@@ -3,6 +3,17 @@
 <head>
 <meta charset="utf-8">
 <script>window.KP_API = /netlify\.app$|^localhost$|^127\./.test(location.hostname) ? '' : 'https://otgwiroxifqtktbipbsu.supabase.co/functions/v1/game'; // игровой сервер на Supabase</script>
+<script>/* быстрый отклик: запросы к серверу — в регион базы (Ирландия); нажатая кнопка «дышит», пока ждёт ответ */
+(() => { const API = window.KP_API, f0 = window.fetch.bind(window); let lastBtn = null, lastT = 0;
+  addEventListener('pointerdown', e => { lastBtn = e.target.closest && e.target.closest('button, .btn'); lastT = performance.now(); }, true);
+  window.fetch = (u, o) => { if (!API || typeof u !== 'string' || !u.startsWith(API)) return f0(u, o);
+    u += (u.includes('?') ? '&' : '?') + 'forceFunctionRegion=eu-west-1';
+    const b = !u.includes('/rpg/pos') && performance.now() - lastT < 600 ? lastBtn : null; if (b) b.classList.add('kp-wait');
+    const p = f0(u, o); if (b) p.finally(() => b.classList.remove('kp-wait')).catch(() => { }); return p; }; })();</script>
+<style>button, .btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button:not(.btn):active:not(:disabled) { scale: .94; filter: brightness(1.12); }
+.kp-wait { animation: kpwait .7s ease-in-out infinite alternate; cursor: progress; }
+@keyframes kpwait { to { opacity: .55; } }</style>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Королевство подписчиков</title>
 <meta name="description" content="Карта Королевства подписчиков @korol_podpi. Найди свой дом по нику из Instagram.">

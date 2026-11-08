@@ -12,7 +12,7 @@ export const emptyDb = () => ({ t: { world_config: [], world_events: [], event_c
 function match(row, k, v) {
   const [op, ...rest] = v.split('.'); const val = rest.join('.');
   if (op === 'eq') return String(row[k]) === val; if (op === 'neq') return String(row[k]) !== val; if (op === 'lt') return String(row[k]) < val; if (op === 'gt') return String(row[k]) > val;
-  if (op === 'in') return val.slice(1, -1).split(',').map(decodeURIComponent).includes(String(row[k]));
+  if (op === 'in') return val.slice(1, -1).split(',').map(decodeURIComponent).map(v => v.replace(/^"(.*)"$/, '$1')).includes(String(row[k]));
   if (op === 'like') return new RegExp('^' + val.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$').test(String(row[k]));
   return false;
 }

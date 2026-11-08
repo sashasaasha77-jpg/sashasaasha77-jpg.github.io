@@ -244,14 +244,14 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
     while (q.steps[step] && q.steps[step].t === 'items' && have(q.steps[step].item) >= q.steps[step].n) step++; return step; };
   async function state(h) {
     const [, h0] = await Promise.all([advanceWorld(), hero()]); h = h0; // мир и герой — параллельно (advanceWorld героя не меняет)
-    const [items, qrows, achs, gathered, [sqv, invites], combat, world, coins] = await Promise.all([
+    const [items, qrows, achs, gathered, [sqv, invites], combat, world, coins, choppedRows, resv, inbox] = await Promise.all([
       inv(), sb(`quests?nick=eq.${N}&or=(status.eq.active,period.eq.once,period.eq.${date})&select=quest_id,period,status,progress`),
       sb(`achievements?nick=eq.${N}&select=ach_id,at`), sb(`reward_log?nick=eq.${N}&key=like.${enc('g:' + date + ':')}*&select=key`),
       Promise.all([mySquad().then(squadView), sb(`squad_invites?to_nick=eq.${N}&status=eq.pending&select=id,squad_id,from_nick`)]),
-      combatView(h), worldView(), coinsOf()]);
+      combatView(h), worldView(), coinsOf(), sb(`reward_log?nick=eq.${N}&key=like.${enc('t:' + date + ':' + slotOf(now) + ':')}*&select=key`), resView(), inboxTake()]); // всё одним заходом — быстрее отклик
     const L = levelOf(h.xp);
     const slot = slotOf(now), taken = new Set(gathered.filter(g => g.key.split(':')[2] === String(slot)).map(g => g.key.split(':').pop()));
-    const chopped = (await sb(`reward_log?nick=eq.${N}&key=like.${enc('t:' + date + ':' + slotOf(now) + ':')}*&select=key`)).map(g => g.key.split(':').pop());
+    const chopped = choppedRows.map(g => g.key.split(':').pop());
     const qs = catalog(h).map(q => { const row = qrows.find(r => r.quest_id === q.id && r.period === q.period);
       let status = row ? row.status : 'available';
       if (status === 'available') { if (L.level < q.minLevel) status = 'locked'; else if (q.after && !qrows.some(r => r.quest_id === q.after && r.status === 'done')) status = 'locked'; }
@@ -259,7 +259,7 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
     await Promise.all(invites.map(async iv => { const [sq] = await sb(`squads?id=eq.${iv.squad_id}&select=name`); iv.name = sq ? sq.name : '?'; }));
     return { hero: { nick, role: h.role, xp: h.xp, level: L.level, into: L.into, need: L.need, hp: h.hp, x: h.x, z: h.z, face: h.face, spec: SPEC[h.role] },
       squad: sqv, invites: invites.filter(i => i.name !== '?'), week: wk, combat, world, title: h.title || null, coins, inventory: items.filter(i => i.qty > 0), quests: qs, achievements: achs, nodes: nodesFor(date).map(n => ({ ...n, taken: taken.has(n.id) })), respawnAt: (slot + 1) * NODE_RESPAWN, rolePrice: ROLE_PRICE, chopped, date,
-      res: await resView(), inbox: await inboxTake() };
+      res: resv, inbox };
   }
   async function resView() {
     const [rp, bl, fort, decor] = await Promise.all([rpgGet(), builds(), cfgGet('fort'), store.get('decor')]);

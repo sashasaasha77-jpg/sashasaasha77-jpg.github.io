@@ -68,8 +68,9 @@ export function createApi({ store, isResident, adminKey = '', now = () => Date.n
   async function need(body) { const a = await auth(body.nick, body.pin); if (!a.p || !a.p.pinHash) throw new Err(401, 'no_account', 'Сначала войди: введи ник и придумай PIN.'); return a.p; }
 
   // ---------- рейтинги ----------
-  async function boards() {
-    const lb = (await store.get('lb')) || { earned: [], week: { wk: week(), list: [] }, vorota: [], donated: [], lastWeek: null };
+  const getMany = ks => store.getMany ? store.getMany(ks) : Promise.all(ks.map(k => store.get(k))); // несколько ключей одним запросом
+  async function boards(...pre) {
+    const lb = (pre.length ? pre[0] : await store.get('lb')) || { earned: [], week: { wk: week(), list: [] }, vorota: [], donated: [], lastWeek: null };
     if (lb.week.wk !== week()) { lb.lastWeek = { wk: lb.week.wk, top: lb.week.list.slice(0, 3) }; lb.week = { wk: week(), list: [] }; }
     return lb;
   }
@@ -82,15 +83,15 @@ export function createApi({ store, isResident, adminKey = '', now = () => Date.n
   async function setLevel(p) { const lv = (await store.get('levels')) || {}; if (p.level > 0) lv[p.nick] = p.level; else delete lv[p.nick]; await store.set('levels', lv); }
 
   // ---------- казна ----------
-  async function treasury() {
-    const t = (await store.get('treasury')) || { totals: {}, donors: {} };
+  async function treasury(...pre) {
+    const t = (pre.length ? pre[0] : await store.get('treasury')) || { totals: {}, donors: {} };
     let current = null; const projects = PROJECTS.map(pr => { const raised = Math.min(pr.goal, t.totals[pr.id] || 0); const done = raised >= pr.goal;
       const o = { ...pr, raised, done, donors: (t.donors[pr.id] || []).slice(0, 10) }; if (!done && !current) current = pr.id; return o; });
     return { projects, current };
   }
   async function recount(pid) {
     const keys = await store.list('d/' + pid + '/'); const rows = [];
-    for (const k of keys) { const v = await store.get(k); if (v && v.amount > 0) rows.push({ nick: k.split('/').pop(), v: v.amount }); }
+    const vals = keys.length ? await getMany(keys) : []; keys.forEach((k, i) => { const v = vals[i]; if (v && v.amount > 0) rows.push({ nick: k.split('/').pop(), v: v.amount }); });
     rows.sort((a, b) => b.v - a.v);
     const t = (await store.get('treasury')) || { totals: {}, donors: {} };
     t.totals[pid] = rows.reduce((s, r) => s + r.v, 0); t.donors[pid] = rows.slice(0, 20); await store.set('treasury', t);
@@ -98,7 +99,8 @@ export function createApi({ store, isResident, adminKey = '', now = () => Date.n
 
   const actions = {
     async state(b) {
-      const [lb, tr, levels, decor, roles] = [await boards(), await treasury(), (await store.get('levels')) || {}, (await store.get('decor')) || {}, (await store.get('roles')) || {}];
+      const [lb0, tr0, lv0, dc0, rl0] = await getMany(['lb', 'treasury', 'levels', 'decor', 'roles']);
+      const [lb, tr, levels, decor, roles] = [await boards(lb0), await treasury(tr0), lv0 || {}, dc0 || {}, rl0 || {}];
       return { boards: lb, treasury: tr, levels, decor, roles, today: today(), week: week(), config: { HOUSE, GAME } };
     },
     async login(b) {
