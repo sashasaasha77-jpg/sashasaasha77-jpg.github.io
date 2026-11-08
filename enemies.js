@@ -3,6 +3,7 @@ let SV = null; // общий вектор для проекции подписе
 // Ход боя считает сервер (rpg-engine.mjs + combat.mjs); здесь — только вид и кнопки.
 import { ENEMIES, KINDS, INTENT, DUEL_INTENT, ABIL, CAMP, enemyPos, enemyStats, cooldownLeft, MOVES, isNight } from './combat.mjs';
 import { buildMonster, isMonster } from './monsters.js';
+import { isBossEvent } from './world.mjs';
 import { G, act } from './rpg-ui.js';
 import { buildKnight as figKnight, flattenStatic, buildHero } from './figure.js';
 let W, K, THREE, R;
@@ -82,8 +83,11 @@ function renderFight() {
     FP.btns = [...p.querySelectorAll('[data-mv]')]; FP.btns.forEach(b => b.onpointerdown = e => { e.preventDefault(); move(b.dataset.mv); });
   }
   const set = (el, prop, v) => { if (el[prop] !== v) el[prop] = v; };
-  set(FP.eName, 'textContent', `${es.name} · ур. ${f.lvl}`); set(FP.eHp, 'textContent', `${f.eHp} / ${f.eMax}`); set(FP.hHp, 'textContent', `${f.hHp} / ${f.hMax}`);
-  FP.eBar.style.width = (100 * f.eHp / f.eMax).toFixed(0) + '%'; FP.hBar.style.width = (100 * f.hHp / f.hMax).toFixed(0) + '%';
+  // босс события: показываем ОБЩЕЕ здоровье (одно на всех героев), а не личную копию
+  const wd = G.state?.world, we = wd?.enemies?.find(x => x.id === f.enemy), bev = KINDS[f.kind]?.boss && wd?.events?.find(ev => ev.status === 'active' && (we?.event ? ev.id === we.event : isBossEvent(ev.kind)) && isBossEvent(ev.kind));
+  const eHp = bev ? Math.max(0, bev.goal - bev.progress) : f.eHp, eMax = bev ? bev.goal : f.eMax;
+  set(FP.eName, 'textContent', `${es.name} · ур. ${f.lvl}`); set(FP.eHp, 'textContent', bev ? `${eHp} / ${eMax} · общее` : `${f.eHp} / ${f.eMax}`); set(FP.hHp, 'textContent', `${f.hHp} / ${f.hMax}`);
+  FP.eBar.style.width = (100 * eHp / Math.max(1, eMax)).toFixed(0) + '%'; FP.hBar.style.width = (100 * f.hHp / f.hMax).toFixed(0) + '%';
   set(FP.intent, 'textContent', `⚠ ${es.name} ${(f.es && DUEL_INTENT[f.next]) || INTENT[f.next] || ''}`); set(FP.log, 'innerHTML', fightLog.slice(-3).join('<br>'));
   for (const b of FP.btns) { const mv = b.dataset.mv, left = mv === 'flee' ? 0 : cooldownLeft(f, mv, G.state.hero.role, now) || 0, sm = b.lastChild, lab = b.firstChild;
     const dis = moving || left > 0 || (mv === 'potion' && !c.potions); if (b.disabled !== dis) b.disabled = dis;
