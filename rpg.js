@@ -172,10 +172,10 @@ async function start() {
   W.toast(S.demo ? 'Демо-герой. Настоящий герой появится у каждого подданного после входа' : `Добро пожаловать в Мир героев, ${w.role.name.toLowerCase()} @${S.nick}!`);
   if (!S.demo && !G.state) setTimeout(() => S.on && !G.state && loadHero(), 1500); // герой не загрузился — покажем причину и попробуем ещё
 }
-function saveServer() { const auth = K.auth && K.auth(); if (S.demo || !auth || !G.state || !S.pos) return; fetch((window.KP_API || '') + '/rpg/pos', { method: 'POST', headers: { 'content-type': 'application/json' }, keepalive: true, body: JSON.stringify({ ...auth, x: S.pos.x, z: S.pos.z, face: S.face }) }).catch(() => { }); }
+function saveServer(force) { const auth = K.auth && K.auth(); if (S.demo || !auth || !G.state || !S.pos) return; const k = S.pos.x.toFixed(1) + ',' + S.pos.z.toFixed(1); if (!force && k === S.srvK) return; S.srvK = k; fetch((window.KP_API || '') + '/rpg/pos', { method: 'POST', headers: { 'content-type': 'application/json' }, keepalive: true, body: JSON.stringify({ ...auth, x: S.pos.x, z: S.pos.z, face: S.face }) }).catch(() => { }); }
 function save() { if (S.pos) try { localStorage.setItem('kp-hero-' + S.nick, JSON.stringify({ x: +S.pos.x.toFixed(2), z: +S.pos.z.toFixed(2), f: +S.face.toFixed(2) })); } catch { } }
 function stop() {
-  if (!S.on) return; save(); saveServer(); disconnect(); document.body.classList.remove('chatting'); S.on = false; W.PLAY.on = false; S.keys.clear(); S.hero.visible = false; S.label.style.display = 'none';
+  if (!S.on) return; save(); saveServer(true); disconnect(); document.body.classList.remove('chatting'); S.on = false; W.PLAY.on = false; S.keys.clear(); S.hero.visible = false; S.label.style.display = 'none';
   document.body.classList.remove('playing'); W.setWorld('map'); ROOT.visible = false; W.target.y = 0; if (S.prev) { W.pitch = S.prev.pitch; W.dist = Math.max(30, S.prev.dist); } W.redraw();
 }
 
@@ -227,7 +227,7 @@ function tick(now, dt) {
   const p = (SV || (SV = new THREE.Vector3())).set(S.pos.x, 1.75 + S.jy - S.sitK * 0.34 + (S.mount ? 0.6 : 0), S.pos.z).project(W.camera);
   if (p.z < 1) { S.label.style.display = 'block'; S.label.textContent = (G.state?.world?.king === S.nick ? '👑 ' : '') + '@' + S.nick; S.label.style.left = ((p.x + 1) / 2 * innerWidth) + 'px'; S.label.style.top = ((1 - p.y) / 2 * innerHeight) + 'px'; } else S.label.style.display = 'none';
   if (now - S.saveT > 3000) { S.saveT = now; save(); }
-  if (now - (S.srvT || 0) > 15000) { S.srvT = now; saveServer(); }
+  if (now - (S.srvT || 0) > 30000 && !document.hidden) { S.srvT = now; saveServer(); } // позиция на сервер раз в 30 с и только если герой сдвинулся
   W.redraw();
 }
 
@@ -241,6 +241,7 @@ export function init(world, k) {
   initNet(W, K, { state: () => S, game: () => G.state, buildHero, animate: animateHero, act }); W.TICKS.push(netTick);
   initEnemies(W, K, { state: () => S, addObs, animate: animateHero, setFoe }); W.TICKS.push((n, d) => S.on && enemyTick(n, d)); G.startFight = startFight;
   initWorld(W, K, { state: () => S, buildKnight }); W.TICKS.push(worldTick);
-  addEventListener('pagehide', () => { save(); if (S.on) saveServer(); });
+  addEventListener('pagehide', () => { save(); if (S.on) saveServer(true); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && S.on) saveServer(); });
   window.RPG = { start, stop, state: S, toggleMount, blocked, buildObstacles, refreshHero: () => { const w = who(); if (w && !w.error) ensureHero(w); } };
 }

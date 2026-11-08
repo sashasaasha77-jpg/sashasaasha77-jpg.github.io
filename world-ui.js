@@ -212,5 +212,5 @@ export function initWorld(world0, k, rpg) {
   if (kk || /korol/.test(location.hash) || W.demo) { const kh = document.createElement('button'); kh.id = 'hudK'; kh.className = 'btn btn-gold'; kh.type = 'button'; kh.textContent = '👑 Указы'; kh.onclick = kingSheet; W.$('hudBtns').prepend(kh); } // король — указы прямо в «Мире героев»
   const hb = document.createElement('button'); hb.id = 'hudW'; hb.className = 'btn btn-paper'; hb.type = 'button'; hb.hidden = true; hb.textContent = '⚔️ Война'; hb.onclick = warSheet; W.$('hudBtns').prepend(hb);
   if (/korol/.test(location.hash) || W.demo) { const kb = document.createElement('button'); kb.className = 'panel'; kb.type = 'button'; kb.innerHTML = '<span style="font-size:20px">👑</span>Указы'; kb.onclick = kingSheet; W.$('mapctl').appendChild(kb); }
-  loadPublic(); setInterval(loadPublic, 60000);
+  loadPublic(); setInterval(() => { if (!document.hidden) loadPublic(); }, 120000); document.addEventListener('visibilitychange', () => { if (!document.hidden) loadPublic(); });
 }

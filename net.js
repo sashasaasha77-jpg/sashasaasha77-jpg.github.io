@@ -77,7 +77,7 @@ export function tick(now, dt) {
   const st = R.state(); if (!st.on || !NET.ready) return;
   // отправка своей позиции: раз в секунду при движении и один раз при остановке
   const p = st.pos; if (p) { const moved = Math.hypot(p.x - lastSend.x, p.z - lastSend.z), moving = st.speed > 0.3;
-    if ((moving && moved > 0.2 && now - lastSend.t > 1000) || (!moving && lastSend.moving) || !!st.mount !== !!lastSend.h) { ch.send({ type: 'broadcast', event: 'p', payload: { n: me.nick, x: +p.x.toFixed(2), z: +p.z.toFixed(2), f: +st.face.toFixed(2), m: moving, h: !!st.mount } }); lastSend = { t: now, x: p.x, z: p.z, moving, h: !!st.mount }; }
+    if ((moving && moved > 0.2 && now - lastSend.t > 1500) || (!moving && lastSend.moving) || !!st.mount !== !!lastSend.h) { ch.send({ type: 'broadcast', event: 'p', payload: { n: me.nick, x: +p.x.toFixed(2), z: +p.z.toFixed(2), f: +st.face.toFixed(2), m: moving, h: !!st.mount } }); lastSend = { t: now, x: p.x, z: p.z, moving, h: !!st.mount }; }
     if (now - lastTrack.t > 20000 && Math.hypot(p.x - lastTrack.x, p.z - lastTrack.z) > 2) { lastTrack = { t: now, x: p.x, z: p.z }; retrack(); } }
   // показ ближайших героев
   const sid = squadId(), list = [...NET.others.values()].map(o => ({ o, d: p ? Math.hypot(o.x - p.x, o.z - p.z) : 0 })).sort((a, b) => a.d - b.d);

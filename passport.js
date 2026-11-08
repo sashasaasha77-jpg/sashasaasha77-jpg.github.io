@@ -106,7 +106,7 @@ export async function drawPassport(K, p) {
   x.textAlign = 'center';
   x.fillStyle = C.ivory; x.font = `800 40px ${BODY}`; x.fillText('Отметь в сторис', W / 2, 1590);
   x.fillStyle = C.gold; x.font = `800 58px ${BODY}`; x.lineWidth = 8; x.strokeStyle = C.ink; x.strokeText('@korol_podpi', W / 2, 1662); x.fillText('@korol_podpi', W / 2, 1662);
-  x.fillStyle = 'rgba(245,235,220,.75)'; x.font = `600 28px ${BODY}`; x.fillText('korolevstvo-podpischikov.netlify.app', W / 2, 1714);
+  x.fillStyle = 'rgba(245,235,220,.75)'; x.font = `600 28px ${BODY}`; x.fillText('sashasaasha77-jpg.github.io', W / 2, 1714);
 
   return new Promise(res => cv.toBlob(b => res(b), 'image/png'));
 }
