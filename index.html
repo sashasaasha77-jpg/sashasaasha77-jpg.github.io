@@ -117,6 +117,18 @@ body.carded .vote p { display: none; } body.carded .vote::after { content: "Го
 #sheet .passhint { font-size: 13px; margin: 12px 0 0; color: var(--muted); }
 #sheet .passhint b { color: var(--gold); }
 #cCrest.ruin { filter: grayscale(1) brightness(.85); }
+/* карточка жителя — компактная (в 2 раза меньше), чтобы не закрывала карту */
+#card { padding: 9px 11px; }
+#card .close { top: 5px; right: 5px; width: 30px; height: 30px; }
+#card .cgrid { grid-template-columns: 44px 1fr; gap: 9px; }
+#cCrest svg, #cCrest img, #cCrest canvas { width: 44px !important; height: 44px !important; display: block; }
+#card .cnick { font-size: 13px; padding-right: 34px; }
+#card .crole { font-size: 19px; margin: 0 0 3px; }
+#card .pill { font-size: 10px; padding: 1px 7px; }
+#card .cduty { font-size: 12px; line-height: 1.35; margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#card .cmeta { font-size: 11.5px; margin-top: 4px; }
+#card .cpass { margin-top: 6px; padding: 6px 10px; font-size: 13px; }
+#card .cpass svg { width: 16px; height: 16px; }
 .chron { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .chron li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; background: rgba(245,235,220,.06); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.4; }
 .chron .ic { font-size: 20px; line-height: 1; text-align: center; }
@@ -128,6 +140,7 @@ body.carded .vote p { display: none; } body.carded .vote::after { content: "Го
 /* тост, подписи */
 #toast { position: fixed; left: 50%; top: 45%; transform: translate(-50%, -50%); z-index: 3; padding: 14px 18px; max-width: min(420px, 90vw); text-align: center; font-weight: 700; display: none; pointer-events: none; }
 #toast.show { display: block; animation: rise .3s ease-out both; }
+body.playing #toast { top: auto; bottom: calc(150px + env(safe-area-inset-bottom)); transform: translateX(-50%); padding: 9px 14px; font-size: 14px; max-width: min(380px, 86vw); } /* в Мире героев оповещения — внизу, не по центру */
 #labels { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
 .lbl { position: absolute; transform: translate(-50%, -100%); white-space: nowrap; font-weight: 800; font-size: 12px; padding: 3px 8px; border-radius: 8px; background: rgba(14,20,36,.82); border: 2px solid var(--ink); color: var(--paper); }
 .lbl.me { background: var(--gold); color: var(--ink); font-size: 14px; padding: 5px 10px; z-index: 2; }
