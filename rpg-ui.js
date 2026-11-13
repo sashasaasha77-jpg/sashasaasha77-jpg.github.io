@@ -31,7 +31,7 @@ export function act(action, extra = {}, quiet = false) {
 }
 async function send(action, extra, quiet) {
   const st = R.state();
-  const body = { ...extra }; if (st.pos && ['take', 'step', 'done', 'gather', 'sq_take', 'sq_act', 'fight', 'shop', 'market', 'war', 'craft', 'weapon', 'build', 'fort', 'decor', 'order', 'chop', 'tutorial', 'gift'].includes(action)) { body.x = +st.pos.x.toFixed(2); body.z = +st.pos.z.toFixed(2); }
+  const body = { ...extra }; if (st.pos && ['take', 'step', 'done', 'gather', 'sq_take', 'sq_act', 'fight', 'shop', 'market', 'war', 'craft', 'weapon', 'build', 'fort', 'decor', 'order', 'chop', 'tutorial', 'gift', 'enchant', 'owar'].includes(action)) { body.x = +st.pos.x.toFixed(2); body.z = +st.pos.z.toFixed(2); }
   let r;
   try {
     if (st.demo) r = await localCall(st.nick, action, body);
