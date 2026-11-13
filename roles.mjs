@@ -5,4 +5,4 @@ export function hash(str) { let h = 0x811c9dc5; for (const ch of 'korolevstvo-po
   h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return h >>> 0; }
 export function roleIdFor(nick) { let x = hash(nick) % (TOTAL * 100) / 100, a = 0; for (const [id, w] of ROLE_W) { a += w; if (x < a) return id; } return ROLE_W[0][0]; }
 // уровень по опыту: на уровень n нужно 100·n опыта сверх предыдущего
-export function levelOf(xp) { let lv = 1, need = 100; while (xp >= need && lv < 60) { xp -= need; lv++; need = 100 * lv; } return { level: lv, into: xp, need }; }
+export function levelOf(xp) { let lv = 1, need = 100; while (xp >= need && lv < 80) { xp -= need; lv++; need = 100 * lv; } return { level: lv, into: xp, need }; }

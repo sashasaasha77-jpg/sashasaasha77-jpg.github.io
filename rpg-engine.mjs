@@ -736,10 +736,14 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
       if (!admin) throw new Bad(403, 'not_king', 'Это может только король.');
       if (b.config) { const c = mergeConfig(b.config); c.invasion.everyDays = Math.max(1, Math.min(30, +c.invasion.everyDays)); c.invasion.difficulty = Math.max(0.3, Math.min(3, +c.invasion.difficulty)); c.invasion.durationMin = Math.max(15, Math.min(240, +c.invasion.durationMin)); c.invasion.warnHours = Math.max(0, Math.min(24, +c.invasion.warnHours)); c.events.everyDays = Math.max(1, Math.min(30, +c.events.everyDays)); await cfgSet('main', c); }
       if (b.setLevel) { // король задаёт уровень героя: опыт ставится ровно на начало уровня
-        const who = normalize(String(b.setLevel.nick || '')), lv = Math.max(1, Math.min(60, Math.floor(+b.setLevel.level || 1)));
+        const who = normalize(String(b.setLevel.nick || '')), lv = Math.max(1, Math.min(80, Math.floor(+b.setLevel.level || 1)));
         const [hr] = await sb(`heroes?nick=eq.${enc(who)}&select=nick`); if (!hr) throw new Bad(404, 'no_hero', `У @${who} ещё нет героя — пусть сначала зайдёт в Мир героев.`);
         const xp = 100 * (lv - 1) * lv / 2; await sb(`heroes?nick=eq.${enc(who)}`, { method: 'PATCH', body: { xp } });
         await chron('king', `👑 Указом короля @${who} получает ${lv} уровень!`, who); return json(200, { world: await worldView(), note: `@${who} теперь ${lv} уровня.` }); }
+      if (b.giveCoins) { // король выдаёт монеты (14.11.2026)
+        const who = normalize(String(b.giveCoins.nick || '')), n = Math.max(-1e6, Math.min(1e6, Math.round(+b.giveCoins.coins || 0))); if (!who || !n) throw new Bad(400, 'bad', 'Укажи ник и сумму.');
+        const p = (await store.get('p/' + who)) || { nick: who, coins: 0, earned: 0, wkEarned: 0 }; p.coins = Math.max(0, (p.coins || 0) + n); await store.set('p/' + who, p);
+        return json(200, { world: await worldView(), note: `🪙 @${who}: ${n > 0 ? '+' : ''}${n} монет. Теперь у него ${p.coins}.` }); }
       if (b.start) { const kind = String(b.start); const cfg = mergeConfig(await cfgGet('main'));
         const cur = await sb(`world_events?kind=eq.${kind}&status=in.(scheduled,warning,active)&select=id`); for (const c of cur) await sb(`world_events?id=eq.${c.id}`, { method: 'DELETE' });
         const warn = kind === 'invasion' ? Math.max(0, Number.isFinite(+b.warnMin) ? +b.warnMin : 5) * 6e4 : 0, start = now + warn;

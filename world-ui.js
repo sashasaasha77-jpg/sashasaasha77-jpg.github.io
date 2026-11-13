@@ -161,8 +161,10 @@ function kingSheet() {
     ${f('kEvery', 'Вторжение раз в N дней', c.invasion.everyDays)}${f('kHour', 'Час начала (по Самаре)', c.invasion.hour)}${f('kWarn', 'Предупреждение за N часов', c.invasion.warnHours)}${f('kDur', 'Длительность осады, мин', c.invasion.durationMin)}${f('kDiff', 'Сложность (0.3–3)', c.invasion.difficulty, 0.1)}
     <label class="field"><span><input id="kEvOn" type="checkbox" ${c.events.enabled ? 'checked' : ''}> Мировые события включены</span></label>${f('kEvEvery', 'Событие раз в N дней', c.events.everyDays)}
     <button class="btn btn-gold" type="button" id="kSave" style="width:100%">Сохранить указ</button>
-    <h2 style="font-size:20px;margin-top:14px">Уровень героя</h2><label class="field"><span>Ник героя</span><input id="kLvNick" type="text" value="korol_podpi" autocomplete="off"></label>${f('kLv', 'Уровень (1–60)', 60)}
+    <h2 style="font-size:20px;margin-top:14px">Уровень героя</h2><label class="field"><span>Ник героя</span><input id="kLvNick" type="text" value="korol_podpi" autocomplete="off"></label>${f('kLv', 'Уровень (1–80)', 80)}
     <button class="btn btn-paper" type="button" id="kLvSet" style="width:100%">⭐ Назначить уровень</button>
+    <h2 style="font-size:20px;margin-top:14px">Казна: выдать монеты</h2><label class="field"><span>Ник героя</span><input id="kCnNick" type="text" value="korol_podpi" autocomplete="off"></label>${f('kCn', 'Сколько монет (можно с минусом)', 80000)}
+    <button class="btn btn-paper" type="button" id="kCnSet" style="width:100%">🪙 Выдать монеты</button>
     <h2 style="font-size:20px;margin-top:14px">Объявить сейчас</h2><div class="npcopts">
       <button class="btn btn-paper" type="button" data-st="invasion" data-w="5">⚔️ Вторжение через 5 минут</button><button class="btn btn-paper" type="button" data-st="invasion" data-w="0">🔥 Осада немедленно</button>
       <button class="btn btn-paper" type="button" data-st="caravan">🐪 Королевский караван</button><button class="btn btn-paper" type="button" data-st="artifact">🏺 Поиск артефакта</button><button class="btn btn-paper" type="button" data-st="raid">🗡️ Набег на торговый путь</button><button class="btn btn-paper" type="button" data-st="dragon">🐉 Нападение дракона</button><button class="btn btn-paper" type="button" data-st="lich">💀 Восстание лича</button><button class="btn btn-paper" type="button" data-st="giant">🧊 Ледяной великан</button></div>`,
@@ -175,6 +177,7 @@ function kingSheet() {
         if (body.start) { if (G.state && r.data.world) G.state.world = r.data.world; W.$('sheet').classList.remove('show'); render(); } await act('hero', {}, true); render(); };
       b.querySelector('#kSave').onclick = () => send({ config: cfgNow() });
       b.querySelector('#kLvSet').onclick = () => send({ setLevel: { nick: b.querySelector('#kLvNick').value.trim().replace(/^@/, ''), level: +b.querySelector('#kLv').value } });
+      b.querySelector('#kCnSet').onclick = () => send({ giveCoins: { nick: b.querySelector('#kCnNick').value.trim().replace(/^@/, ''), coins: +b.querySelector('#kCn').value } });
       b.querySelectorAll('[data-st]').forEach(x => x.onclick = () => send({ start: x.dataset.st, warnMin: +(x.dataset.w || 0) }));
     });
 }
