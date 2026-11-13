@@ -117,7 +117,7 @@ function ui() {
   const hint = document.createElement('div'); hint.id = 'hint'; hint.className = 'panel'; hint.textContent = 'WASD или стрелки — идти · Shift — бег · Пробел — прыжок · C — сесть · мышь или Q/E — повернуть камеру · колесо — приблизить';
   document.body.appendChild(hint);
   const joy = document.createElement('div'); joy.id = 'joy'; joy.innerHTML = '<i></i>'; joy.setAttribute('aria-hidden', 'true'); document.body.appendChild(joy);
-  const lab = document.createElement('div'); lab.className = 'lbl hero'; lab.style.display = 'none'; W.$('labels').appendChild(lab); S.label = lab;
+  const lab = document.createElement('div'); lab.className = 'lbl hero'; lab.style.display = 'none'; lab.style.left = lab.style.top = '0'; W.$('labels').appendChild(lab); S.label = lab;
   const btn = W.$('bHero'); // кнопка «Мир героев» внизу, на месте бывшей мини-игры
   btn.addEventListener('click', start); W.$('hudExit').addEventListener('click', stop);
   // джойстик
@@ -225,11 +225,14 @@ function tick(now, dt) {
   W.dist = Math.min(40, Math.max(4, W.dist));
   // подпись над героем
   const p = (SV || (SV = new THREE.Vector3())).set(S.pos.x, 1.75 + S.jy - S.sitK * 0.34 + (S.mount ? 0.6 : 0), S.pos.z).project(W.camera);
-  if (p.z < 1) { S.label.style.display = 'block'; S.label.textContent = (G.state?.world?.king === S.nick ? '👑 ' : '') + '@' + S.nick; S.label.style.left = ((p.x + 1) / 2 * innerWidth) + 'px'; S.label.style.top = ((1 - p.y) / 2 * innerHeight) + 'px'; } else S.label.style.display = 'none';
+  if (p.z < 1) { const tx = (G.state?.world?.king === S.nick ? '👑 ' : '') + '@' + S.nick; if (S.label.textContent !== tx) S.label.textContent = tx; S.label.style.display = 'block'; S.label.style.transform = `translate(${((p.x + 1) / 2 * innerWidth).toFixed(1)}px, ${((1 - p.y) / 2 * innerHeight).toFixed(1)}px) translate(-50%, -100%)`; } else S.label.style.display = 'none';
   if (now - S.saveT > 3000) { S.saveT = now; save(); }
   if (now - (S.srvT || 0) > 30000 && !document.hidden) { S.srvT = now; saveServer(); } // позиция на сервер раз в 30 с и только если герой сдвинулся
-  W.redraw();
+  // стоим на месте — перерисовываем реже (на телефоне ~15 кадров/с): меньше нагрев, анимации всё равно плавные
+  const busy = m > 0.12 || S.speed > 0.05 || fighting || S.jy > 0 || Math.abs(T.x - S.pos.x) + Math.abs(T.z - S.pos.z) > 0.02;
+  if (busy || now - (S.rdT || 0) > (IDLE_DT)) { S.rdT = now; W.redraw(); }
 }
+const IDLE_DT = (() => { try { if (localStorage.getItem('kp-eco') === '1') return 100; } catch { } return innerWidth < 700 || matchMedia('(pointer: coarse)').matches ? 66 : 33; })();
 
 let ROOT = null; // всё, что есть только в «Мире героев»: NPC, враги, лагерь, ресурсы, осада, другие игроки
 export function init(world, k) {
