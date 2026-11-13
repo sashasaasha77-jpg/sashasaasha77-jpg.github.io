@@ -57,8 +57,8 @@ export const PETS = {
 export const PET_BONUS = { pet_fox: { coins: 0.05 }, pet_owl: { xp: 0.05 }, pet_wolf: { atk: 2 } };
 
 // ---------- горы и шахта на северо-западе ----------
-export const MINE = { x: -46.2, z: -46.2, r: 18, door: { x: -52, z: -54 } };
-export const MINE_SPOTS = [[-38, -40], [-41, -52], [-47, -36.5], [-55, -44], [-35.5, -47], [-50.5, -40.5], [-43, -58]];
+export const MINE = { x: -138.6, z: -138.6, r: 18, door: { x: -144.4, z: -146.4 } };
+export const MINE_SPOTS = [[-130.4, -132.4], [-133.4, -144.4], [-139.4, -128.9], [-147.4, -136.4], [-127.9, -139.4], [-142.9, -132.9], [-135.4, -150.4]];
 export const GEM = { name: 'Самоцвет', icon: '💎', sell: 25 };
 // подземелье: Горный король — общее здоровье на отряд, раз в день
 export const DUNGEON = { needMembers: 2, near: 22, freshMin: 4, hpPer: 500, rewardXp: 400, rewardCoins: 180,
@@ -93,7 +93,7 @@ export const OWAR = { hour: 19, durationMin: 60, cd: 20e3, r: 4.5, flagPts: 120,
   flags: [
     { id: 'market', name: 'Флаг у рынка', x: 29.5, z: 8 },
     { id: 'swamp', name: 'Флаг у болота', x: -140.1, z: 3.3 },
-    { id: 'mine', name: 'Флаг у шахты', x: -31, z: -33 },
+    { id: 'mine', name: 'Флаг у шахты', x: -123.4, z: -125.4 },
     { id: 'bridge', name: 'Флаг у моста', x: 4.5, z: 40 },
     { id: 'arena', name: 'Флаг у арены', x: 9.9, z: 58.5 },
   ] };

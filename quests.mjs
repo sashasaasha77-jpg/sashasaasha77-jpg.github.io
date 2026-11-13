@@ -345,5 +345,5 @@ import { MINE_SPOTS, PETS, GEM } from './extras.mjs';
 Object.assign(ITEMS, { gem: { name: GEM.name, type: 'res', icon: GEM.icon } });
 for (const [id, p] of Object.entries(PETS)) ITEMS[id] = { name: p.name, type: 'pet', icon: p.icon };
 SHOP.sell.gem = GEM.sell; SHOP.buy.pet_fox = PETS.pet_fox.price; SHOP.buy.pet_owl = PETS.pet_owl.price;
-POI.mine = { name: 'горы и шахта на северо-западе', x: -40, z: -40 };
+POI.mine = { name: 'горы и шахта далеко на северо-западе', x: -132.4, z: -132.4 };
 SLOTS.pet = { name: 'Питомец', n: 1 };

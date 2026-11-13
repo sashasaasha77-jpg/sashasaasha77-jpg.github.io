@@ -230,11 +230,11 @@ Object.assign(LOOT, {
 });
 Object.assign(RESPAWN_MS, { troll: 5 * 60e3, mountain_king: 60e3, snowking: 60e3 });
 ENEMIES.push(
-  { id: 't1', kind: 'troll', lvl: 16, path: [[-36.5, -38], [-39, -44]], speed: 0.45 },
-  { id: 't2', kind: 'troll', lvl: 20, path: [[-44, -35], [-49, -37]], speed: 0.45 },
-  { id: 't3', kind: 'troll', lvl: 24, path: [[-58, -48], [-56, -42]], speed: 0.4 },
-  { id: 't4', kind: 'troll', lvl: 30, path: [[-40, -56], [-46, -58]], speed: 0.4 },
-  { id: 'mk', kind: 'mountain_king', lvl: 22, path: [[-50.5, -51.5]], dungeon: true },
+  { id: 't1', kind: 'troll', lvl: 16, path: [[-128.9, -130.4], [-131.4, -136.4]], speed: 0.45 },
+  { id: 't2', kind: 'troll', lvl: 20, path: [[-136.4, -127.4], [-141.4, -129.4]], speed: 0.45 },
+  { id: 't3', kind: 'troll', lvl: 24, path: [[-150.4, -140.4], [-148.4, -134.4]], speed: 0.4 },
+  { id: 't4', kind: 'troll', lvl: 30, path: [[-132.4, -148.4], [-138.4, -150.4]], speed: 0.4 },
+  { id: 'mk', kind: 'mountain_king', lvl: 22, path: [[-142.9, -143.9]], dungeon: true },
 );
 Object.assign(SLOT_OF, { pet_fox: 'pet', pet_owl: 'pet', pet_wolf: 'pet' });
 Object.assign(GEAR, { pet_fox: {}, pet_owl: {}, pet_wolf: { atk: 2 } });

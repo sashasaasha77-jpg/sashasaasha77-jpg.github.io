@@ -66,7 +66,7 @@ function buildObstacles() {
   // стройки карты подписчиков (ярмарка, собор, мельница) в «Мир героев» не переносятся — их места здесь пустые и проходимые
 }
 function blocked(x, z, r) {
-  if (Math.abs(x) > W.LIM + 30 || Math.abs(z) > W.LIM + 30) return true; // за картой — лес, его можно рубить
+  if (Math.abs(x) > W.RLIM || Math.abs(z) > W.RLIM) return true; // за картой — лес, его можно рубить
   if (blockedExtra(x, z, r)) return true;
   if (blockedSite(x, z, r)) return true; // общие стройки во дворе
   const dz = Math.abs(z - W.riverZ(x));

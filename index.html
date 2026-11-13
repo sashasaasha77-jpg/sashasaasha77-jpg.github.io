@@ -876,7 +876,7 @@ const freeStart = residents.length;
   for (const t of [T1, T2, B]) { t.m.userData.keep = true; if (t.o) t.o.userData.keep = true; }
   const r = rng(77); let n1 = 0, n2 = 0, nb = 0;
   const thin = rng(777); // деревьев на 70 % меньше: остаётся каждое ~третье (отдельный генератор, чтобы остальное не сдвинулось)
-  const putT = (x, z, s) => { if (thin() > 0.3 || Math.hypot(x - 3.3, z + 155.1) < 14 || Math.max(Math.abs(x), Math.abs(z)) < 22.5 || Math.hypot(x - 42.9, z - 3.3) < 11.5 || Math.hypot(x + 158.4, z - 3.3) < 19 || Math.hypot(x + 50, z + 52) < 25) return; /* лагерь и крепость «Мира героев» */ tmp.position.set(x, 0, z); tmp.rotation.set(0, r() * 6.28, 0); tmp.scale.setScalar(s); tmp.updateMatrix(); if (r() < 0.55) { if (n1 < NT) { TREES.push([x, z, s, T1.m, n1]); T1.m.setMatrixAt(n1++, tmp.matrix); } } else if (n2 < NT) { TREES.push([x, z, s, T2.m, n2]); T2.m.setMatrixAt(n2++, tmp.matrix); } }; // препятствие — только видимое дерево
+  const putT = (x, z, s) => { if (thin() > 0.3 || Math.hypot(x - 3.3, z + 155.1) < 14 || Math.max(Math.abs(x), Math.abs(z)) < 22.5 || Math.hypot(x - 42.9, z - 3.3) < 11.5 || Math.hypot(x + 158.4, z - 3.3) < 19 || Math.hypot(x + 142.4, z + 144.4) < 25) return; /* лагерь и крепость «Мира героев» */ tmp.position.set(x, 0, z); tmp.rotation.set(0, r() * 6.28, 0); tmp.scale.setScalar(s); tmp.updateMatrix(); if (r() < 0.55) { if (n1 < NT) { TREES.push([x, z, s, T1.m, n1]); T1.m.setMatrixAt(n1++, tmp.matrix); } } else if (n2 < NT) { TREES.push([x, z, s, T2.m, n2]); T2.m.setMatrixAt(n2++, tmp.matrix); } }; // препятствие — только видимое дерево
   for (let k = freeStart + FREE + 40; k < plots.length; k++) { if (r() < 0.5) continue; const pl = plots[k]; for (let j = 0; j < 2; j++) putT(pl.x + (r() - 0.5) * 1.8, pl.z + (r() - 0.5) * 1.8, 0.8 + r() * 0.6); }
   for (let x = -SIZE / 2 + 10; x < SIZE / 2 - 10; x += 4.5) { if (r() < 0.35) continue; const side = r() < 0.5 ? -1 : 1, z = riverZ(x) + side * (5 + r() * 1.5); if (Math.abs(((x / PITCH) % 1 + 1) % 1 - 0) < 0.15) continue; putT(x, z, 0.8 + r() * 0.5); }
   // кусты вдоль площади
@@ -1019,7 +1019,7 @@ const RPG_OBS = [];   // препятствия второго мира для �
     for (let k = 0; k < 8; k++) { const a = (k + 0.5) / 8 * Math.PI * 2; if (Math.abs(Math.sin(a)) > 0.92 && Math.sin(a) < 0) continue; const x = MX + Math.sin(a) * 9.1, z = MZ + Math.cos(a) * 9.1; // флаги по краю
       C3(new THREE.CylinderGeometry(0.05, 0.05, 3.2, 6).translate(x, 1.6, z), 0x4E3020); C3(new THREE.BoxGeometry(0.06, 0.7, 0.9).translate(x, 2.8, z + 0.45), [0xE8B931, 0xA4161A, 0x4E8A34][k % 3]); RPG_OBS.push({ x, z, c: 0.15, r: 0.15 }); } }
   // Болото далеко на западе (13.11.2026, 14.11 — отодвинуто втрое дальше): строим на старом месте и сдвигаем всё целиком
-  const shiftFrom = (m, dx, dz) => { for (let i = m.col; i < col.length; i++) col[i].translate(dx, 0, dz); for (let i = m.rpg; i < RPGW.children.length; i++) { RPGW.children[i].position.x += dx; RPGW.children[i].position.z += dz; } for (let i = m.obs; i < RPG_OBS.length; i++) { RPG_OBS[i].x += dx; RPG_OBS[i].z += dz; } };
+  const shiftFrom = (m, dx, dz) => { for (let i = m.col; i < col.length; i++) col[i].translate(dx, 0, dz); for (let i = m.stone ?? stone.length; i < stone.length; i++) stone[i].translate(dx, 0, dz); for (let i = m.rpg; i < RPGW.children.length; i++) { RPGW.children[i].position.x += dx; RPGW.children[i].position.z += dz; } for (let i = m.obs; i < RPG_OBS.length; i++) { RPG_OBS[i].x += dx; RPG_OBS[i].z += dz; } };
   const SWMARK = { col: col.length, rpg: RPGW.children.length, obs: RPG_OBS.length };
   { const SX = -52.8, SZ = 3.3, rr = (k => () => (k = (k * 16807) % 2147483647) / 2147483647)(9137);
     C3(new THREE.CylinderGeometry(17.6, 17.6, 0.05, 48).translate(SX, 0.026, SZ), 0x56603A);
@@ -1059,6 +1059,7 @@ const RPG_OBS = [];   // препятствия второго мира для �
   }
   shiftFrom(SWMARK, -105.6, 0);
   // Горы и шахта на северо-западе (14.11.2026): скалы со снежными шапками, вход в шахту, рельсы, вагонетка, кристаллы
+  const MNMARK = { col: col.length, rpg: RPGW.children.length, obs: RPG_OBS.length, stone: stone.length };
   { const MX = -46.2, MZ = -46.2, rr = (k => () => (k = (k * 16807) % 2147483647) / 2147483647)(5521);
     C3(new THREE.CylinderGeometry(18.5, 18.5, 0.05, 48).translate(MX, 0.026, MZ), 0x9C9488);
     for (let k = 0; k < 16; k++) { const t = k / 16 * 6.28 + rr() * 0.2, d = 17.6 + rr() * 1.2; C3(new THREE.CylinderGeometry(1.5 + rr() * 1.4, 1.5 + rr() * 1.4, 0.05, 10).translate(MX + Math.cos(t) * d, 0.025, MZ + Math.sin(t) * d), 0x9C9488); }
@@ -1082,6 +1083,7 @@ const RPG_OBS = [];   // препятствия второго мира для �
     for (let k = 0; k < 14; k++) { const t = rr() * 6.28, d = 6 + rr() * 11, x = MX + Math.cos(t) * d, z = MZ + Math.sin(t) * d; if (Math.hypot(x + 52, z + 50) < 5) continue; const r = 0.4 + rr() * 0.6; C3(new THREE.DodecahedronGeometry(r, 0).translate(x, r * 0.6, z), [0x8C857B, 0x7A7470, 0x9C948A][k % 3]); if (r > 0.7) RPG_OBS.push({ x, z, c: r, r }); }
     C3(new THREE.CylinderGeometry(0.08, 0.1, 2.3, 6).translate(-33.5, 1.15, -35), 0x4A3420); C3(new THREE.BoxGeometry(1.5, 0.5, 0.12).rotateY(0.785).translate(-33.5, 2.0, -35), 0x6A4C30); C3(new THREE.BoxGeometry(1.2, 0.3, 0.13).rotateY(0.785).translate(-33.45, 2.0, -34.95), 0xE8DCC8);
     RPG_OBS.push({ x: -33.5, z: -35, c: 0.2, r: 0.2 }); }
+  shiftFrom(MNMARK, -92.4, -92.4); // 14.11.2026: горы с троллями — втрое дальше от замка
   // Новогодний праздник: ёлка на площади у ворот (видна с 1 декабря по 14 января или по #zima)
   { const NY = (() => { const d = new Date(Date.now() + 4 * 36e5), m = d.getUTCMonth(); return m === 11 || (m === 0 && d.getUTCDate() <= 14) || /zima/.test(location.hash); })();
     const ny = new THREE.Group(); ny.visible = NY; RPGW.add(ny); window.NYG = ny; const TX = -6.6, TZ = 13.6, lights = [];
@@ -1187,7 +1189,8 @@ const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
   canvas.addEventListener('wheel', e => { e.preventDefault(); fly = null; if (PLAY.on && FPV.on) return; dist = THREE.MathUtils.clamp(dist * Math.exp(e.deltaY * 0.0012), PLAY.on ? 4 : DMIN, PLAY.on ? 40 : DMAX); }, { passive: false });
 }
 const LIM = Math.sqrt(Math.max(plots[Math.min(plots.length - 1, freeStart + FREE + 400)].x ** 2, 900)) + 60;
-function clampTarget() { const L = PLAY.on ? LIM + 32 : LIM; target.x = THREE.MathUtils.clamp(target.x, -L, L); target.z = THREE.MathUtils.clamp(target.z, -L, L); } // в «Мире героев» можно дойти до лесной опушки
+const RLIM = Math.max(LIM + 30, 215); // граница «Мира героев»: дальние болото, лагерь Ордена и горы должны быть доступны
+function clampTarget() { const L = PLAY.on ? RLIM + 2 : LIM; target.x = THREE.MathUtils.clamp(target.x, -L, L); target.z = THREE.MathUtils.clamp(target.z, -L, L); } // в «Мире героев» можно дойти до лесной опушки
 
 // ================= выбор дома =================
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -1389,7 +1392,7 @@ function snapshotHouse(nick) {
 window.K = { residents, byNick, roleFor: nick => byNick.get(nick)?.role || (KINGS.has(nick) ? ROLES.find(r => r.id === 'korol') : roleFor(nick)), chronicle: CHRON, ROLES, TIERS, crest, toast, isKingNick: n => KINGS.has(n), setLevels, setRoles, setRole: (n, id) => setRoles({ ...ROLEMAP, [n]: id }), setDecor, decorAdd: (n, id) => { DECOR_MAP = { ...DECOR_MAP, [n]: [...new Set([...(DECOR_MAP[n] || []), id])] }; layoutDecor(); }, setProjects, openHowto: openModal, normalize, validNick, fmt, plural,
   select: nick => { const p = byNick.get(nick); if (p) select(p); return !!p; }, demo: DEMO, flyTo, spots: SPOTS, house: nick => houseInfo[byNick.get(nick)?.i],
   dayOf, levelOf: nick => LEVELS[nick] || 0, snapshot: nick => snapshotHouse(nick), passport: nick => { const p = byNick.get(nick); if (p && p.status !== 'ruins') openPassport(window.K, p); } };
-window.W = { HQ, THREE, scene, camera, renderer, canvas, toon, outline, mesh, grad, TICKS, PLAY, plots, residents, houseInfo, TREES, SPOTS, PLOT, PITCH, ROAD, SIZE, LIM, riverZ, rng, hash, ROLES, TIERS, crest, toast, select, $,
+window.W = { HQ, THREE, scene, camera, renderer, canvas, toon, outline, mesh, grad, TICKS, PLAY, plots, residents, houseInfo, TREES, SPOTS, PLOT, PITCH, ROAD, SIZE, LIM, RLIM, riverZ, rng, hash, ROLES, TIERS, crest, toast, select, $,
   setWorld, RPG_OBS, RPGW, BRIDGES, FPV, get target() { return target; }, get yaw() { return yaw; }, set yaw(v) { yaw = v; }, get dist() { return dist; }, set dist(v) { dist = v; }, get pitch() { return pitch; }, set pitch(v) { pitch = v; },
   stopFly: () => { fly = null; }, redraw: () => { dirty = true; }, demo: DEMO };
 import('./rpg.js').then(m => m.init(window.W, window.K)).catch(e => console.warn('rpg', e));
