@@ -18,7 +18,7 @@ function camp() {
   const g = new THREE.Group(); g.position.set(CAMP.x, 0, CAMP.z); W.scene.add(g);
   const ground = new THREE.Mesh(new THREE.CircleGeometry(CAMP.r + 1, 40), W.toon(0x5B4A3A)); ground.rotation.x = -Math.PI / 2; ground.position.y = 0.035; ground.receiveShadow = true; g.add(ground);
   // частокол с воротами на юге и севере
-  for (let a = 0; a < Math.PI * 2; a += 0.09) { const gate = Math.abs(Math.sin(a)) > 0.985; if (gate) continue;
+  for (let a = 0; a < Math.PI * 2; a += 0.09) { const gate = Math.abs(Math.cos(a)) > 0.975; if (gate) continue; // 14.11.2026: проходы действительно на юге (к замку) и на севере
     const x = Math.sin(a) * CAMP.r, z = Math.cos(a) * CAMP.r, h = 1.5 + ((a * 37) % 0.4);
     W.mesh(g, new THREE.CylinderGeometry(0.16, 0.18, h, 6), 0x3A2A1E, { pos: [x, h / 2, z], ol: 1.5 }); W.mesh(g, new THREE.ConeGeometry(0.16, 0.3, 6), 0x3A2A1E, { pos: [x, h + 0.15, z], ol: 1 });
     R.addObs({ x: CAMP.x + x, z: CAMP.z + z, c: 0.3, r: 0.3 }); }
