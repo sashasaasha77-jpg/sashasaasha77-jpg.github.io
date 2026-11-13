@@ -180,6 +180,7 @@ body.touring .top, body.touring #card { display: none; }
 #bMusic.off { opacity: .6; filter: grayscale(1); }
 #bEco { position: fixed; left: 10px; top: calc(46% + 56px); z-index: 40; width: 46px; height: 46px; border-radius: 50%; border: 3px solid #1A1410; background: #F5EBDC; font-size: 20px; line-height: 1; box-shadow: 3px 3px 0 #1A1410; cursor: pointer; padding: 0; }
 #bEco.on { background: #8DD06B; }
+body:has(#sheet.show) #bMusic, body:has(#sheet.show) #bEco { display: none; }
 #bHero { background: linear-gradient(160deg, #F7D154 0%, #E8B931 45%, #E0791F 100%); color: #1A1410; border-color: #1A1410; animation: heroGlow 2.2s ease-in-out infinite; } /* «Мир героев» — главная кнопка, яркая */
 #bHero svg * { stroke: #1A1410 !important; }
 @keyframes heroGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(247,209,84,.0), 4px 4px 0 var(--ink); } 50% { box-shadow: 0 0 18px 4px rgba(247,209,84,.75), 4px 4px 0 var(--ink); } }
@@ -821,7 +822,7 @@ const freeStart = residents.length;
   for (const t of [T1, T2, B]) { t.m.userData.keep = true; if (t.o) t.o.userData.keep = true; }
   const r = rng(77); let n1 = 0, n2 = 0, nb = 0;
   const thin = rng(777); // деревьев на 70 % меньше: остаётся каждое ~третье (отдельный генератор, чтобы остальное не сдвинулось)
-  const putT = (x, z, s) => { if (thin() > 0.3 || Math.hypot(x - 3.3, z + 49.5) < 14 || Math.max(Math.abs(x), Math.abs(z)) < 22.5 || Math.hypot(x - 42.9, z - 3.3) < 11.5) return; /* лагерь и крепость «Мира героев» */ tmp.position.set(x, 0, z); tmp.rotation.set(0, r() * 6.28, 0); tmp.scale.setScalar(s); tmp.updateMatrix(); if (r() < 0.55) { if (n1 < NT) { TREES.push([x, z, s, T1.m, n1]); T1.m.setMatrixAt(n1++, tmp.matrix); } } else if (n2 < NT) { TREES.push([x, z, s, T2.m, n2]); T2.m.setMatrixAt(n2++, tmp.matrix); } }; // препятствие — только видимое дерево
+  const putT = (x, z, s) => { if (thin() > 0.3 || Math.hypot(x - 3.3, z + 49.5) < 14 || Math.max(Math.abs(x), Math.abs(z)) < 22.5 || Math.hypot(x - 42.9, z - 3.3) < 11.5 || Math.hypot(x + 52.8, z - 3.3) < 19) return; /* лагерь и крепость «Мира героев» */ tmp.position.set(x, 0, z); tmp.rotation.set(0, r() * 6.28, 0); tmp.scale.setScalar(s); tmp.updateMatrix(); if (r() < 0.55) { if (n1 < NT) { TREES.push([x, z, s, T1.m, n1]); T1.m.setMatrixAt(n1++, tmp.matrix); } } else if (n2 < NT) { TREES.push([x, z, s, T2.m, n2]); T2.m.setMatrixAt(n2++, tmp.matrix); } }; // препятствие — только видимое дерево
   for (let k = freeStart + FREE + 40; k < plots.length; k++) { if (r() < 0.5) continue; const pl = plots[k]; for (let j = 0; j < 2; j++) putT(pl.x + (r() - 0.5) * 1.8, pl.z + (r() - 0.5) * 1.8, 0.8 + r() * 0.6); }
   for (let x = -SIZE / 2 + 10; x < SIZE / 2 - 10; x += 4.5) { if (r() < 0.35) continue; const side = r() < 0.5 ? -1 : 1, z = riverZ(x) + side * (5 + r() * 1.5); if (Math.abs(((x / PITCH) % 1 + 1) % 1 - 0) < 0.15) continue; putT(x, z, 0.8 + r() * 0.5); }
   // кусты вдоль площади
@@ -892,7 +893,7 @@ const RPG_OBS = [];   // препятствия второго мира для �
   // поля за стенами
   const r = rng(404);
   for (let bx = -5; bx <= 5; bx++) for (let bz = -5; bz <= 5; bz++) { const ring = Math.max(Math.abs(bx), Math.abs(bz)); if (ring < 4 || r() < 0.45) continue;
-    const x = bx * PITCH, z = bz * PITCH; if (Math.abs(z - riverZ(x)) < 6 || Math.hypot(x - 3.3, z + 52.8) < 15 || Math.hypot(x - 42.9, z - 3.3) < 14.5 || TREES.some(([tx, tz]) => Math.abs(tx - x) < 3 && Math.abs(tz - z) < 3)) continue;
+    const x = bx * PITCH, z = bz * PITCH; if (Math.abs(z - riverZ(x)) < 6 || Math.hypot(x - 3.3, z + 52.8) < 15 || Math.hypot(x - 42.9, z - 3.3) < 14.5 || Math.hypot(x + 52.8, z - 3.3) < 18.5 || TREES.some(([tx, tz]) => Math.abs(tx - x) < 3 && Math.abs(tz - z) < 3)) continue;
     const c = [0xD9B84A, 0x8DB04A, 0xC98A3A][r() * 3 | 0]; C3(new THREE.BoxGeometry(4.8, 0.08, 4.8).translate(x, 0.04, z), 0x7A5A32);
     for (let k = 0; k < 6; k++) C3(new THREE.BoxGeometry(4.5, 0.26, 0.42).translate(x, 0.15, z - 2.0 + k * 0.8), c); }
   // арена за рекой (голосование подданных): песок, стена с трибунами, ворота с башнями на юг и север, флаги и факелы
@@ -963,6 +964,43 @@ const RPG_OBS = [];   // препятствия второго мира для �
       for (let k = 0; k < 3; k++) C3(at(new THREE.SphereGeometry(0.28, 8, 6), -0.25 + k * 0.25, 0.98, -0.3 + k * 0.25, a, x, z), [0xD9C79E, 0xC9B07A, 0x8DB04A][k]); RPG_OBS.push({ x, z, c: 0.95, r: 0.95 }); }
     for (let k = 0; k < 8; k++) { const a = (k + 0.5) / 8 * Math.PI * 2; if (Math.abs(Math.sin(a)) > 0.92 && Math.sin(a) < 0) continue; const x = MX + Math.sin(a) * 9.1, z = MZ + Math.cos(a) * 9.1; // флаги по краю
       C3(new THREE.CylinderGeometry(0.05, 0.05, 3.2, 6).translate(x, 1.6, z), 0x4E3020); C3(new THREE.BoxGeometry(0.06, 0.7, 0.9).translate(x, 2.8, z + 0.45), [0xE8B931, 0xA4161A, 0x4E8A34][k % 3]); RPG_OBS.push({ x, z, c: 0.15, r: 0.15 }); } }
+  // Болото к западу от замка (13.11.2026): топь, тина, камыш, мёртвые деревья, мостки и хижина Болотной ведьмы на сваях
+  { const SX = -52.8, SZ = 3.3, rr = (k => () => (k = (k * 16807) % 2147483647) / 2147483647)(9137);
+    C3(new THREE.CylinderGeometry(17.6, 17.6, 0.05, 48).translate(SX, 0.026, SZ), 0x56603A);
+    for (let k = 0; k < 18; k++) { const t = k / 18 * 6.28 + rr() * 0.2, d = 16.6 + rr() * 1.2; C3(new THREE.CylinderGeometry(1.6 + rr() * 1.4, 1.6 + rr() * 1.4, 0.05, 12).translate(SX + Math.cos(t) * d, 0.024, SZ + Math.sin(t) * d), 0x56603A); } // неровный край топи
+    for (const [x, z, r] of [[-44, -8, 5], [-62, 12, 6], [-48, 13, 4.5], [-63, -2, 5.5]]) C3(new THREE.CylinderGeometry(r, r, 0.05, 20).translate(x, 0.03, z), 0x4A5232); // тёмная грязь
+    const POOLS = [[-50.5, 5.5, 3.2, 2.2], [-57.5, -1.5, 3.6, 2.6], [-65.5, 9.5, 3, 2.4], [-54, 10, 2.2, 1.6], [-47, -3, 2, 1.4], [-60, 4.5, 1.8, 1.3], [-55.5, -9, 2.4, 1.6]];
+    for (const [x, z, a, c] of POOLS) { C3(new THREE.CylinderGeometry(1, 1, 0.06, 22).scale(a, 1, c).translate(x, 0.05, z), 0x35503A); C3(new THREE.CylinderGeometry(0.8, 0.8, 0.02, 20).scale(a, 1, c).translate(x, 0.09, z), 0x426A48);
+      for (let k = 0; k < 4; k++) { const t = rr() * 6.28, d = 0.4 + rr() * 0.4; C3(new THREE.CylinderGeometry(0.28, 0.28, 0.02, 9).translate(x + Math.cos(t) * a * d, 0.11, z + Math.sin(t) * c * d), 0x5E9A3A);
+        if (k === 0) C3(new THREE.SphereGeometry(0.09, 6, 4).translate(x + Math.cos(t) * a * d, 0.16, z + Math.sin(t) * c * d), 0xF5EBDC); } }
+    for (let k = 0; k < 26; k++) { const t = rr() * 6.28, d = 4 + rr() * 12.5, x = SX + Math.cos(t) * d, z = SZ + Math.sin(t) * d; if (Math.abs(z - SZ) < 1.4 && x > SX - 2) continue; // камыш
+      for (let q = 0; q < 5; q++) { const h = 0.9 + rr() * 0.7, ox = (rr() - 0.5) * 0.6, oz = (rr() - 0.5) * 0.6; C3(new THREE.CylinderGeometry(0.025, 0.035, h, 4).translate(x + ox, h / 2, z + oz), 0x7A8A3A); if (q < 3) C3(new THREE.CylinderGeometry(0.06, 0.06, 0.24, 6).translate(x + ox, h - 0.05, z + oz), 0x6B4A2A); } }
+    const deadTree = (x, z, s) => { const lean = (rr() - 0.5) * 0.3; C3(new THREE.CylinderGeometry(0.12 * s, 0.32 * s, 3.4 * s, 7).rotateZ(lean).translate(x, 1.7 * s, z), 0x4A3A2A);
+      for (let b = 0; b < 3; b++) { const a = rr() * 6.28, y = (1.6 + b * 0.6) * s; C3(new THREE.CylinderGeometry(0.04 * s, 0.09 * s, 1.3 * s, 5).rotateZ(0.9).rotateY(a).translate(x + Math.cos(a) * 0.45 * s, y, z - Math.sin(a) * 0.45 * s), 0x4A3A2A); }
+      C3(new THREE.ConeGeometry(0.4 * s, 0.9 * s, 5).rotateX(Math.PI).translate(x + 0.3, 2.3 * s, z + 0.2), 0x5E7A34); RPG_OBS.push({ x, z, c: 0.45 * s, r: 0.45 * s }); }
+    for (const [x, z, sc] of [[-46, 9, 1], [-49, -11, 1.2], [-58, 14, 1.1], [-61, -9.5, 0.9], [-67.5, 4, 1.3], [-53.5, -4.5, 0.8], [-44, -6.5, 0.9], [-62.5, 8, 0.9]]) deadTree(x, z, sc);
+    // мостки от дороги вглубь болота
+    for (let x = -35.6; x > -50; x -= 0.62) { C3(new THREE.BoxGeometry(0.5, 0.08, 2.0).rotateY((rr() - 0.5) * 0.12).translate(x, 0.2, SZ + (rr() - 0.5) * 0.12), rr() < 0.5 ? 0x7A5A3A : 0x6A4C30);
+      if (Math.round(x * 10) % 31 === 0) for (const sz of [-1, 1]) C3(new THREE.CylinderGeometry(0.07, 0.07, 0.5, 6).translate(x, 0.14, SZ + sz * 0.95), 0x4A3420); }
+    // вход: кривой указатель с черепом
+    C3(new THREE.CylinderGeometry(0.08, 0.1, 2.4, 6).rotateZ(0.12).translate(-35.8, 1.2, SZ - 1.8), 0x4A3420); C3(new THREE.BoxGeometry(0.12, 0.55, 1.5).rotateX(0.1).translate(-35.6, 2.0, SZ - 1.8), 0x6A4C30);
+    C3(new THREE.SphereGeometry(0.2, 8, 6).translate(-35.6, 2.55, SZ - 1.8), 0xEDE6D3); for (const dz of [-0.07, 0.07]) C3(new THREE.BoxGeometry(0.05, 0.06, 0.05).translate(-35.42, 2.57, SZ - 1.8 + dz), 0x1A1410);
+    RPG_OBS.push({ x: -35.8, z: SZ - 1.8, c: 0.25, r: 0.25 });
+    // хижина Болотной ведьмы на сваях
+    { const hx = -64.5, hz = -10.5; for (const [dx, dz] of [[-1.4, -1.1], [1.4, -1.1], [-1.4, 1.1], [1.4, 1.1]]) C3(new THREE.CylinderGeometry(0.12, 0.14, 1.4, 6).translate(hx + dx, 0.7, hz + dz), 0x4A3420);
+      C3(new THREE.BoxGeometry(3.4, 0.16, 2.8).translate(hx, 1.45, hz), 0x5A4630); C3(new THREE.BoxGeometry(3.0, 2.0, 2.4).rotateY(0.05).translate(hx, 2.5, hz), 0x5A4630);
+      C3(new THREE.ConeGeometry(2.6, 1.8, 4).rotateY(Math.PI / 4 + 0.05).rotateZ(0.08).translate(hx, 4.3, hz), 0x6A6A3A); C3(new THREE.BoxGeometry(0.5, 1.4, 0.5).translate(hx + 0.8, 4.8, hz - 0.3), 0x4A3A2A);
+      C3(new THREE.BoxGeometry(0.9, 1.4, 0.08).translate(hx + 0.5, 2.25, hz + 1.24), 0x3A2A1C); for (let i = 0; i < 4; i++) C3(new THREE.BoxGeometry(0.9, 0.1, 0.4).translate(hx + 0.5, 0.25 + i * 0.32, hz + 1.6 + (3 - i) * 0.3), 0x6A4C30);
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.5), new THREE.MeshBasicMaterial({ color: 0xB6FF5A })); win.position.set(hx - 0.8, 2.6, hz + 1.22); RPGW.add(win);
+      const cauld = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 8, 0, Math.PI * 2, Math.PI / 2.6, Math.PI), new THREE.MeshToonMaterial({ color: 0x2A2A30, gradientMap: grad })); cauld.position.set(hx + 2.6, 0.45, hz + 2.4); RPGW.add(cauld);
+      const brew = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.04, 14), new THREE.MeshBasicMaterial({ color: 0x8DFF5A })); brew.position.set(hx + 2.6, 0.62, hz + 2.4); RPGW.add(brew);
+      RPG_OBS.push({ x: hx, z: hz, c: 1.9, r: 1.9 }, { x: hx + 2.6, z: hz + 2.4, c: 0.5, r: 0.5 }); }
+    // светящиеся грибы и туман над топью
+    for (let k = 0; k < 14; k++) { const t = rr() * 6.28, d = 3 + rr() * 13, x = SX + Math.cos(t) * d, z = SZ + Math.sin(t) * d, g = new THREE.Mesh(new THREE.SphereGeometry(0.12 + rr() * 0.08, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshBasicMaterial({ color: k % 2 ? 0xB98CFF : 0x8DFF9A })); g.position.set(x, 0.18, z); RPGW.add(g); }
+    const fc = document.createElement('canvas'); fc.width = fc.height = 128; { const x = fc.getContext('2d'), gr = x.createRadialGradient(64, 64, 4, 64, 64, 64); gr.addColorStop(0, 'rgba(225,238,215,0.55)'); gr.addColorStop(1, 'rgba(225,238,215,0)'); x.fillStyle = gr; x.fillRect(0, 0, 128, 128); }
+    const fogM = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(fc), transparent: true, depthWrite: false });
+    for (const [x, z, w, d, y] of [[-50, 4, 12, 7, 0.5], [-60, -3, 10, 8, 0.7], [-58, 11, 11, 6, 0.45], [-47, -6, 8, 6, 0.6], [-64, 6, 7, 9, 0.9]]) { const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), fogM); f.rotation.x = -Math.PI / 2; f.position.set(x, y, z); f.renderOrder = 2; RPGW.add(f); }
+  }
   const stoneMat = stoneM(1, 1);
   const wall = new THREE.Mesh(mergeGeos([...stone, ...top]), stoneMat); wall.castShadow = wall.receiveShadow = true; wall.add(new THREE.Mesh(wall.geometry, outline(2))); RPGW.add(wall);
   const deco = new THREE.Mesh(mergeGeos(col), new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: grad })); deco.castShadow = deco.receiveShadow = true; deco.add(new THREE.Mesh(deco.geometry, outline(1.5))); RPGW.add(deco);
@@ -981,9 +1019,12 @@ function setWorld(mode) {
 const target = new THREE.Vector3(0, 0, 4); let dist = 70, yaw = -0.6, pitch = 0.92;
 const DMIN = 9, DMAX = 260;
 const TICKS = [], PLAY = { on: false }; // игровой режим (rpg.js)
+const FPV = { on: false, h: 1.55, p: 0 }; // вид от первого лица (rpg.js включает, камера смотрит из глаз героя)
 // камера не заходит в стены: в «Мире героев» луч от героя к камере, при попадании в стену/башню камера подъезжает ближе
 const camRay = new THREE.Raycaster(), camFrom = new THREE.Vector3(), camDir = new THREE.Vector3(); var CAMCOL = null;
-function applyCam() { const r = dist; camera.position.set(target.x + r * Math.cos(pitch) * Math.sin(yaw), r * Math.sin(pitch), target.z + r * Math.cos(pitch) * Math.cos(yaw));
+function applyCam() {
+  if (PLAY.on && FPV.on) { const c = Math.cos(FPV.p); camera.position.set(target.x - Math.sin(yaw) * 0.12, FPV.h, target.z - Math.cos(yaw) * 0.12); camera.lookAt(target.x - Math.sin(yaw) * c * 10, FPV.h + Math.sin(FPV.p) * 10, target.z - Math.cos(yaw) * c * 10); return; }
+  const r = dist; camera.position.set(target.x + r * Math.cos(pitch) * Math.sin(yaw), r * Math.sin(pitch), target.z + r * Math.cos(pitch) * Math.cos(yaw));
   if (PLAY.on && RPGW.visible) {
     if (!CAMCOL) { CAMCOL = []; for (const g of [RPGW, C]) if (g.visible) g.traverseVisible(o => { if (o.isMesh && !o.isInstancedMesh && !o.material.isShaderMaterial) CAMCOL.push(o); }); }
     camFrom.set(target.x, target.y + 1.3, target.z); camDir.subVectors(camera.position, camFrom); const L = camDir.length(); camDir.divideScalar(L); camRay.set(camFrom, camDir); camRay.far = L;
@@ -997,7 +1038,8 @@ const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
   const pts = new Map(); let last = null, pinch = null, moved = 0;
   canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY, rot: e.pointerType === 'mouse' && (e.button === 2 || e.button === 1 || e.ctrlKey || e.altKey) }); moved = 0; fly = null; stopTour(); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), dist, ang: Math.atan2(b.y - a.y, b.x - a.x), yaw }; } canvas.classList.add('drag'); });
   canvas.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; const p = pts.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
-    if (pts.size === 1 && PLAY.on) { yaw -= dx * 0.008; pitch = THREE.MathUtils.clamp(pitch + dy * 0.004, 0.3, 1.25); }
+    if (pts.size === 1 && PLAY.on && FPV.on) { yaw -= dx * 0.006; FPV.p = THREE.MathUtils.clamp(FPV.p + dy * 0.004, -0.9, 0.75); dirty = true; }
+    else if (pts.size === 1 && PLAY.on) { yaw -= dx * 0.008; pitch = THREE.MathUtils.clamp(pitch + dy * 0.004, 0.3, 1.25); }
     else if (pts.size === 1 && p.rot) { yaw -= dx * 0.007; pitch = THREE.MathUtils.clamp(pitch + dy * 0.003, 0.35, 1.4); } // ПК: правая кнопка / колесо / Ctrl + мышь — вращать карту
     else if (pts.size === 1) { const k = dist / innerHeight * 1.25; const fx = Math.cos(yaw), fz = -Math.sin(yaw); target.x -= (dx * fx + dy * Math.sin(yaw) / Math.sin(pitch)) * k; target.z -= (dx * fz + dy * Math.cos(yaw) / Math.sin(pitch)) * k; clampTarget(); }
     else if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); dist = THREE.MathUtils.clamp(pinch.dist * pinch.d / Math.max(d, 1), DMIN, DMAX); yaw = pinch.yaw - (Math.atan2(b.y - a.y, b.x - a.x) - pinch.ang); } });
@@ -1005,7 +1047,7 @@ const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   canvas.addEventListener('contextmenu', e => e.preventDefault());
   canvas.addEventListener('auxclick', e => e.preventDefault()); canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
-  canvas.addEventListener('wheel', e => { e.preventDefault(); fly = null; dist = THREE.MathUtils.clamp(dist * Math.exp(e.deltaY * 0.0012), PLAY.on ? 4 : DMIN, PLAY.on ? 40 : DMAX); }, { passive: false });
+  canvas.addEventListener('wheel', e => { e.preventDefault(); fly = null; if (PLAY.on && FPV.on) return; dist = THREE.MathUtils.clamp(dist * Math.exp(e.deltaY * 0.0012), PLAY.on ? 4 : DMIN, PLAY.on ? 40 : DMAX); }, { passive: false });
 }
 const LIM = Math.sqrt(Math.max(plots[Math.min(plots.length - 1, freeStart + FREE + 400)].x ** 2, 900)) + 60;
 function clampTarget() { const L = PLAY.on ? LIM + 32 : LIM; target.x = THREE.MathUtils.clamp(target.x, -L, L); target.z = THREE.MathUtils.clamp(target.z, -L, L); } // в «Мире героев» можно дойти до лесной опушки
@@ -1211,7 +1253,7 @@ window.K = { residents, byNick, roleFor: nick => byNick.get(nick)?.role || (KING
   select: nick => { const p = byNick.get(nick); if (p) select(p); return !!p; }, demo: DEMO, flyTo, spots: SPOTS, house: nick => houseInfo[byNick.get(nick)?.i],
   dayOf, levelOf: nick => LEVELS[nick] || 0, snapshot: nick => snapshotHouse(nick), passport: nick => { const p = byNick.get(nick); if (p && p.status !== 'ruins') openPassport(window.K, p); } };
 window.W = { THREE, scene, camera, renderer, canvas, toon, outline, mesh, grad, TICKS, PLAY, plots, residents, houseInfo, TREES, SPOTS, PLOT, PITCH, ROAD, SIZE, LIM, riverZ, rng, hash, ROLES, TIERS, crest, toast, select, $,
-  setWorld, RPG_OBS, RPGW, BRIDGES, get target() { return target; }, get yaw() { return yaw; }, set yaw(v) { yaw = v; }, get dist() { return dist; }, set dist(v) { dist = v; }, get pitch() { return pitch; }, set pitch(v) { pitch = v; },
+  setWorld, RPG_OBS, RPGW, BRIDGES, FPV, get target() { return target; }, get yaw() { return yaw; }, set yaw(v) { yaw = v; }, get dist() { return dist; }, set dist(v) { dist = v; }, get pitch() { return pitch; }, set pitch(v) { pitch = v; },
   stopFly: () => { fly = null; }, redraw: () => { dirty = true; }, demo: DEMO };
 import('./rpg.js').then(m => m.init(window.W, window.K)).catch(e => console.warn('rpg', e));
 dispatchEvent(new Event('k-ready'));

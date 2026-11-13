@@ -3,6 +3,8 @@
 import { createClient } from './sb.js';
 import { localCall } from './rpg-local.mjs';
 import { buildHorse, rideHorse, horseVariant } from './monsters.js';
+import { activeGear, gearSlot } from './combat.mjs';
+const wpOf = g => activeGear((g?.inventory || []).filter(i => i.equipped).map(i => i.item)).find(i => gearSlot(i) === 'weapon') || '';
 const SB_URL = 'https://otgwiroxifqtktbipbsu.supabase.co', SB_KEY = 'sb_publishable_YM1peVWMHKlyAy1kCx0D2w_SjoGpgEt';
 let W, K, THREE, R, client = null, ch = null, me = null, onRefresh = () => { };
 export const NET = { others: new Map(), online: new Map(), chat: { world: [], squad: [] }, tab: 'world', open: false, ready: false };
@@ -53,18 +55,20 @@ export async function connect(info, refresh) {
   }
   ch.subscribe(async status => {
     if (status !== 'SUBSCRIBED') return; NET.ready = true;
-    const p = R.state().pos; await ch.track({ nick: me.nick, role: me.role, lvl: me.level, sq: squadId(), x: p ? +p.x.toFixed(1) : 0, z: p ? +p.z.toFixed(1) : 0 });
+    const p = R.state().pos; await ch.track({ nick: me.nick, role: me.role, lvl: me.level, sq: squadId(), wp: wpOf(R.game()), x: p ? +p.x.toFixed(1) : 0, z: p ? +p.z.toFixed(1) : 0 });
     if (!info.demo) loadChat();
   });
 }
 export function disconnect() { if (ch) { try { ch.untrack(); client.removeChannel(ch); } catch { } } ch = null; NET.ready = false; for (const n of [...NET.others.keys()]) removeOther(n); NET.online.clear(); }
-export function retrack() { if (!ch || !NET.ready || !me) return; const p = R.state().pos, g = R.game(); ch.track({ nick: me.nick, role: g?.hero.role || me.role, lvl: g?.hero.level || me.level, sq: squadId(), x: p ? +p.x.toFixed(1) : 0, z: p ? +p.z.toFixed(1) : 0 }); }
+export function retrack() { if (!ch || !NET.ready || !me) return; const p = R.state().pos, g = R.game(); ch.track({ nick: me.nick, role: g?.hero.role || me.role, lvl: g?.hero.level || me.level, sq: squadId(), wp: wpOf(g), x: p ? +p.x.toFixed(1) : 0, z: p ? +p.z.toFixed(1) : 0 }); }
 
 // ---------------- другие герои ----------------
 function upsert(nick, m, fromPresence) {
   let o = NET.others.get(nick);
   const role = W.ROLES.find(r => r.id === m.role) || W.ROLES[0];
-  if (!o) { o = { nick, role: role.id, g: R.buildHero(role, nick), lab: document.createElement('div'), x: m.x || 0, z: m.z || 0, tx: m.x || 0, tz: m.z || 0, f: 0, tf: 0, t: Math.random() * 9, last: performance.now() };
+  if (o && fromPresence && (o.role !== role.id || (o.wp || '') !== (m.wp || ''))) { // сменил роль или оружие — пересобираем фигуру
+    const ng = R.buildHero(role, nick, m.wp || ''); ng.position.copy(o.g.position); ng.rotation.copy(o.g.rotation); W.scene.remove(o.g); W.scene.add(ng); o.g = ng; o.role = role.id; o.wp = m.wp || ''; }
+  if (!o) { o = { nick, role: role.id, wp: m.wp || '', g: R.buildHero(role, nick, m.wp || ''), lab: document.createElement('div'), x: m.x || 0, z: m.z || 0, tx: m.x || 0, tz: m.z || 0, f: 0, tf: 0, t: Math.random() * 9, last: performance.now() };
     o.g.position.set(o.x, 0, o.z); W.scene.add(o.g); o.lab.className = 'lbl rp'; W.$('labels').appendChild(o.lab); NET.others.set(nick, o); }
   else if (fromPresence && !o.moving && Number.isFinite(m.x)) { o.tx = m.x; o.tz = m.z; }
   o.lvl = m.lvl; o.sq = m.sq;

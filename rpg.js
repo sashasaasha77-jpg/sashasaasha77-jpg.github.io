@@ -7,6 +7,7 @@ import { initEnemies, tick as enemyTick, startFight, buildKnight } from './enemi
 import { initWorld, tick as worldTick, render as worldRender, warAction, doWar, blockedExtra } from './world-ui.js';
 import { roleIdFor } from './roles.mjs';
 import { buildHero } from './figure.js';
+import { activeGear, gearSlot } from './combat.mjs';
 import { buildHorse, rideHorse, horseVariant } from './monsters.js';
 import { initNet, connect, disconnect, tick as netTick, NET, retrack, reloadSquadChat } from './net.js';
 let W, K, THREE;
@@ -99,6 +100,7 @@ function ui() {
   .pose { position: fixed; z-index: 3; bottom: calc(max(18px, env(safe-area-inset-bottom)) + 52px); width: 54px; height: 54px; border-radius: 50%; display: none; place-items: center; font-size: 24px; line-height: 1; padding: 0; cursor: pointer; background: var(--night); border: 3px solid var(--gold); color: #F5EBDC; box-shadow: 2px 2px 0 var(--ink); touch-action: manipulation; }
   .pose:active, .pose[aria-pressed="true"] { background: var(--gold); }
   #bJump { left: calc(max(18px, env(safe-area-inset-left)) + 136px); } #bSit { left: calc(max(18px, env(safe-area-inset-left)) + 198px); } #bHorse { left: calc(max(18px, env(safe-area-inset-left)) + 167px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 116px); }
+  #bEye { left: calc(max(18px, env(safe-area-inset-left)) + 229px); bottom: calc(max(18px, env(safe-area-inset-bottom)) + 116px); font-size: 22px; } @media (pointer: fine) { body.playing #bEye { display: grid; left: auto; right: 18px; bottom: 150px; } }
   body:not(.hashorse) #bHorse { display: none !important; } @media (pointer: fine) { body.playing.hashorse #bHorse { display: grid; left: auto; right: 18px; bottom: 90px; } }
   @media (pointer: coarse) { body.playing .pose { display: grid; } } body.playing.carded .pose, body.chatting .pose { display: none !important; }
   .lbl.hero { background: var(--gold); color: var(--ink); font-size: 13px; padding: 4px 9px; z-index: 3; }
@@ -132,8 +134,8 @@ function ui() {
   addEventListener('keyup', e => S.keys.delete(e.code)); addEventListener('blur', () => S.keys.clear());
   // прыжок и «сесть»: Пробел / C на компьютере, круглые кнопки у джойстика на телефоне
   const pb = (id, ic, label, fn) => { const b = document.createElement('button'); b.id = id; b.type = 'button'; b.className = 'pose'; b.textContent = ic; b.setAttribute('aria-label', label); b.addEventListener('click', e => { e.preventDefault(); fn(); }); document.body.appendChild(b); return b; };
-  pb('bJump', '⤒', 'Прыгнуть', jump); S.sitBtn = pb('bSit', '🪑', 'Сесть или встать', toggleSit); S.horseBtn = pb('bHorse', '🐎', 'Сесть на коня или слезть', toggleMount);
-  addEventListener('keydown', e => { if (!S.on || e.repeat || e.target.closest?.('input,textarea,button')) return; if (e.code === 'Space') { jump(); e.preventDefault(); } else if (e.code === 'KeyC') toggleSit(); else if (e.code === 'KeyH') toggleMount(); });
+  S.eyeBtn = pb('bEye', '👁', 'Вид от первого лица', toggleFpv); pb('bJump', '⤒', 'Прыгнуть', jump); S.sitBtn = pb('bSit', '🪑', 'Сесть или встать', toggleSit); S.horseBtn = pb('bHorse', '🐎', 'Сесть на коня или слезть', toggleMount);
+  addEventListener('keydown', e => { if (!S.on || e.repeat || e.target.closest?.('input,textarea,button')) return; if (e.code === 'Space') { jump(); e.preventDefault(); } else if (e.code === 'KeyC') toggleSit(); else if (e.code === 'KeyH') toggleMount(); else if (e.code === 'KeyV') toggleFpv(); });
 }
 
 // ---------------- вход в игру ----------------
@@ -143,10 +145,20 @@ function who() {
   return null;
 }
 // модель героя — по роли с сервера (её можно сменить за монеты), иначе по жеребьёвке ника
+// оружие в руке героя — лучшее надетое в слоте «оружие»
+export function myWeapon() { const eq = (G.state?.inventory || []).filter(i => i.equipped).map(i => i.item); return activeGear(eq).find(i => gearSlot(i) === 'weapon') || ''; }
+// вид от первого лица: кнопка 👁 у джойстика или клавиша V
+function toggleFpv(on) {
+  const F = W.FPV; if (!F || !S.on) return; F.on = typeof on === 'boolean' ? on : !F.on; F.p = 0;
+  W.camera.near = F.on ? 0.08 : 0.5; W.camera.fov = F.on ? 68 : 42; W.camera.updateProjectionMatrix();
+  if (F.on) W.yaw = S.face + Math.PI; else { S.hero.visible = true; if (S.horse) S.horse.visible = S.mount; }
+  S.eyeBtn && S.eyeBtn.setAttribute('aria-pressed', F.on ? 'true' : 'false'); document.body.classList.toggle('fpv', F.on);
+  try { localStorage.setItem('kp-fpv', F.on ? '1' : '0'); } catch { } W.toast && W.toast(F.on ? '👁 Вид от первого лица. Смотри по сторонам, ведя пальцем или мышью по экрану' : 'Обычный вид'); W.redraw();
+}
 function ensureHero(w) {
-  const rid = G.state?.hero?.role, role = (rid && W.ROLES.find(r => r.id === rid)) || w.role, key = w.nick + '|' + role.id;
+  const rid = G.state?.hero?.role, role = (rid && W.ROLES.find(r => r.id === rid)) || w.role, wp = myWeapon(), key = w.nick + '|' + role.id + '|' + wp;
   if (S.hero && S.heroOf === key) return;
-  const old = S.hero; S.hero = buildHero(role, w.nick); S.heroOf = key; S.role = role;
+  const old = S.hero, wpChanged = old && S.wp !== wp; S.hero = buildHero(role, w.nick, wp); S.heroOf = key; S.role = role; S.wp = wp; if (wpChanged && S.on) retrack(); // другие увидят новое оружие
   if (old) { S.hero.position.copy(old.position); S.hero.rotation.copy(old.rotation); S.hero.visible = old.visible; W.scene.remove(old); }
   W.scene.add(S.hero);
 }
@@ -175,7 +187,7 @@ async function start() {
 function saveServer(force) { const auth = K.auth && K.auth(); if (S.demo || !auth || !G.state || !S.pos) return; const k = S.pos.x.toFixed(1) + ',' + S.pos.z.toFixed(1); if (!force && k === S.srvK) return; S.srvK = k; fetch((window.KP_API || '') + '/rpg/pos', { method: 'POST', headers: { 'content-type': 'application/json' }, keepalive: true, body: JSON.stringify({ ...auth, x: S.pos.x, z: S.pos.z, face: S.face }) }).catch(() => { }); }
 function save() { if (S.pos) try { localStorage.setItem('kp-hero-' + S.nick, JSON.stringify({ x: +S.pos.x.toFixed(2), z: +S.pos.z.toFixed(2), f: +S.face.toFixed(2) })); } catch { } }
 function stop() {
-  if (!S.on) return; save(); saveServer(true); disconnect(); document.body.classList.remove('chatting'); S.on = false; W.PLAY.on = false; S.keys.clear(); S.hero.visible = false; S.label.style.display = 'none';
+  if (!S.on) return; if (W.FPV && W.FPV.on) toggleFpv(false); save(); saveServer(true); disconnect(); document.body.classList.remove('chatting'); S.on = false; W.PLAY.on = false; S.keys.clear(); S.hero.visible = false; S.label.style.display = 'none';
   document.body.classList.remove('playing'); W.setWorld('map'); ROOT.visible = false; W.target.y = 0; if (S.prev) { W.pitch = S.prev.pitch; W.dist = Math.max(30, S.prev.dist); } W.redraw();
 }
 
@@ -221,11 +233,16 @@ function tick(now, dt) {
     if (S.mount && !S.horse) { S.horse = buildHorse(horseVariant(S.nick)); W.scene.add(S.horse); } if (S.horse) S.horse.visible = S.mount;
     if (S.mount) { S.horse.position.set(S.pos.x, 0, S.pos.z); S.horse.rotation.y = S.face; S.hero.position.y = rideHorse(S.horse, S.hero, S.t, m > 0.12 ? S.speed : 0); } }
   // камера следует за героем
-  const T = W.target, a = Math.min(1, dt * 6); T.x += (S.pos.x - T.x) * a; T.z += (S.pos.z - T.z) * a; T.y = 0.9;
+  const T = W.target, a = Math.min(1, dt * 6), F = W.FPV;
+  if (F && F.on) { // от первого лица: камера в глазах героя, герой смотрит туда же, куда камера
+    T.x = S.pos.x; T.z = S.pos.z; T.y = 0.9; F.h = 1.52 + S.jy - S.sitK * 0.4 + (S.mount ? 0.65 : 0);
+    if (fighting) W.yaw = S.face + Math.PI; else S.face = W.yaw + Math.PI;
+    S.hero.visible = false; if (S.horse) S.horse.visible = false; }
+  else { T.x += (S.pos.x - T.x) * a; T.z += (S.pos.z - T.z) * a; T.y = 0.9; }
   W.dist = Math.min(40, Math.max(4, W.dist));
   // подпись над героем
   const p = (SV || (SV = new THREE.Vector3())).set(S.pos.x, 1.75 + S.jy - S.sitK * 0.34 + (S.mount ? 0.6 : 0), S.pos.z).project(W.camera);
-  if (p.z < 1) { const tx = (G.state?.world?.king === S.nick ? '👑 ' : '') + '@' + S.nick; if (S.label.textContent !== tx) S.label.textContent = tx; S.label.style.display = 'block'; S.label.style.transform = `translate(${((p.x + 1) / 2 * innerWidth).toFixed(1)}px, ${((1 - p.y) / 2 * innerHeight).toFixed(1)}px) translate(-50%, -100%)`; } else S.label.style.display = 'none';
+  if (p.z < 1 && !(W.FPV && W.FPV.on)) { const tx = (G.state?.world?.king === S.nick ? '👑 ' : '') + '@' + S.nick; if (S.label.textContent !== tx) S.label.textContent = tx; S.label.style.display = 'block'; S.label.style.transform = `translate(${((p.x + 1) / 2 * innerWidth).toFixed(1)}px, ${((1 - p.y) / 2 * innerHeight).toFixed(1)}px) translate(-50%, -100%)`; } else S.label.style.display = 'none';
   if (now - S.saveT > 3000) { S.saveT = now; save(); }
   if (now - (S.srvT || 0) > 30000 && !document.hidden) { S.srvT = now; saveServer(); } // позиция на сервер раз в 30 с и только если герой сдвинулся
   // стоим на месте — перерисовываем реже (на телефоне ~15 кадров/с): меньше нагрев, анимации всё равно плавные

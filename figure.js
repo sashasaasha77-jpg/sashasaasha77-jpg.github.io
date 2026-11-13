@@ -248,19 +248,33 @@ function torso(k, coat, o = {}) {
 }
 
 // ---------------- горожане ----------------
-export function buildHero(role, seed) {
+// оружие в руке: надетое оружие заменяет предмет роли в правой руке (лук — в левой)
+const BOWS = { bow: {}, hunter_bow: { wood: 0x8A5A32 }, elven_bow: { wood: 0xE8E2C8, tip: 0x7FD07F, grip: 0x2E6B3A } };
+const SWD = (o = {}) => k => { k.push([0, 0, 0], [0.5, 0, -0.18]); sword(k, o); k.pop(); };
+const WLOOK = {
+  iron_sword: SWD(), steel_sword: SWD({ blade: 0xF2F4F8, guard: C.STEEL2, len: 0.7 }), black_blade: SWD({ blade: 0x3A3A44, guard: 0x111114, grip: 0xA4161A }),
+  dragon_blade: SWD({ blade: 0xFF8A3A, guard: C.GOLD, grip: 0x5A1020, wide: true, len: 0.78, width: 0.075, fuller: 0xFFD060, runes: true }),
+  hammer: k => { k.push([0, 0, 0], [0.35, 0, -0.15]); hammer(k); k.pop(); }, war_axe: k => spear(k, { axe: true, shaft: C.WOOD2, steel: 0xC9CED6 }),
+  staff: k => staff(k), oak_staff: k => staff(k, 0x8DD06B), frost_staff: k => staff(k, 0xBFEFFF), lich_scythe: k => glaive(k),
+};
+export const WEAPON_LOOKS = new Set([...Object.keys(WLOOK), ...Object.keys(BOWS)]);
+export function buildHero(role, seed, weapon) {
   THREE = window.W.THREE; W = window.W;
   const id = role.id, s = h32(seed ?? role.name ?? id), skin = SKINS[s % SKINS.length], hairC = HAIRS[(s >>> 3) % HAIRS.length], style = (s >>> 7) % 5;
   const coat = role.roof ?? 0xA4161A, tierCape = ['rare', 'epic', 'legendary'].includes(role.tier);
-  const key = [id, coat, role.tier, skin, hairC, style].join('|');
+  const wp = WEAPON_LOOKS.has(weapon) && !(id === 'luchnik' && BOWS[weapon]) ? weapon : '';
+  const key = [id, coat, role.tier, skin, hairC, style, wp].join('|');
   let set = CACHE.get(key);
-  if (!set) { const k = new Kit(); dress(k, id, { coat, skin, hairC, style, tierCape, tier: role.tier }); set = bake(k); CACHE.set(key, set); }
+  if (!set) { const k = new Kit(); dress(k, id, { coat, skin, hairC, style, tierCape, tier: role.tier, wp });
+    if (wp && BOWS[wp]) { k.in('armL').push([0, -0.37, 0.02], [0, -1.2, 0]); bow(k, BOWS[wp]); k.pop(); }
+    else if (wp) { k.in('armR').push([0, -0.37, 0.02]); WLOOK[wp](k); k.pop(); }
+    set = bake(k); CACHE.set(key, set); }
   return rig(set, PIV);
 }
-function dress(k, id, { coat, skin, hairC, style, tierCape, tier }) {
+function dress(k, id, { coat, skin, hairC, style, tierCape, tier, wp }) {
   const dark = shade(coat, 0.62), O = {};
   let pants = 0x4E3020, boot = 0x2E1E14;
-  const hand = side => k.in(side).push([0, -0.37, 0.02]);
+  const hand = side => k.in(side === 'armR' && wp ? '__drop' : side).push([0, -0.37, 0.02]); // предмет роли уходит, если в руке оружие
   switch (id) {
     case 'rytsar': {
       legs(k, 0x3A3540, 0x4A4A52, { greave: C.STEEL2 });

@@ -12,13 +12,27 @@ export const GEAR = {
   cloak: { def: 3, hp: 10 }, staff: { atk: 5 }, seal: { atk: 2, def: 2 }, ring: { atk: 3 }, mantle: { def: 4, hp: 15 }, gloves: { atk: 2 }, boots: { dodge: 0.05 },
   star_shard: { atk: 3 }, gate_key: { def: 1 }, ancient_coin: { crit: 0.05 }, forest_charm: { hp: 20 }, caravan_seal: { def: 2 },
   black_blade: { atk: 6 }, ancient_relic: { atk: 2, def: 2, hp: 10 }, order_shield: { def: 6 }, iron_helm: { hp: 25 }, lord_shard: { atk: 5, def: 5 },
+  wood_shield: { def: 3 },
+  // новое оружие и снаряжение (13.11.2026)
+  iron_sword: { atk: 5 }, hunter_bow: { atk: 4, dodge: 0.05 }, oak_staff: { atk: 4, crit: 0.05 }, steel_sword: { atk: 8 }, war_axe: { atk: 10, def: -1, crit: 0.05 },
+  elven_bow: { atk: 8, dodge: 0.08 }, frost_staff: { atk: 11, crit: 0.08 }, lich_scythe: { atk: 12, hp: 20 }, dragon_blade: { atk: 15, crit: 0.1 },
+  leather_armor: { def: 2, hp: 15 }, chainmail: { def: 5, hp: 20 }, knight_armor: { def: 8, hp: 30 }, dragon_scale: { def: 10, hp: 50 },
+  witch_hat: { atk: 4, crit: 0.08, hp: 10 }, steel_helm: { hp: 40, def: 2 }, tower_shield: { def: 9, dodge: -0.03 }, swift_boots: { dodge: 0.1 }, amulet_luck: { crit: 0.1 },
 };
+// слоты: в каждом слоте в бою работает одна вещь (лучшая), амулетов — до трёх
+const SLOT_OF = { hammer: 'weapon', bow: 'weapon', staff: 'weapon', black_blade: 'weapon', iron_sword: 'weapon', hunter_bow: 'weapon', oak_staff: 'weapon', steel_sword: 'weapon', war_axe: 'weapon', elven_bow: 'weapon', frost_staff: 'weapon', lich_scythe: 'weapon', dragon_blade: 'weapon',
+  shield: 'shield', wood_shield: 'shield', order_shield: 'shield', tower_shield: 'shield', iron_helm: 'head', steel_helm: 'head', witch_hat: 'head', boots: 'feet', swift_boots: 'feet', gloves: 'hands',
+  cloak: 'body', mantle: 'body', leather_armor: 'body', chainmail: 'body', knight_armor: 'body', dragon_scale: 'body' };
+export const gearSlot = id => SLOT_OF[id] || 'trinket';
+export const gearScore = id => { const g = GEAR[id] || {}; return (g.atk || 0) + (g.def || 0) + (g.hp || 0) / 5 + (g.dodge || 0) * 60 + (g.crit || 0) * 60; };
+export function activeGear(equipped) { const by = {}; for (const i of equipped) if (GEAR[i]) (by[gearSlot(i)] = by[gearSlot(i)] || []).push(i);
+  return Object.entries(by).flatMap(([sl, l]) => l.sort((a, b) => gearScore(b) - gearScore(a)).slice(0, sl === 'trinket' ? 3 : 1)); }
 export const ROLE_STAT = { zhitel: { hp: 20, atk: 2 }, torgovets: { dodge: 0.04, atk: 2 }, kuznets: { atk: 2, def: 1 }, strazhnik: { hp: 25, def: 2 }, luchnik: { dodge: 0.08, atk: 1 },
   alkhimik: { hp: 10, atk: 1 }, rytsar: { def: 2, hp: 10 }, mag: { atk: 3, def: -2 }, sovetnik: { crit: 0.12, atk: 2 }, graf: { atk: 3, def: 1, hp: 10 }, korol: { atk: 3, def: 3, hp: 20 }, gertsog: { atk: 2, def: 2 } };
 
 export function heroStats(role, level, equipped = []) {
   const s = { hp: 80 + 12 * level, atk: 8 + 2 * level, def: 2 + level, dodge: 0.05, crit: 0.05 };
-  for (const b of [ROLE_STAT[role] || {}, ...equipped.map(i => GEAR[i] || {})]) for (const k in b) s[k] += b[k];
+  for (const b of [ROLE_STAT[role] || {}, ...activeGear(equipped).map(i => GEAR[i] || {})]) for (const k in b) s[k] += b[k];
   s.dodge = Math.min(0.45, s.dodge); s.crit = Math.min(0.5, s.crit); return s;
 }
 
@@ -52,6 +66,7 @@ export const KINDS = {
   // существа из камня и болота
   golem: { name: 'Каменный голем', hp: 120, atk: 13, def: 9, dodge: 0, pattern: ['wait', 'slam', 'attack'], xp: 1.8, scale: 1.3, beast: true },
   kikimora: { name: 'Болотная кикимора', hp: 70, atk: 10, def: 2, dodge: 0.18, pattern: ['poison', 'attack', 'attack'], xp: 1.3, scale: 1, beast: true },
+  witch: { name: 'Болотная ведьма', hp: 520, atk: 24, def: 8, dodge: 0.12, pattern: ['poison', 'attack', 'drain', 'heavy'], xp: 5, scale: 1.3, beast: true, lab: 2.6 },
   utopets: { name: 'Утопец', hp: 95, atk: 13, def: 3, dodge: 0.1, pattern: ['attack', 'grab', 'attack'], xp: 1.6, scale: 1.05, beast: true },
   skeleton: { name: 'Скелет', hp: 45, atk: 10, def: 1, dodge: 0.05, pattern: ['attack', 'attack', 'heavy'], xp: 0.7, scale: 0.95, beast: true },
   // боссы мировых событий: бьёт всё королевство, общее здоровье
@@ -63,10 +78,10 @@ export const INTENT = { attack: 'готовит удар', heavy: 'замахи�
   wait: 'медленно поднимает меч', rally: 'трубит в рог: Орден звереет!', dark: 'собирает тёмную силу! Защищайся!',
   slam: 'поднимает каменные кулаки! Защищайся!', poison: 'плюётся болотным ядом! Уклоняйся!', grab: 'тянет тебя под воду! Защищайся!',
   fire: 'набирает пламя в пасть! Уклоняйся!', tail: 'разворачивается для удара хвостом! Защищайся!', drain: 'вытягивает из тебя жизнь!', freeze: 'дышит ледяным ветром! Защищайся!' };
-export const LOOT = { knight: [['potion', 0.4], ['iron_helm', 0.06]], archer: [['potion', 0.4], ['boots', 0.08]], heavy: [['potion', 0.5], ['order_shield', 0.12]],
-  captain: [['potion', 0.6], ['black_blade', 0.2]], lord: [['potion', 1], ['lord_shard', 0.35]], commander: [['potion', 1], ['lord_shard', 1]],
-  golem: [['ore', 1], ['ore', 0.6], ['ore', 0.3]], kikimora: [['herb', 1], ['herb', 0.5], ['potion', 0.3]], utopets: [['potion', 0.5], ['herb', 0.5]], skeleton: [['potion', 0.25]],
-  dragon: [['potion', 1], ['lord_shard', 1], ['ancient_relic', 0.3]], lich: [['potion', 1], ['lord_shard', 0.6]], giant: [['potion', 1], ['lord_shard', 0.8], ['ore', 1]] };
+export const LOOT = { knight: [['potion', 0.4], ['iron_helm', 0.06], ['iron_sword', 0.05]], archer: [['potion', 0.4], ['boots', 0.08], ['hunter_bow', 0.05]], heavy: [['potion', 0.5], ['order_shield', 0.12], ['chainmail', 0.05]],
+  captain: [['potion', 0.6], ['black_blade', 0.2], ['knight_armor', 0.05]], lord: [['potion', 1], ['lord_shard', 0.35], ['knight_armor', 0.12]], commander: [['potion', 1], ['lord_shard', 1], ['knight_armor', 0.3]],
+  golem: [['ore', 1], ['ore', 0.6], ['ore', 0.3], ['war_axe', 0.04]], kikimora: [['herb', 1], ['mushroom', 0.5], ['potion', 0.3], ['elven_bow', 0.04]], utopets: [['potion', 0.5], ['mushroom', 0.6], ['swift_boots', 0.04]], witch: [['potion', 1], ['mushroom', 1], ['mushroom', 0.6], ['amulet_luck', 0.15], ['frost_staff', 0.06], ['witch_hat', 0.12]], skeleton: [['potion', 0.25], ['amulet_luck', 0.03]],
+  dragon: [['potion', 1], ['lord_shard', 1], ['ancient_relic', 0.3], ['dragon_blade', 0.12], ['dragon_scale', 0.1]], lich: [['potion', 1], ['lord_shard', 0.6], ['lich_scythe', 0.2]], giant: [['potion', 1], ['lord_shard', 0.8], ['ore', 1], ['frost_staff', 0.2], ['tower_shield', 0.2]] };
 
 // лагерь Ордена — на севере за городом; патрули ходят туда-обратно по дорогам
 export const CAMP = { x: R(0), z: R(-8), r: 12 };
@@ -86,13 +101,18 @@ export const ENEMIES = [
   { id: 'g1', kind: 'golem', lvl: 12, path: [[R(-3), R(11)], [R(-3), R(12)]], speed: 0.5 },
   { id: 'g2', kind: 'golem', lvl: 18, path: [[R(3), R(13)], [R(4), R(13)]], speed: 0.5 },
   { id: 'g3', kind: 'golem', lvl: 24, path: [[R(-6), R(13)]] },
-  { id: 'k1', kind: 'kikimora', lvl: 9, path: [[R(-5), bank(R(-5), 1)]] },
-  { id: 'k2', kind: 'kikimora', lvl: 15, path: [[R(4), bank(R(4), 1)]] },
-  { id: 'k3', kind: 'kikimora', lvl: 12, path: [[R(-8), bank(R(-8), -1)]] },
-  { id: 'u1', kind: 'utopets', lvl: 15, path: [[R(-2), bank(R(-2), -1)]], night: true },
-  { id: 'u2', kind: 'utopets', lvl: 21, path: [[R(5), bank(R(5), -1)]], night: true },
+  // Болото к западу от замка (13.11.2026): кикиморы и утопцы живут теперь здесь, а не у реки; в глубине — хижина Болотной ведьмы
+  { id: 'k1', kind: 'kikimora', lvl: 9, path: [[-45.5, -2], [-45.5, 8.5]] },
+  { id: 'k2', kind: 'kikimora', lvl: 15, path: [[-55, -6.5], [-49.5, -8]] },
+  { id: 'k3', kind: 'kikimora', lvl: 12, path: [[-58, 10.5], [-52.5, 12.5]] },
+  { id: 'k4', kind: 'kikimora', lvl: 18, path: [[-62.5, 1.5], [-61, 7]] },
+  { id: 'u1', kind: 'utopets', lvl: 15, path: [[-50.5, 5.5]] },
+  { id: 'u2', kind: 'utopets', lvl: 21, path: [[-57.5, -1.5]] },
+  { id: 'u3', kind: 'utopets', lvl: 24, path: [[-65.5, 9.5]] },
+  { id: 'w1', kind: 'witch', lvl: 28, path: [[-62.5, -7.5], [-60, -5]], speed: 0.4 },
 ];
-export const RESPAWN_MS = { knight: 3 * 60e3, archer: 3 * 60e3, heavy: 5 * 60e3, captain: 8 * 60e3, lord: 30 * 60e3, commander: 60 * 60e3, golem: 5 * 60e3, kikimora: 4 * 60e3, utopets: 6 * 60e3, skeleton: 60e3, dragon: 60e3, lich: 60e3, giant: 60e3 };
+export const SWAMP = { x: -52.8, z: 3.3, r: 17 };
+export const RESPAWN_MS = { knight: 3 * 60e3, archer: 3 * 60e3, heavy: 5 * 60e3, captain: 8 * 60e3, lord: 30 * 60e3, commander: 60 * 60e3, golem: 5 * 60e3, kikimora: 4 * 60e3, utopets: 6 * 60e3, witch: 20 * 60e3, skeleton: 60e3, dragon: 60e3, lich: 60e3, giant: 60e3 };
 export const enemyById = id => ENEMIES.find(e => e.id === id);
 export function enemyPos(e, t) {
   if (e.path.length < 2) return { x: e.path[0][0], z: e.path[0][1], face: 0 };

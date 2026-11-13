@@ -63,8 +63,8 @@ export function orderSheet(back) {
 // в окне героя: выпить зелье, передать ресурсы товарищу по отряду
 export function heroExtras() {
   const s = G.state; if (!s) return ''; const r = res(), now = Date.now(), left = k => Math.ceil(((r.buffs?.[k] || 0) - now) / 60000);
-  const pots = ['potion', 'potion_power', 'potion_speed'].filter(it => have(it) > 0), mates = (s.squad?.members || []).map(m => m.nick || m).filter(n => n && n !== s.hero.nick);
-  const buffs = [left('power') > 0 && `💪 сила ещё ${left('power')} мин`, left('speed') > 0 && `💨 скорость ещё ${left('speed')} мин`].filter(Boolean);
+  const pots = ['potion', 'potion_power', 'potion_rage', 'potion_speed'].filter(it => have(it) > 0), mates = (s.squad?.members || []).map(m => m.nick || m).filter(n => n && n !== s.hero.nick);
+  const buffs = [left('rage') > 0 && `🔥 ярость ещё ${left('rage')} мин`, left('power') > 0 && `💪 сила ещё ${left('power')} мин`, left('speed') > 0 && `💨 скорость ещё ${left('speed')} мин`].filter(Boolean);
   return `${s.rolePrice && !(K.isKingNick && K.isKingNick(s.hero.nick)) ? `<p>${button('data-rolesheet', '🎭 Сменить роль за монеты')}</p>` : ''}<p class="rw">⚔️ Оружие: +${r.wlvl || 0}${buffs.length ? ' · ' + buffs.join(' · ') : ''}</p>
     ${pots.length ? `<div class="ach res">${pots.map(it => row(ITEMS[it].icon, `${ITEMS[it].name} ×${have(it)}`, RECIPES[it]?.text || '', button(`data-use="${it}"`, 'Выпить'))).join('')}</div>` : ''}
     ${mates.length && RES.some(k => have(k) > 0) ? `<div class="qcard"><h3>Передать товарищу</h3><p style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">

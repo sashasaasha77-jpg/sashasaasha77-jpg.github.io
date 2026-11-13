@@ -90,7 +90,21 @@ function giant() {
   for (const [x, y, z] of [[0.6, 2.6, -0.2], [-0.5, 2.7, -0.3], [0.1, 2.8, -0.4]]) m(u.body, K(0.12, 0.6, 5), 0xDFF6FF, [x, y, z], null, 1);
   return g;
 }
-const MAKE = { golem, kikimora, utopets, skeleton, dragon, lich, giant };
+function witch() { // Болотная ведьма: сгорбленная, в лохмотьях, с острой шляпой и посохом-корягой
+  const g = rig({ neck: 1.3, sh: 0.26, shy: 1.16, hip: 0.12, hipy: 0.52 }), u = g.userData, skin = 0x8FA86A, robe = 0x3A2E4A, rag = 0x2E3A22;
+  m(u.body, C(0.2, 0.42, 0.95, 9), robe, [0, 0.8, 0]); m(u.body, C(0.43, 0.46, 0.12, 9), rag, [0, 0.36, 0]); m(u.body, S(0.23), robe, [0, 1.18, 0.02]); u.body.rotation.x = 0.22;
+  for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; m(u.body, B(0.08, 0.26, 0.03), rag, [Math.sin(a) * 0.42, 0.28, Math.cos(a) * 0.42], [0, a, 0.15], 1); }
+  m(u.head, S(0.2), skin, [0, 0.1, 0.05]); m(u.head, K(0.05, 0.2, 5), skin, [0, 0.06, 0.29], [Math.PI / 2 + 0.3, 0, 0], 1); m(u.head, S(0.03, 0), 0x4E7A34, [0.03, 0.02, 0.36], null, 0);
+  for (const x of [-0.08, 0.08]) m(u.head, S(0.04, 0), 0, [x, 0.14, 0.2], null, 0).material = glow(0xB6FF5A);
+  m(u.head, C(0.42, 0.42, 0.04, 14), 0x1E1A28, [0, 0.24, 0]); m(u.head, K(0.2, 0.62, 10), 0x1E1A28, [0.04, 0.55, -0.04], [-0.18, 0, 0.12]); m(u.head, C(0.21, 0.21, 0.06, 12), 0x6A8A2A, [0, 0.29, 0], null, 1);
+  for (let k = 0; k < 8; k++) { const a = -1.4 + k * 0.4; m(u.head, B(0.05, 0.55, 0.04), 0x9C9A92, [Math.sin(a) * 0.18, -0.1, -Math.cos(a) * 0.12 - 0.03], [0.12, 0, a * 0.2], 1); }
+  for (const a of [u.armL, u.armR]) { m(a, C(0.07, 0.05, 0.5, 6), robe, [0, -0.25, 0.04]); m(a, S(0.06, 0), skin, [0, -0.52, 0.06], null, 1); }
+  m(u.armR, C(0.035, 0.045, 1.5, 6), 0x4A3420, [0, -0.35, 0.18], [0.1, 0, 0]); m(u.armR, S(0.11, 0), 0x6A4A2A, [0, 0.42, 0.22], null, 1);
+  m(u.armR, S(0.07, 1), 0, [0, 0.5, 0.24], null, 0).material = glow(0x8DFF5A);
+  for (const l of [u.legL, u.legR]) m(l, C(0.06, 0.05, 0.5, 6), 0x2A2018, [0, -0.25, 0]);
+  return g;
+}
+const MAKE = { golem, kikimora, utopets, skeleton, dragon, lich, giant, witch };
 export function buildMonster(kind, scale) {
   W = window.W; THREE = W.THREE; const g = MAKE[kind](); if (scale && scale !== 1) g.scale.multiplyScalar(scale);
   g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return g;

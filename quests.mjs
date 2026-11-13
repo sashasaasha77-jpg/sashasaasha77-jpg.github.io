@@ -34,6 +34,7 @@ export const POI = {
   far_sw: { name: 'юго-западная окраина', x: R(-3), z: R(3) },
   arena: { name: 'арена за рекой', x: R(1), z: R(10) - 5 },
   market: { name: 'рынок к востоку от замка', x: R(6) - 8, z: R(0) },
+  swamp: { name: 'болото к западу от замка', x: -40, z: R(0) },
 };
 
 export const ITEMS = {
@@ -155,6 +156,7 @@ export function nodesFor(date) {
   for (let i = -7; i <= 6; i++) for (let j = 5; j <= 15; j++) { const x = (i + 1) * PITCH, z = (j + 1) * PITCH, dr = z - riverZ(x); if (dr < 6.5 || z > 104 || Math.hypot(x - R(1), z - R(10)) < 11) continue; block.push({ x, z }); }
   for (const [kind, cnt, salt] of [['rock', 24, 0x5bd1e995], ['tree', 12, 0x27d4eb2f], ['bush', 10, 0x165667b1]]) { const before = out.length; pick(block, kind, cnt, salt);
     for (let q = before; q < out.length; q++) Object.assign(out[q], { kind, type: kind === 'tree' ? 'wood' : kind === 'rock' ? 'ore' : 'herb', n: kind === 'bush' ? 1 : 2 }); }
+  { const before = out.length; pick(SWAMP_SPOTS.map(([x, z]) => ({ x, z, kind: 'pile' })), 'mush', 7, 0x7f4a7c15); for (let q = before; q < out.length; q++) Object.assign(out[q], { type: 'mushroom', n: 2 }); } // грибы на болоте
   return out;
 }
 // старые деревья мира (их расставляет карта): рубить можно, сервер проверяет только близость героя и лимит
@@ -278,3 +280,57 @@ export function marketPrices(date, sold = {}, role = '') {
     out[it] = { sell: Math.max(1, Math.round(B.sell[it] * (hot ? B.hot : 1) * glut * (role === 'torgovets' ? B.trader : 1))), buy: Math.round(B.buy[it] * (hot ? 1.3 : 1)), hot, glut: Math.round(glut * 100), sold: sold[it] || 0 }; }
   return { day: d, res: out, rare: { item: d.rare[0], price: Math.round(d.rare[1] * (role === 'torgovets' ? 0.9 : 1)) } };
 }
+
+// ---------------- новое оружие и снаряжение (13.11.2026): слоты и редкость ----------------
+// слот: одно оружие, один доспех, шлем, щит, сапоги, перчатки и до 3 амулетов/реликвий. Надеваешь новое — старое в том же слоте снимается.
+export const RARITY = { common: { name: 'обычное', color: '#C9C1B5' }, rare: { name: 'редкое', color: '#5AA9FF' }, epic: { name: 'эпическое', color: '#B47CFF' }, legendary: { name: 'легендарное', color: '#FFB020' } };
+Object.assign(ITEMS, {
+  iron_sword: { name: 'Железный меч', type: 'gear', icon: '🗡️', slot: 'weapon', rar: 'common' },
+  hunter_bow: { name: 'Охотничий лук', type: 'gear', icon: '🏹', slot: 'weapon', rar: 'common' },
+  oak_staff: { name: 'Дубовый посох', type: 'gear', icon: '🪄', slot: 'weapon', rar: 'common' },
+  steel_sword: { name: 'Стальной меч', type: 'gear', icon: '⚔️', slot: 'weapon', rar: 'rare' },
+  war_axe: { name: 'Боевой топор', type: 'gear', icon: '🪓', slot: 'weapon', rar: 'rare' },
+  elven_bow: { name: 'Эльфийский лук', type: 'gear', icon: '🏹', slot: 'weapon', rar: 'rare' },
+  frost_staff: { name: 'Посох инея', type: 'gear', icon: '❄️', slot: 'weapon', rar: 'epic' },
+  lich_scythe: { name: 'Коса Лича', type: 'gear', icon: '☠️', slot: 'weapon', rar: 'epic' },
+  dragon_blade: { name: 'Драконий клинок', type: 'gear', icon: '🔥', slot: 'weapon', rar: 'legendary' },
+  leather_armor: { name: 'Кожаная куртка', type: 'gear', icon: '🦺', slot: 'body', rar: 'common' },
+  chainmail: { name: 'Кольчуга', type: 'gear', icon: '⛓️', slot: 'body', rar: 'rare' },
+  knight_armor: { name: 'Латы рыцаря', type: 'gear', icon: '🛡️', slot: 'body', rar: 'epic' },
+  dragon_scale: { name: 'Чешуйчатый доспех', type: 'gear', icon: '🐉', slot: 'body', rar: 'legendary' },
+  steel_helm: { name: 'Стальной шлем', type: 'gear', icon: '🪖', slot: 'head', rar: 'rare' },
+  tower_shield: { name: 'Башенный щит', type: 'gear', icon: '🧱', slot: 'shield', rar: 'epic' },
+  swift_boots: { name: 'Сапоги-скороходы', type: 'gear', icon: '👢', slot: 'feet', rar: 'rare' },
+  amulet_luck: { name: 'Амулет удачи', type: 'gear', icon: '🧿', slot: 'trinket', rar: 'rare' },
+});
+// слоты старых вещей
+for (const [k, slot, rar] of [['hammer', 'weapon', 'common'], ['bow', 'weapon', 'common'], ['staff', 'weapon', 'rare'], ['black_blade', 'weapon', 'rare'],
+  ['shield', 'shield', 'common'], ['wood_shield', 'shield', 'common'], ['order_shield', 'shield', 'rare'], ['iron_helm', 'head', 'common'], ['boots', 'feet', 'common'], ['gloves', 'hands', 'common'],
+  ['cloak', 'body', 'common'], ['mantle', 'body', 'rare'], ['lord_shard', 'trinket', 'epic'], ['ancient_relic', 'trinket', 'epic'], ['star_shard', 'trinket', 'rare']]) Object.assign(ITEMS[k], { slot, rar });
+export const SLOTS = { weapon: { name: 'Оружие', n: 1 }, body: { name: 'Доспех', n: 1 }, head: { name: 'Шлем', n: 1 }, shield: { name: 'Щит', n: 1 }, feet: { name: 'Сапоги', n: 1 }, hands: { name: 'Перчатки', n: 1 }, trinket: { name: 'Амулеты', n: 3 } };
+export const slotOfItem = id => (ITEMS[id] && ITEMS[id].slot) || 'trinket';
+Object.assign(RECIPES, {
+  iron_sword: { npc: 'kuznets', need: { ore: 5, wood: 2 }, text: 'Атака +5' },
+  hunter_bow: { npc: 'kuznets', need: { wood: 6, ore: 1 }, text: 'Атака +4, уворот +5%' },
+  oak_staff: { npc: 'kuznets', need: { wood: 4, herb: 3 }, text: 'Атака +4, крит +5%' },
+  leather_armor: { npc: 'kuznets', need: { herb: 3, wood: 3, ore: 1 }, text: 'Броня +2, здоровье +15' },
+  chainmail: { npc: 'kuznets', need: { ore: 12, wood: 2 }, text: 'Броня +5, здоровье +20' },
+  steel_helm: { npc: 'kuznets', need: { ore: 10, wood: 1 }, text: 'Здоровье +40, броня +2' },
+  steel_sword: { npc: 'kuznets', need: { ore: 14, wood: 3, lord_shard: 1 }, text: 'Атака +8' },
+});
+MARKET_RARE.push(['steel_helm', 150], ['swift_boots', 160], ['amulet_luck', 140], ['war_axe', 220], ['elven_bow', 220], ['chainmail', 180]);
+
+// ---------------- Болото к западу от замка (13.11.2026) ----------------
+export const SWAMP_SPOTS = [[-47, -6], [-48.5, 11], [-53, -10.5], [-56, 7.5], [-59.5, -3.5], [-61, 12.5], [-66, 2.5], [-64.5, -3], [-51.5, 14.5], [-57, 15.5], [-44.5, 3]];
+Object.assign(ITEMS, {
+  mushroom: { name: 'Болотный гриб', type: 'res', icon: '🍄' },
+  witch_hat: { name: 'Шляпа ведьмы', type: 'gear', icon: '🧙', slot: 'head', rar: 'epic' },
+  swamp_brew: { name: 'Болотный отвар (3 зелья лечения)', type: 'recipe', icon: '🍲' },
+  potion_rage: { name: 'Зелье ярости', type: 'consumable', icon: '🔥' },
+});
+Object.assign(RECIPES, {
+  swamp_brew: { npc: 'mag', need: { mushroom: 3, herb: 1 }, out: 'potion', qty: 3, text: 'Три зелья лечения из болотных грибов' },
+  potion_rage: { npc: 'mag', need: { mushroom: 4, ore: 1 }, text: 'Атака +40% на 10 минут' },
+});
+BUFFS.potion_rage = { key: 'rage', min: 10 };
+SHOP.sell.mushroom = 4;
