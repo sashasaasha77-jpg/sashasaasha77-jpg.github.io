@@ -815,7 +815,7 @@ const freeStart = residents.length;
   for (const t of [T1, T2, B]) { t.m.userData.keep = true; if (t.o) t.o.userData.keep = true; }
   const r = rng(77); let n1 = 0, n2 = 0, nb = 0;
   const thin = rng(777); // деревьев на 70 % меньше: остаётся каждое ~третье (отдельный генератор, чтобы остальное не сдвинулось)
-  const putT = (x, z, s) => { if (thin() > 0.3 || Math.hypot(x - 3.3, z + 49.5) < 14 || Math.max(Math.abs(x), Math.abs(z)) < 22.5) return; /* лагерь и крепость «Мира героев» */ tmp.position.set(x, 0, z); tmp.rotation.set(0, r() * 6.28, 0); tmp.scale.setScalar(s); tmp.updateMatrix(); if (r() < 0.55) { if (n1 < NT) { TREES.push([x, z, s, T1.m, n1]); T1.m.setMatrixAt(n1++, tmp.matrix); } } else if (n2 < NT) { TREES.push([x, z, s, T2.m, n2]); T2.m.setMatrixAt(n2++, tmp.matrix); } }; // препятствие — только видимое дерево
+  const putT = (x, z, s) => { if (thin() > 0.3 || Math.hypot(x - 3.3, z + 49.5) < 14 || Math.max(Math.abs(x), Math.abs(z)) < 22.5 || Math.hypot(x - 42.9, z - 3.3) < 11.5) return; /* лагерь и крепость «Мира героев» */ tmp.position.set(x, 0, z); tmp.rotation.set(0, r() * 6.28, 0); tmp.scale.setScalar(s); tmp.updateMatrix(); if (r() < 0.55) { if (n1 < NT) { TREES.push([x, z, s, T1.m, n1]); T1.m.setMatrixAt(n1++, tmp.matrix); } } else if (n2 < NT) { TREES.push([x, z, s, T2.m, n2]); T2.m.setMatrixAt(n2++, tmp.matrix); } }; // препятствие — только видимое дерево
   for (let k = freeStart + FREE + 40; k < plots.length; k++) { if (r() < 0.5) continue; const pl = plots[k]; for (let j = 0; j < 2; j++) putT(pl.x + (r() - 0.5) * 1.8, pl.z + (r() - 0.5) * 1.8, 0.8 + r() * 0.6); }
   for (let x = -SIZE / 2 + 10; x < SIZE / 2 - 10; x += 4.5) { if (r() < 0.35) continue; const side = r() < 0.5 ? -1 : 1, z = riverZ(x) + side * (5 + r() * 1.5); if (Math.abs(((x / PITCH) % 1 + 1) % 1 - 0) < 0.15) continue; putT(x, z, 0.8 + r() * 0.5); }
   // кусты вдоль площади
@@ -886,7 +886,7 @@ const RPG_OBS = [];   // препятствия второго мира для �
   // поля за стенами
   const r = rng(404);
   for (let bx = -5; bx <= 5; bx++) for (let bz = -5; bz <= 5; bz++) { const ring = Math.max(Math.abs(bx), Math.abs(bz)); if (ring < 4 || r() < 0.45) continue;
-    const x = bx * PITCH, z = bz * PITCH; if (Math.abs(z - riverZ(x)) < 6 || Math.hypot(x - 3.3, z + 52.8) < 15 || TREES.some(([tx, tz]) => Math.abs(tx - x) < 3 && Math.abs(tz - z) < 3)) continue;
+    const x = bx * PITCH, z = bz * PITCH; if (Math.abs(z - riverZ(x)) < 6 || Math.hypot(x - 3.3, z + 52.8) < 15 || Math.hypot(x - 42.9, z - 3.3) < 14.5 || TREES.some(([tx, tz]) => Math.abs(tx - x) < 3 && Math.abs(tz - z) < 3)) continue;
     const c = [0xD9B84A, 0x8DB04A, 0xC98A3A][r() * 3 | 0]; C3(new THREE.BoxGeometry(4.8, 0.08, 4.8).translate(x, 0.04, z), 0x7A5A32);
     for (let k = 0; k < 6; k++) C3(new THREE.BoxGeometry(4.5, 0.26, 0.42).translate(x, 0.15, z - 2.0 + k * 0.8), c); }
   // арена за рекой (голосование подданных): песок, стена с трибунами, ворота с башнями на юг и север, флаги и факелы
@@ -913,6 +913,50 @@ const RPG_OBS = [];   // препятствия второго мира для �
       C3(new THREE.CylinderGeometry(0.06, 0.08, 1.3, 6).translate(tx, 0.65, tz), 0x4E3020); C3(new THREE.ConeGeometry(0.17, 0.45, 7).translate(tx, 1.5, tz), 0xFF9A2E); RPG_OBS.push({ x: tx, z: tz, c: 0.15, r: 0.15 }); }
     for (const g of [0, Math.PI]) { const x = AX + Math.sin(g) * (RW + 0.4), z = AZ + Math.cos(g) * (RW + 0.4); stone.push(sbox(3.9, 0.9, 1.2, x, 4.25, z)); // арка над воротами
       C3(new THREE.BoxGeometry(2.0, 0.6, 0.1).translate(x, 4.25, z + (g ? -0.65 : 0.65)), 0xE8B931); C3(new THREE.BoxGeometry(1.7, 0.36, 0.12).translate(x, 4.25, z + (g ? -0.67 : 0.67)), 0xA4161A); } }
+  // рынок к востоку от замка (победил в голосовании подданных): мощёная площадь, три купеческих ряда, колодец, ворота с вывеской, лотки и телеги
+  { const MX = 42.9, MZ = 3.3;
+    const at = (g, lx, ly, lz, ang, cx, cz) => g.translate(lx, ly, lz).rotateY(ang).translate(cx, 0, cz);
+    C3(new THREE.CylinderGeometry(9.6, 9.6, 0.06, 56).translate(MX, 0.03, MZ), 0xCDB894);
+    C3(new THREE.TorusGeometry(9.5, 0.12, 4, 56).rotateX(Math.PI / 2).translate(MX, 0.07, MZ), 0xA88E62);
+    for (let k = 0; k < 3; k++) C3(new THREE.TorusGeometry(2.6 + k * 2.2, 0.05, 3, 48).rotateX(Math.PI / 2).translate(MX, 0.07, MZ), 0xBFA678);
+    // колодец посреди площади
+    stone.push(scyl(1.15, 1.25, 0.75, MX, 0.38, MZ)); C3(new THREE.CylinderGeometry(0.95, 0.95, 0.08, 20).translate(MX, 0.72, MZ), 0x4A90C8);
+    for (const s of [-1, 1]) C3(new THREE.BoxGeometry(0.12, 1.5, 0.12).translate(MX + s * 0.95, 1.4, MZ), 0x5A3A22);
+    C3(new THREE.ConeGeometry(1.35, 0.8, 4).rotateY(Math.PI / 4).translate(MX, 2.5, MZ), 0xA4161A); C3(new THREE.CylinderGeometry(0.07, 0.07, 1.9, 6).rotateZ(Math.PI / 2).translate(MX, 1.85, MZ), 0x4E3020);
+    RPG_OBS.push({ x: MX, z: MZ, c: 1.35, r: 1.35 });
+    // три купеческих ряда: лес, травы, руда — лицом к колодцу
+    const stall = (dx, dz, awA, awB, goods) => { const d = Math.hypot(dx, dz), ang = Math.atan2(dx / d, dz / d), cx = MX + dx, cz = MZ + dz, P = (g, x, y, z) => at(g, x, y, z, ang, cx, cz);
+      C3(P(new THREE.BoxGeometry(3.0, 0.85, 0.75), 0, 0.43, 0), 0x7A4A2A); C3(P(new THREE.BoxGeometry(3.1, 0.08, 0.85), 0, 0.88, 0), 0x5A3A22);
+      for (const sx of [-1.45, 1.45]) for (const sz of [-0.35, 1.5]) C3(P(new THREE.BoxGeometry(0.1, sz < 0 ? 2.1 : 2.5, 0.1), sx, sz < 0 ? 1.05 : 1.25, sz), 0x4E3020);
+      for (let k = 0; k < 6; k++) C3(P(new THREE.BoxGeometry(0.52, 0.06, 2.3).rotateX(-0.28), -1.3 + k * 0.52, 2.3, 0.6), k % 2 ? awA : awB); // полосатый навес
+      C3(P(new THREE.BoxGeometry(1.1, 0.5, 0.06), 0, 2.95, 1.75), 0xF5EBDC);                                                        // вывеска над рядом
+      goods(P); RPG_OBS.push({ x: cx - Math.cos(ang) * 0.9, z: cz + Math.sin(ang) * 0.9, c: 0.9, r: 0.9 }, { x: cx + Math.cos(ang) * 0.9, z: cz - Math.sin(ang) * 0.9, c: 0.9, r: 0.9 }); };
+    const log = (P, x, y, z, rz) => C3(P(new THREE.CylinderGeometry(0.13, 0.13, 0.9, 8).rotateZ(Math.PI / 2).rotateY(rz || 0), x, y, z), 0x8A5A32);
+    stall(0, -6.2, 0xE8B931, 0x7A4A2A, P => { for (let i = 0; i < 4; i++) log(P, -0.9 + (i % 2) * 0.25, 1.05 + Math.floor(i / 2) * 0.24, -0.1 + (i % 2) * 0.22); for (let i = 0; i < 3; i++) log(P, 0.7, 1.05 + i * 0.24, 0, 0.1);
+      for (let r = 0; r < 3; r++) for (let i = 0; i < 4 - r; i++) log(P, 2.3, 0.15 + r * 0.25, -0.6 + i * 0.28 + r * 0.14, Math.PI / 2); C3(P(new THREE.BoxGeometry(0.35, 0.35, 0.35), 0.1, 1.1, 0.05), 0xC9C1B5); });
+    stall(6.2, 0, 0x4E8A34, 0xF5EBDC, P => { for (const x of [-0.9, 0, 0.9]) { C3(P(new THREE.CylinderGeometry(0.3, 0.24, 0.28, 10), x, 1.05, 0), 0xB08A5A); for (let k = 0; k < 3; k++) C3(P(new THREE.IcosahedronGeometry(0.16, 0), x - 0.12 + k * 0.12, 1.28, (k - 1) * 0.08), [0x4E8A34, 0x6BAF4A, 0x8DB04A][k]); }
+      for (const [x, z] of [[2.2, -0.3], [2.3, 0.5]]) { C3(P(new THREE.CylinderGeometry(0.34, 0.3, 0.5, 10), x, 0.25, z), 0xB08A5A); C3(P(new THREE.IcosahedronGeometry(0.3, 0), x, 0.6, z), 0x5C9A3A); }
+      for (const x of [-1.1, -0.4, 0.3, 1.0]) C3(P(new THREE.ConeGeometry(0.1, 0.4, 5).rotateX(Math.PI), x, 2.0, 1.2), 0x6BAF4A); });        // пучки трав под навесом
+    stall(0, 6.2, 0x5E5A55, 0xA4161A, P => { for (const x of [-0.9, 0.1, 1.0]) { C3(P(new THREE.BoxGeometry(0.55, 0.3, 0.45), x, 1.05, 0), 0x8A5A32); for (let k = 0; k < 3; k++) C3(P(new THREE.IcosahedronGeometry(0.13, 0), x - 0.13 + k * 0.13, 1.27, 0), [0x8C857B, 0x6E6A66, 0xB7BCC4][k]); }
+      C3(P(new THREE.IcosahedronGeometry(0.55, 0), 2.3, 0.4, 0.1), 0x7A7470); C3(P(new THREE.IcosahedronGeometry(0.38, 0), 2.0, 0.3, -0.6), 0x8C857B); C3(P(new THREE.IcosahedronGeometry(0.18, 0), 2.5, 0.85, 0.2), 0xE8B931);
+      C3(P(new THREE.BoxGeometry(0.07, 0.9, 0.07).rotateZ(0.5), -2.0, 0.45, -0.3), 0x4E3020); C3(P(new THREE.BoxGeometry(0.6, 0.09, 0.09).rotateZ(0.5), -1.82, 0.83, -0.3), 0x8C857B); }); // кирка
+    // ворота рынка с запада — со стороны замка: столбы, перекладина, золотая вывеска, флаги
+    { const gx = MX - 9.4; for (const s of [-1, 1]) { stone.push(sbox(0.6, 3.6, 0.6, gx, 1.8, MZ + s * 2.0)); C3(new THREE.ConeGeometry(0.5, 0.7, 4).rotateY(Math.PI / 4).translate(gx, 3.95, MZ + s * 2.0), 0xA4161A); RPG_OBS.push({ x: gx, z: MZ + s * 2.0, c: 0.45, r: 0.45 }); }
+      C3(new THREE.BoxGeometry(0.35, 0.4, 4.6).translate(gx, 3.2, MZ), 0x5A3A22); C3(new THREE.BoxGeometry(0.12, 0.8, 2.6).translate(gx - 0.2, 2.65, MZ), 0xE8B931); C3(new THREE.BoxGeometry(0.14, 0.55, 2.2).translate(gx - 0.22, 2.65, MZ), 0xA4161A);
+      for (let k = 0; k < 3; k++) C3(new THREE.BoxGeometry(0.16, 0.2, 0.2).translate(gx - 0.3, 2.65, MZ - 0.6 + k * 0.6), 0xE8B931); }
+    // лотки поменьше, бочки, ящики, телеги и флаги по кругу
+    const mini = (x, z, c) => { const a = Math.atan2(x - MX, z - MZ); for (const [lx, lz] of [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]]) C3(at(new THREE.BoxGeometry(0.08, 1.6, 0.08), lx, 0.8, lz, a, x, z), 0x4E3020);
+      C3(at(new THREE.BoxGeometry(1.6, 0.6, 1.0), 0, 0.3, 0, a, x, z), 0x8A5A32); C3(at(new THREE.ConeGeometry(1.2, 0.6, 4).rotateY(Math.PI / 4), 0, 1.9, 0, a, x, z), c);
+      for (let k = 0; k < 3; k++) C3(at(new THREE.SphereGeometry(0.14, 8, 6), -0.4 + k * 0.4, 0.72, 0, a, x, z), [0xC8102E, 0xE8B931, 0xFF9A2E][k]); RPG_OBS.push({ x, z, c: 0.95, r: 0.95 }); };
+    for (const [a, c] of [[0.8, 0xB9A6E0], [2.35, 0x4A90C8], [3.95, 0xE8B931], [5.5, 0xC8102E]]) mini(MX + Math.sin(a) * 7.1, MZ + Math.cos(a) * 7.1, c);
+    for (const [dx, dz] of [[2.6, -7.9], [-2.6, -7.9], [7.9, 2.6], [7.9, -2.6], [2.6, 7.9], [-2.6, 7.9]]) { const x = MX + dx, z = MZ + dz;
+      C3(new THREE.CylinderGeometry(0.28, 0.25, 0.6, 10).translate(x, 0.3, z), 0x8A5A32); C3(new THREE.TorusGeometry(0.29, 0.025, 4, 12).rotateX(Math.PI / 2).translate(x, 0.45, z), 0x3A3A44);
+      C3(new THREE.BoxGeometry(0.5, 0.5, 0.5).translate(x + 0.55, 0.25, z + 0.2), 0xB08A5A); RPG_OBS.push({ x: x + 0.25, z, c: 0.6, r: 0.6 }); }
+    for (const [x, z, a] of [[MX - 4.6, MZ - 4.9, 0.6], [MX + 4.9, MZ + 4.6, 2.2]]) { // телеги купцов
+      C3(at(new THREE.BoxGeometry(1.0, 0.32, 1.5), 0, 0.62, 0, a, x, z), 0x7A4A2A); for (const s of [-1, 1]) C3(at(new THREE.CylinderGeometry(0.36, 0.36, 0.1, 12).rotateZ(Math.PI / 2), s * 0.58, 0.36, 0, a, x, z), 0x4E3020);
+      for (let k = 0; k < 3; k++) C3(at(new THREE.SphereGeometry(0.28, 8, 6), -0.25 + k * 0.25, 0.98, -0.3 + k * 0.25, a, x, z), [0xD9C79E, 0xC9B07A, 0x8DB04A][k]); RPG_OBS.push({ x, z, c: 0.95, r: 0.95 }); }
+    for (let k = 0; k < 8; k++) { const a = (k + 0.5) / 8 * Math.PI * 2; if (Math.abs(Math.sin(a)) > 0.92 && Math.sin(a) < 0) continue; const x = MX + Math.sin(a) * 9.1, z = MZ + Math.cos(a) * 9.1; // флаги по краю
+      C3(new THREE.CylinderGeometry(0.05, 0.05, 3.2, 6).translate(x, 1.6, z), 0x4E3020); C3(new THREE.BoxGeometry(0.06, 0.7, 0.9).translate(x, 2.8, z + 0.45), [0xE8B931, 0xA4161A, 0x4E8A34][k % 3]); RPG_OBS.push({ x, z, c: 0.15, r: 0.15 }); } }
   const stoneMat = stoneM(1, 1);
   const wall = new THREE.Mesh(mergeGeos([...stone, ...top]), stoneMat); wall.castShadow = wall.receiveShadow = true; wall.add(new THREE.Mesh(wall.geometry, outline(2))); RPGW.add(wall);
   const deco = new THREE.Mesh(mergeGeos(col), new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: grad })); deco.castShadow = deco.receiveShadow = true; deco.add(new THREE.Mesh(deco.geometry, outline(1.5))); RPGW.add(deco);
@@ -1160,7 +1204,7 @@ window.K = { residents, byNick, roleFor: nick => byNick.get(nick)?.role || (KING
   select: nick => { const p = byNick.get(nick); if (p) select(p); return !!p; }, demo: DEMO, flyTo, spots: SPOTS, house: nick => houseInfo[byNick.get(nick)?.i],
   dayOf, levelOf: nick => LEVELS[nick] || 0, snapshot: nick => snapshotHouse(nick), passport: nick => { const p = byNick.get(nick); if (p && p.status !== 'ruins') openPassport(window.K, p); } };
 window.W = { THREE, scene, camera, renderer, canvas, toon, outline, mesh, grad, TICKS, PLAY, plots, residents, houseInfo, TREES, SPOTS, PLOT, PITCH, ROAD, SIZE, LIM, riverZ, rng, hash, ROLES, TIERS, crest, toast, select, $,
-  setWorld, RPG_OBS, BRIDGES, get target() { return target; }, get yaw() { return yaw; }, set yaw(v) { yaw = v; }, get dist() { return dist; }, set dist(v) { dist = v; }, get pitch() { return pitch; }, set pitch(v) { pitch = v; },
+  setWorld, RPG_OBS, RPGW, BRIDGES, get target() { return target; }, get yaw() { return yaw; }, set yaw(v) { yaw = v; }, get dist() { return dist; }, set dist(v) { dist = v; }, get pitch() { return pitch; }, set pitch(v) { pitch = v; },
   stopFly: () => { fly = null; }, redraw: () => { dirty = true; }, demo: DEMO };
 import('./rpg.js').then(m => m.init(window.W, window.K)).catch(e => console.warn('rpg', e));
 dispatchEvent(new Event('k-ready'));

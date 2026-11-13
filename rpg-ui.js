@@ -3,6 +3,7 @@ import { NPC, POI, ITEMS, ACH, SQUAD, SQUADQ, SHOP } from './quests.mjs';
 import { localCall } from './rpg-local.mjs';
 import { initRes, syncSites, siteAction, buildSheet, heroExtras, wireHeroExtras } from './resursy.js';
 import { arenaSheet, inArena, initArena } from './arena.js';
+import { marketSheet, inMarket, initMarket } from './market.js';
 let W, K, THREE, R; // R — состояние героя из rpg.js
 export const G = { state: null, busy: false, track: null, nodes: new Map(), wait: null, lastVisit: 0, sqWork: null, sqTogether: 0 };
 
@@ -27,7 +28,7 @@ export function act(action, extra = {}, quiet = false) {
 }
 async function send(action, extra, quiet) {
   const st = R.state();
-  const body = { ...extra }; if (st.pos && ['take', 'step', 'done', 'gather', 'sq_take', 'sq_act', 'fight', 'shop', 'war', 'craft', 'weapon', 'build', 'fort', 'decor', 'order', 'chop'].includes(action)) { body.x = +st.pos.x.toFixed(2); body.z = +st.pos.z.toFixed(2); }
+  const body = { ...extra }; if (st.pos && ['take', 'step', 'done', 'gather', 'sq_take', 'sq_act', 'fight', 'shop', 'market', 'war', 'craft', 'weapon', 'build', 'fort', 'decor', 'order', 'chop'].includes(action)) { body.x = +st.pos.x.toFixed(2); body.z = +st.pos.z.toFixed(2); }
   let r;
   try {
     if (st.demo) r = await localCall(st.nick, action, body);
@@ -268,6 +269,7 @@ export function tick(now, dt) {
   if (!best && R.warAction) { const wa = R.warAction(st, now); if (wa) best = wa; }
   if (!best && G.foe) best = { kind: 'foe', id: G.foe.id, label: G.foe.label };
   if (!best && !G.state.combat?.fight && inArena(st.pos)) best = { kind: 'arena', label: '🏟 Арена: бросить вызов' };
+  if (!best && !G.state.combat?.fight && inMarket(st.pos)) best = { kind: 'market', label: '🛒 Рынок: торговать' };
   if (G.wait && (!best || best.id !== G.wait.q)) G.wait = null; // ушёл с поста — отсчёт заново
   const b = W.$('actBtn'); actTarget = best;
   if (best) { b.hidden = false; const pend = G.actPending && G.actPending === (best.kind + ':' + (best.id || '')); const lab = pend ? '⏳ ' + best.label.replace(/^\S+\s/, '') : best.label;
@@ -282,6 +284,7 @@ async function onAct() {
 async function doAct(t) {
   if (t.kind === 'build') { buildSheet(t.id); return; }
   if (t.kind === 'arena') { await arenaSheet(); return; }
+  if (t.kind === 'market') { await marketSheet(); return; }
   if (t.kind === 'foe') { G.startFight && await G.startFight(t.id); return; }
   if (t.kind === 'war') { R.doWar && await R.doWar(t); return; }
   if (t.kind === 'chop') { const tr = G.nearTree; if (!tr) return; G.chop = { t0: performance.now(), o: { n: { x: tr[0], z: tr[1] }, g: { rotation: {}, position: {} } } }; await new Promise(r => setTimeout(r, 1300)); G.chop = null;
@@ -298,7 +301,7 @@ async function doAct(t) {
 const st0 = () => R.state().pos;
 
 export function initUi(world, k, rpg) {
-  W = world; K = k; THREE = W.THREE; R = rpg; css(); makeBeacon(); initRes(W, K, R); initArena(W, R);
+  W = world; K = k; THREE = W.THREE; R = rpg; css(); makeBeacon(); initRes(W, K, R); initArena(W, R); initMarket(W, R);
   const lv = document.createElement('div'); lv.id = 'hudLv'; lv.className = 'lv'; lv.hidden = true; W.$('hudRole').after(lv);
   const btns = document.createElement('div'); btns.id = 'hudBtns'; btns.innerHTML = '<button class="btn btn-gold" id="hudQ" type="button">📜 Задания</button><button class="btn btn-paper" id="hudS" type="button">👥 Отряд</button><button class="btn btn-paper" id="hudP" type="button">🎒 Герой</button>';
   W.$('hudExit').before(btns); W.$('hudQ').onclick = () => withState(questLog, 'Задания');

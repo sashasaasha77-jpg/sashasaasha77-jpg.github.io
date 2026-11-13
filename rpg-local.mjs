@@ -40,7 +40,7 @@ export function memSb(db, persist = () => { }) {
     persist(); return prefer.includes('return=representation') ? copy(out) : null;
   };
 }
-export function memStore(db, persist = () => { }) { return { get: async k => db.blobs[k] ? JSON.parse(JSON.stringify(db.blobs[k])) : null, set: async (k, v) => { db.blobs[k] = v; persist(); } }; }
+export function memStore(db, persist = () => { }) { return { get: async k => db.blobs[k] ? JSON.parse(JSON.stringify(db.blobs[k])) : null, set: async (k, v) => { db.blobs[k] = v; persist(); }, list: async p => Object.keys(db.blobs).filter(k => k.startsWith(p || '')).sort() }; }
 
 // ---------- демо в браузере ----------
 const LS = 'kp-rpg-demo2';
@@ -56,5 +56,6 @@ export async function localCall(nick, action, b = {}, admin = false) {
   boot(); if (!db.blobs['p/' + nick]) await store.set('p/' + nick, { nick, coins: 0, earned: 0, wkEarned: 0 });
   return rpgAction({ action, b, nick, resident: { nick }, sb, store, demo: true, admin });
 }
+export function demoDb() { boot(); return db; } // для проверок
 export function localChronicle() { boot(); return db.t.chronicle.slice(-50); }
 export function resetDemo() { localStorage.removeItem(LS); location.reload(); }

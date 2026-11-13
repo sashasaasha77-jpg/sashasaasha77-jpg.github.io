@@ -3,7 +3,7 @@
 import { dayKey, weekKey, normalize } from './core.mjs';
 import { roleIdFor, levelOf } from './roles.mjs';
 import { censor } from './censor.mjs';
-import { questsFor, applySpec, nodesFor, NPC, POI, ITEMS, SPEC, ACH, SQUAD, SQUADQ, SHOP, RES, RECIPES, BUFFS, WEAPON, BUILDS, FORT, DECOR, dailyOrder, slotOf, ROLE_PRICE, CHOP, ARENA, RESPAWN_MS as NODE_RESPAWN } from './quests.mjs';
+import { questsFor, applySpec, nodesFor, NPC, POI, ITEMS, SPEC, ACH, SQUAD, SQUADQ, SHOP, RES, RECIPES, BUFFS, WEAPON, BUILDS, FORT, DECOR, dailyOrder, slotOf, ROLE_PRICE, CHOP, ARENA, MARKET, MARKET_STALLS, marketPrices, RESPAWN_MS as NODE_RESPAWN } from './quests.mjs';
 import { heroStats, ABIL, MOVES, MIN_GAP, KINDS, LOOT, ENEMIES, RESPAWN_MS, enemyById, enemyPos, enemyReward, newFight, resolveRound, cooldownLeft, isNight, GEAR, duelStats, duelReward, elo, ARENA_RULES } from './combat.mjs';
 import { mergeConfig, TERR, CAPTURE_ORDER, SIEGE, TASKS, invasionGoal, invasionEnemies, occupiers, WORLD_EVENTS, RAIDERS, TITLES, isBossEvent, bossGoal, bossEnemies } from './world.mjs';
 
@@ -768,6 +768,52 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
         if (row.equipped && row.qty - qty < 1) throw new Bad(409, 'equipped', 'Сначала сними этот предмет.');
         await setItem(it, -qty); await addCoins(price * qty);
         return json(200, { ...(await state(h)), note: `Продано: ${ITEMS[it].name} ×${qty} за ${price * qty} монет.` }); }
+      throw new Bad(400, 'bad_op', 'Неизвестная сделка.');
+    }
+    if (action === 'market') { // рынок к востоку от замка: купцы скупают ресурсы; чем больше продаёт королевство, тем ниже цена до утра
+      const h = await hero(), key = 'market/' + date, mk = (await store.get(key)) || { sold: {} }, pr = () => marketPrices(date, mk.sold, h.role);
+      // ряды игроков: каждый лот — свой ключ lot/<id>; покупку и отмену защищает замок в reward_log (одна сделка на версию лота)
+      const LOT_TTL = 48 * 3600e3, FEE = 0.05, MAXLOTS = 5;
+      const lockLot = async l => { const r = await sb('reward_log', { method: 'POST', body: { nick: 'market', key: `lot:${l.id}:${l.v}` }, prefer: 'resolution=ignore-duplicates,return=representation' }); if (!r || !r.length) throw new Bad(409, 'busy', 'Этот лот только что купили или изменили. Обнови рынок.'); };
+      const lotKeys = store.list ? await store.list('lot/') : [], lotsAll = (lotKeys.length ? await (store.getMany ? store.getMany(lotKeys) : Promise.all(lotKeys.map(k => store.get(k)))) : []).filter(l => l && l.qty > 0);
+      for (const l of lotsAll) if (now - l.at > LOT_TTL) { try { await lockLot(l); await setItem(l.item, l.qty, l.seller); await inboxAdd(l.seller, { t: 'market', text: `Рынок: лот «${ITEMS[l.item]?.name || l.item}» ×${l.qty} никто не купил за 2 дня — товар вернулся к тебе.` }); l.qty = 0; l.v++; await store.set('lot/' + l.id, l); } catch { } }
+      const lots = lotsAll.filter(l => l.qty > 0);
+      const view = () => ({ ...pr(), stalls: MARKET_STALLS, date, lots: lots.sort((x, y) => x.item.localeCompare(y.item) || x.price - y.price || x.at - y.at).slice(0, 80).map(l => ({ id: l.id, seller: l.seller, item: l.item, qty: l.qty, price: l.price, mine: l.seller === nick })), fee: FEE, maxLots: MAXLOTS });
+      if (b.op === 'view' || !b.op) return json(200, { ...(await state(h)), market: view() });
+      await at(h, +b.x, +b.z); if (Math.hypot(h.x - MARKET.x, h.z - MARKET.z) > MARKET.r + 1.5) throw new Bad(409, 'far', 'Торговать можно только на рынке: он к востоку от замка.');
+      const it = String(b.item), P = pr();
+      if (b.op === 'sell') { const q = P.res[it]; if (!q) throw new Bad(400, 'no_sell', 'Купцы это не берут.');
+        const qty = Math.max(1, Math.min(9999, Math.round(+b.qty || 1))), [row] = await sb(`inventory?nick=eq.${N}&item=eq.${enc(it)}&select=qty`);
+        if (!row || row.qty < qty) throw new Bad(409, 'no_item', 'У тебя столько нет.');
+        // цена падает прямо во время большой сделки: считаем по частям
+        let coins = 0; const st = MARKET_STALLS.find(x => x.item === it); for (let left = qty; left > 0;) { const part = Math.min(left, 25); coins += part * marketPrices(date, mk.sold, h.role).res[it].sell; mk.sold[it] = (mk.sold[it] || 0) + part; left -= part; }
+        await setItem(it, -qty); await addCoins(coins); await store.set(key, mk);
+        return json(200, { ...(await state(h)), market: view(), note: `${st.who}: беру! ${ITEMS[it].name} ×${qty} — ${coins} монет.` }); }
+      if (b.op === 'buy') { const rare = P.rare.item === it, q = P.res[it]; if (!rare && !q) throw new Bad(400, 'no_item', 'Такого товара сегодня нет.');
+        const qty = rare ? 1 : Math.max(1, Math.min(50, Math.round(+b.qty || 1))), price = (rare ? P.rare.price : q.buy) * qty;
+        const p = await store.get('p/' + nick); if (!p || p.coins < price) throw new Bad(409, 'poor', `Нужно ${price} монет.`);
+        p.coins -= price; await store.set('p/' + nick, p); await setItem(it, qty);
+        return json(200, { ...(await state(h)), market: view(), note: `Куплено на рынке: ${ITEMS[it].name} ×${qty} за ${price} монет.` }); }
+      if (b.op === 'list') { // выставить свой товар: он уходит с героя и лежит на прилавке, пока не купят (до 2 дней)
+        const def = ITEMS[it]; if (!def || !(RES.includes(it) || ['consumable', 'gear'].includes(def.type))) throw new Bad(400, 'no_list', 'Это на рынок выставить нельзя.');
+        if (lots.filter(l => l.seller === nick).length >= MAXLOTS) throw new Bad(409, 'many', `Не больше ${MAXLOTS} лотов сразу. Сними старый или подожди, пока купят.`);
+        const qty = Math.max(1, Math.min(999, Math.round(+b.qty || 1))), cap = RES.includes(it) ? P.res[it].buy * 4 : 1000, price = Math.round(+b.price);
+        if (!(price >= 1 && price <= cap)) throw new Bad(400, 'bad_price', `Цена за штуку — от 1 до ${cap} монет.`);
+        const [row] = await sb(`inventory?nick=eq.${N}&item=eq.${enc(it)}&select=qty,equipped`); if (!row || row.qty < qty) throw new Bad(409, 'no_item', 'У тебя столько нет.');
+        if (row.equipped && row.qty - qty < 1) throw new Bad(409, 'equipped', 'Сначала сними этот предмет.');
+        await setItem(it, -qty); const l = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), seller: nick, item: it, qty, price, at: now, v: 0 }; await store.set('lot/' + l.id, l); lots.push(l);
+        return json(200, { ...(await state(h)), market: view(), note: `Выставлено: ${def.name} ×${qty} по ${price} монет. Деньги придут, когда купят.` }); }
+      if (b.op === 'take' || b.op === 'cancel') { const l = lots.find(x => x.id === String(b.lot)); if (!l) throw new Bad(404, 'gone', 'Этого лота уже нет.');
+        if (b.op === 'cancel') { if (l.seller !== nick) throw new Bad(403, 'not_yours', 'Это не твой лот.'); await lockLot(l); await setItem(l.item, l.qty); l.qty = 0; l.v++; await store.set('lot/' + l.id, l); lots.splice(lots.indexOf(l), 1);
+          return json(200, { ...(await state(h)), market: view(), note: 'Лот снят, товар вернулся к тебе.' }); }
+        if (l.seller === nick) throw new Bad(409, 'own', 'Свой товар купить нельзя — его можно снять.');
+        const qty = Math.max(1, Math.min(l.qty, Math.round(+b.qty || 1))), total = qty * l.price;
+        const p = await store.get('p/' + nick); if (!p || p.coins < total) throw new Bad(409, 'poor', `Нужно ${total} монет.`);
+        await lockLot(l); p.coins -= total; await store.set('p/' + nick, p); await setItem(l.item, qty);
+        l.qty -= qty; l.v++; await store.set('lot/' + l.id, l); if (!l.qty) lots.splice(lots.indexOf(l), 1);
+        const got = Math.max(1, Math.floor(total * (1 - FEE))); await addCoins(got, l.seller);
+        await inboxAdd(l.seller, { t: 'market', text: `Рынок: @${nick} купил у тебя ${ITEMS[l.item]?.name || l.item} ×${qty}. Тебе +${got} монет.` });
+        return json(200, { ...(await state(h)), market: view(), note: `Куплено у @${l.seller}: ${ITEMS[l.item].name} ×${qty} за ${total} монет.` }); }
       throw new Bad(400, 'bad_op', 'Неизвестная сделка.');
     }
     if (action === 'equip') {

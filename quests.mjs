@@ -18,6 +18,8 @@ export const NPC = {
 // места для заданий — на дорогах, куда можно дойти
 // Арена за рекой: перекрёсток к северу от моста (центр, радиус песка)
 export const ARENA = { x: R(1), z: R(10), r: 7 };
+// Рынок (победил в голосовании подданных, 13.11.2026): отдельный квартал к востоку от замка, на дороге от восточных ворот
+export const MARKET = { x: R(6), z: R(0), r: 9.5 };
 export const POI = {
   gate: { name: 'ворота замка', x: 0, z: 10.0 },
   fountain: { name: 'фонтан на площади', x: -4.8, z: 9.9 },
@@ -31,6 +33,7 @@ export const POI = {
   far_se: { name: 'юго-восточная окраина', x: R(2), z: R(3) },
   far_sw: { name: 'юго-западная окраина', x: R(-3), z: R(3) },
   arena: { name: 'арена за рекой', x: R(1), z: R(10) - 5 },
+  market: { name: 'рынок к востоку от замка', x: R(6) - 8, z: R(0) },
 };
 
 export const ITEMS = {
@@ -257,4 +260,21 @@ export function dailyOrder(date) {
   const h = hash('order:' + date) >>> 0, need = { wood: 3 + h % 6, herb: 2 + (h >>> 4) % 5, ore: 2 + (h >>> 8) % 4 };
   const coins = 3 * Object.entries(need).reduce((s, [k, n]) => s + SHOP.sell[k] * n, 0);
   return { need, coins, xp: 40 };
+}
+
+// ---------------- рынок: купцы скупают ресурсы дороже лавки; цена падает, когда королевство продаёт много, и растёт к утру ----------------
+export const MARKET_STALLS = [
+  { id: 'les', item: 'wood', name: 'Лесоторговец', who: 'Ефим', icon: '🪵', dx: 0, dz: -6.2 },
+  { id: 'trava', item: 'herb', name: 'Травница', who: 'Агафья', icon: '🌿', dx: 6.2, dz: 0 },
+  { id: 'ruda', item: 'ore', name: 'Рудознатец', who: 'Тихон', icon: '⛏️', dx: 0, dz: 6.2 },
+];
+export const MARKET_BASE = { sell: { wood: 6, herb: 6, ore: 8 }, buy: { wood: 12, herb: 12, ore: 16 }, glut: 600, floor: 0.5, hot: 1.8, trader: 1.15 };
+export const MARKET_RARE = [['potion_power', 35], ['potion_speed', 30], ['wood_shield', 80], ['iron_helm', 100], ['boots', 55], ['gloves', 45]];
+// товар дня в цене (скупают почти вдвое дороже) и редкий товар дня — одинаковы для всех, меняются в полночь
+export function marketDay(date) { const h = hash('market|' + date) >>> 0; return { hot: RES[h % RES.length], rare: MARKET_RARE[(h >>> 5) % MARKET_RARE.length] }; }
+export function marketPrices(date, sold = {}, role = '') {
+  const d = marketDay(date), B = MARKET_BASE, out = {};
+  for (const it of RES) { const glut = Math.max(B.floor, 1 - (sold[it] || 0) / B.glut), hot = it === d.hot;
+    out[it] = { sell: Math.max(1, Math.round(B.sell[it] * (hot ? B.hot : 1) * glut * (role === 'torgovets' ? B.trader : 1))), buy: Math.round(B.buy[it] * (hot ? 1.3 : 1)), hot, glut: Math.round(glut * 100), sold: sold[it] || 0 }; }
+  return { day: d, res: out, rare: { item: d.rare[0], price: Math.round(d.rare[1] * (role === 'torgovets' ? 0.9 : 1)) } };
 }
