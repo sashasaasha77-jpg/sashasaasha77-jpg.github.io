@@ -84,17 +84,17 @@ export const LOOT = { knight: [['potion', 0.4], ['iron_helm', 0.06], ['iron_swor
   dragon: [['potion', 1], ['lord_shard', 1], ['ancient_relic', 0.3], ['dragon_blade', 0.12], ['dragon_scale', 0.1]], lich: [['potion', 1], ['lord_shard', 0.6], ['lich_scythe', 0.2]], giant: [['potion', 1], ['lord_shard', 0.8], ['ore', 1], ['frost_staff', 0.2], ['tower_shield', 0.2]] };
 
 // лагерь Ордена — на севере за городом; патрули ходят туда-обратно по дорогам
-export const CAMP = { x: R(0), z: R(-8), r: 12 };
+export const CAMP = { x: R(0), z: R(-8) - 105.6, r: 12 }; // 14.11.2026: лагерь втрое дальше от королевства
 export const ENEMIES = [
-  { id: 'n1', kind: 'knight', lvl: 1, path: [[R(0), R(-3)], [R(0), R(-5)]] },
-  { id: 'n2', kind: 'knight', lvl: 2, path: [[R(-2), R(-3)], [R(-4), R(-3)]] },
-  { id: 'n3', kind: 'archer', lvl: 3, path: [[R(2), R(-5)]] },
-  { id: 'n4', kind: 'archer', lvl: 3, path: [[R(-2), R(-6)]] },
-  { id: 'n5', kind: 'knight', lvl: 4, path: [[R(-1), R(-7)], [R(1), R(-7)]] },
-  { id: 'n6', kind: 'heavy', lvl: 5, path: [[R(0), R(-6)], [R(0), R(-7)]], speed: 0.6 },
-  { id: 'n7', kind: 'captain', lvl: 6, path: [[R(1), R(-8)], [R(1), -57.4]] },
-  { id: 'n8', kind: 'heavy', lvl: 6, path: [[R(-1), R(-9)]] },
-  { id: 'n9', kind: 'lord', lvl: 9, path: [[R(0), -59.4]] },
+  { id: 'n1', kind: 'knight', lvl: 1, path: [[R(0), R(-3) - 105.6], [R(0), R(-5) - 105.6]] },
+  { id: 'n2', kind: 'knight', lvl: 2, path: [[R(-2), R(-3) - 105.6], [R(-4), R(-3) - 105.6]] },
+  { id: 'n3', kind: 'archer', lvl: 3, path: [[R(2), R(-5) - 105.6]] },
+  { id: 'n4', kind: 'archer', lvl: 3, path: [[R(-2), R(-6) - 105.6]] },
+  { id: 'n5', kind: 'knight', lvl: 4, path: [[R(-1), R(-7) - 105.6], [R(1), R(-7) - 105.6]] },
+  { id: 'n6', kind: 'heavy', lvl: 5, path: [[R(0), R(-6) - 105.6], [R(0), R(-7) - 105.6]], speed: 0.6 },
+  { id: 'n7', kind: 'captain', lvl: 6, path: [[R(1), R(-8) - 105.6], [R(1), -57.4 - 105.6]] },
+  { id: 'n8', kind: 'heavy', lvl: 6, path: [[R(-1), R(-9) - 105.6]] },
+  { id: 'n9', kind: 'lord', lvl: 9, path: [[R(0), -59.4 - 105.6]] },
   { id: 's1', kind: 'knight', lvl: 2, path: [[R(2), R(7)], [R(3), R(7)]] }, // северный берег реки (раньше тропа шла по воде)
   { id: 's2', kind: 'archer', lvl: 2, path: [[R(-3), R(8)]] },
   // за рекой у камней — големы; на берегах — кикиморы; утопцы выходят только ночью
@@ -102,16 +102,16 @@ export const ENEMIES = [
   { id: 'g2', kind: 'golem', lvl: 18, path: [[R(3), R(13)], [R(4), R(13)]], speed: 0.5 },
   { id: 'g3', kind: 'golem', lvl: 24, path: [[R(-6), R(13)]] },
   // Болото к западу от замка (13.11.2026): кикиморы и утопцы живут теперь здесь, а не у реки; в глубине — хижина Болотной ведьмы
-  { id: 'k1', kind: 'kikimora', lvl: 9, path: [[-45.5, -2], [-45.5, 8.5]] },
-  { id: 'k2', kind: 'kikimora', lvl: 15, path: [[-55, -6.5], [-49.5, -8]] },
-  { id: 'k3', kind: 'kikimora', lvl: 12, path: [[-58, 10.5], [-52.5, 12.5]] },
-  { id: 'k4', kind: 'kikimora', lvl: 18, path: [[-62.5, 1.5], [-61, 7]] },
-  { id: 'u1', kind: 'utopets', lvl: 15, path: [[-50.5, 5.5]] },
-  { id: 'u2', kind: 'utopets', lvl: 21, path: [[-57.5, -1.5]] },
-  { id: 'u3', kind: 'utopets', lvl: 24, path: [[-65.5, 9.5]] },
-  { id: 'w1', kind: 'witch', lvl: 28, path: [[-62.5, -7.5], [-60, -5]], speed: 0.4 },
+  { id: 'k1', kind: 'kikimora', lvl: 9, path: [[-151.1, -2], [-151.1, 8.5]] },
+  { id: 'k2', kind: 'kikimora', lvl: 15, path: [[-160.6, -6.5], [-155.1, -8]] },
+  { id: 'k3', kind: 'kikimora', lvl: 12, path: [[-163.6, 10.5], [-158.1, 12.5]] },
+  { id: 'k4', kind: 'kikimora', lvl: 18, path: [[-168.1, 1.5], [-166.6, 7]] },
+  { id: 'u1', kind: 'utopets', lvl: 15, path: [[-156.1, 5.5]] },
+  { id: 'u2', kind: 'utopets', lvl: 21, path: [[-163.1, -1.5]] },
+  { id: 'u3', kind: 'utopets', lvl: 24, path: [[-171.1, 9.5]] },
+  { id: 'w1', kind: 'witch', lvl: 28, path: [[-168.1, -7.5], [-165.6, -5]], speed: 0.4 },
 ];
-export const SWAMP = { x: -52.8, z: 3.3, r: 17 };
+export const SWAMP = { x: -158.4, z: 3.3, r: 17 };
 export const RESPAWN_MS = { knight: 3 * 60e3, archer: 3 * 60e3, heavy: 5 * 60e3, captain: 8 * 60e3, lord: 30 * 60e3, commander: 60 * 60e3, golem: 5 * 60e3, kikimora: 4 * 60e3, utopets: 6 * 60e3, witch: 20 * 60e3, skeleton: 60e3, dragon: 60e3, lich: 60e3, giant: 60e3 };
 export const enemyById = id => ENEMIES.find(e => e.id === id);
 export function enemyPos(e, t) {
@@ -216,3 +216,25 @@ export function duelStats(nick, role, level, hs) { return { name: `Тень @${n
 export function duelReward(oppLvl) { return { xp: 12 * oppLvl, coins: 10 + 4 * oppLvl }; }
 export const elo = (ra, rb, win, k = ARENA_RULES.k) => Math.round(k * ((win ? 1 : 0) - 1 / (1 + 10 ** ((rb - ra) / 400))));
 export const DUEL_INTENT = { fire: 'колдует огненный шар! Уклоняйся!', slam: 'заносит тяжёлый молот! Защищайся!', poison: 'швыряет склянку с ядом! Уклоняйся!', wait: 'выжидает и следит за тобой', heavy: 'замахивается со всей силы! Защищайся!' };
+
+// ---------------- Горы и шахта, подземелье, Снежный король, питомцы (14.11.2026) ----------------
+Object.assign(KINDS, {
+  troll: { name: 'Горный тролль', hp: 150, atk: 16, def: 8, dodge: 0.03, pattern: ['attack', 'slam', 'wait', 'attack'], xp: 2, scale: 1.25, beast: true },
+  mountain_king: { name: 'Горный король', hp: 420, atk: 24, def: 12, dodge: 0, pattern: ['wait', 'slam', 'attack', 'heavy', 'attack'], xp: 4, scale: 1.9, beast: true, lab: 4.4, dungeon: true },
+  snowking: { name: 'Снежный король', hp: 1000, atk: 22, def: 10, dodge: 0.02, pattern: ['wait', 'freeze', 'heavy', 'attack', 'attack'], xp: 10, scale: 1.15, boss: true, beast: true, lab: 4.6 },
+});
+Object.assign(LOOT, {
+  troll: [['ore', 1], ['gem', 0.35], ['chainmail', 0.03], ['war_axe', 0.03]],
+  mountain_king: [['gem', 1]],
+  snowking: [['potion', 1], ['lord_shard', 0.8], ['frost_staff', 0.1], ['pet_wolf', 0.06], ['amulet_luck', 0.2]],
+});
+Object.assign(RESPAWN_MS, { troll: 5 * 60e3, mountain_king: 60e3, snowking: 60e3 });
+ENEMIES.push(
+  { id: 't1', kind: 'troll', lvl: 16, path: [[-36.5, -38], [-39, -44]], speed: 0.45 },
+  { id: 't2', kind: 'troll', lvl: 20, path: [[-44, -35], [-49, -37]], speed: 0.45 },
+  { id: 't3', kind: 'troll', lvl: 24, path: [[-58, -48], [-56, -42]], speed: 0.4 },
+  { id: 't4', kind: 'troll', lvl: 30, path: [[-40, -56], [-46, -58]], speed: 0.4 },
+  { id: 'mk', kind: 'mountain_king', lvl: 22, path: [[-50.5, -51.5]], dungeon: true },
+);
+Object.assign(SLOT_OF, { pet_fox: 'pet', pet_owl: 'pet', pet_wolf: 'pet' });
+Object.assign(GEAR, { pet_fox: {}, pet_owl: {}, pet_wolf: { atk: 2 } });

@@ -5,7 +5,8 @@ import { roleIdFor, levelOf } from './roles.mjs';
 import { censor } from './censor.mjs';
 import { ORDER, COLORS, GOALS, orderLevel, levelBonus, nextLevelPts, validName } from './orders.mjs';
 import { questsFor, applySpec, nodesFor, NPC, POI, ITEMS, SPEC, ACH, SQUAD, SQUADQ, SHOP, RES, RECIPES, BUFFS, WEAPON, BUILDS, FORT, DECOR, dailyOrder, slotOf, ROLE_PRICE, CHOP, ARENA, MARKET, MARKET_STALLS, marketPrices, RESPAWN_MS as NODE_RESPAWN } from './quests.mjs';
-import { heroStats, ABIL, MOVES, MIN_GAP, KINDS, LOOT, ENEMIES, RESPAWN_MS, enemyById, enemyPos, enemyReward, newFight, resolveRound, cooldownLeft, isNight, GEAR, gearSlot, gearScore, duelStats, duelReward, elo, ARENA_RULES } from './combat.mjs';
+import { activeGear, heroStats, ABIL, MOVES, MIN_GAP, KINDS, LOOT, ENEMIES, RESPAWN_MS, enemyById, enemyPos, enemyReward, newFight, resolveRound, cooldownLeft, isNight, GEAR, gearSlot, gearScore, duelStats, duelReward, elo, ARENA_RULES } from './combat.mjs';
+import { TUT, TUT_STEP_COINS, TUT_DONE, loginReward, prevDay, REF, nySeason, TREE, pickGift, SNOW, nextSaturday, PETS, PET_BONUS, MINE, DUNGEON, LOOKS, ENCH, OWAR, owarWindow, owarLast } from './extras.mjs';
 import { mergeConfig, TERR, CAPTURE_ORDER, SIEGE, TASKS, invasionGoal, invasionEnemies, occupiers, WORLD_EVENTS, RAIDERS, TITLES, isBossEvent, bossGoal, bossEnemies } from './world.mjs';
 
 export class Bad extends Error { constructor(status, code, msg) { super(msg); this.status = status; this.code = code; } }
@@ -128,13 +129,16 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
       const start = last ? Math.max(nextSlot(cfg, Date.parse(last.ends_at)), now + cfg.invasion.warnHours * 36e5) : now + cfg.firstInvasionHours * 36e5;
       await sb('world_events', { method: 'POST', body: { kind: 'invasion', status: 'scheduled', starts_at: ISO(start), ends_at: ISO(start + cfg.invasion.durationMin * 6e4), difficulty: cfg.invasion.difficulty, progress: 0, goal: 100, data: {}, updated_at: ISO(now) } });
     }
-    if (cfg.events.enabled && !evs.some(e => e.kind !== 'invasion')) {
-      const [last] = await sb(`world_events?kind=neq.invasion&order=ends_at.desc&limit=1&select=ends_at`);
-      const start = last ? Date.parse(last.ends_at) + cfg.events.everyDays * 864e5 : now + 6 * 36e5, kinds = Object.keys(WORLD_EVENTS), kind = kinds[Math.floor(Math.random() * kinds.length)];
+    if (cfg.events.enabled && !evs.some(e => e.kind !== 'invasion' && !WORLD_EVENTS[e.kind]?.seasonal)) {
+      const [last] = await sb(`world_events?kind=not.in.(invasion,snowking)&order=ends_at.desc&limit=1&select=ends_at`);
+      const start = last ? Date.parse(last.ends_at) + cfg.events.everyDays * 864e5 : now + 6 * 36e5, kinds = Object.keys(WORLD_EVENTS).filter(k => !WORLD_EVENTS[k].seasonal), kind = kinds[Math.floor(Math.random() * kinds.length)];
       const data = kind === 'artifact' ? { spot: SIEGE.scout[Math.floor(Math.random() * 4)], finders: [] } : kind === 'raid' || isBossEvent(kind) ? { lvl: await avgLevel(), wins: 0 } : {};
       const bGoal = isBossEvent(kind) ? bossGoal(kind, await activeHeroCount(), cfg.invasion.difficulty) : 0;
       await sb('world_events', { method: 'POST', body: { kind, status: 'scheduled', starts_at: ISO(start), ends_at: ISO(start + cfg.events.durationHours * 36e5), difficulty: 1, progress: 0, goal: bGoal || (kind === 'raid' ? 15 : kind === 'artifact' ? 5 : 1), data, updated_at: ISO(now) } });
-    }
+    }    if (nySeason(now) && !evs.some(e => e.kind === 'snowking')) { // новогодний праздник: Снежный король по субботам в 20:00
+      const start = nextSaturday(now); if (nySeason(start)) {
+        const [dup] = await sb(`world_events?kind=eq.snowking&starts_at=eq.${enc(ISO(start))}&select=id`);
+        if (!dup) await sb('world_events', { method: 'POST', body: { kind: 'snowking', status: 'scheduled', starts_at: ISO(start), ends_at: ISO(start + SNOW.durationMin * 6e4), difficulty: 1, progress: 0, goal: bossGoal('snowking', await activeHeroCount(), cfg.invasion.difficulty), data: { lvl: await avgLevel(), wins: 0 }, updated_at: ISO(now) } }); } }
   }
   async function worldEnemies() {
     const out = [], [evs, terr] = await Promise.all([sb(`world_events?status=eq.active&select=*`), sb('territories?owner=eq.order&select=id')]);
@@ -187,7 +191,8 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
   // личные данные героя для ресурсов (уровень оружия, временные эффекты, заказ дня) — в хранилище, без новых таблиц
   async function rpgGet(who = nick) { return (await store.get('rpg/' + who)) || {}; }
   async function rpgSet(v, who = nick) { await store.set('rpg/' + who, v); }
-  async function statsOf(h) { const [eq, rp] = await Promise.all([equipped(), rpgGet()]); const s = heroStats(h.role, levelOf(h.xp).level, eq);
+  async function statsOf(h) { const [eq, rp, en] = await Promise.all([equipped(), rpgGet(), store.get('ench/' + nick)]); const s = heroStats(h.role, levelOf(h.xp).level, eq);
+    { const wpn = activeGear(eq).find(i => gearSlot(i) === 'weapon'); if (wpn && en && en[wpn]) s.atk += en[wpn] * ENCH.atk; }
     s.atk += (rp.wlvl || 0) * WEAPON.atk; if ((rp.buffs?.rage || 0) > now) s.atk = Math.round(s.atk * 1.4); else if ((rp.buffs?.power || 0) > now) s.atk = Math.round(s.atk * 1.25); return s; }
   async function builds() { return (await cfgGet('builds')) || {}; }
   // хватает ли ресурсов; списать
@@ -264,11 +269,11 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
   }
   async function state(h) {
     const [, h0] = await Promise.all([advanceWorld(), hero()]); h = h0; // мир и герой — параллельно (advanceWorld героя не меняет)
-    const [items, qrows, achs, gathered, [sqv, invites], combat, world, coins, choppedRows, resv, inbox] = await Promise.all([
+    const [items, qrows, achs, gathered, [sqv, invites], combat, world, coins, choppedRows, resv, inbox, extra] = await Promise.all([
       inv(), sb(`quests?nick=eq.${N}&or=(status.eq.active,period.eq.once,period.eq.${date})&select=quest_id,period,status,progress`),
       sb(`achievements?nick=eq.${N}&select=ach_id,at`), sb(`reward_log?nick=eq.${N}&key=like.${enc('g:' + date + ':')}*&select=key`),
       Promise.all([mySquad().then(squadView), sb(`squad_invites?to_nick=eq.${N}&status=eq.pending&select=id,squad_id,from_nick`)]),
-      combatView(h), worldView(), coinsOf(), sb(`reward_log?nick=eq.${N}&key=like.${enc('t:' + date + ':' + slotOf(now) + ':')}*&select=key`), resView(), inboxTake()]); // всё одним заходом — быстрее отклик
+      combatView(h), worldView(), coinsOf(), sb(`reward_log?nick=eq.${N}&key=like.${enc('t:' + date + ':' + slotOf(now) + ':')}*&select=key`), resView(), inboxTake(), extraView()]); // всё одним заходом — быстрее отклик
     const L = levelOf(h.xp);
     const slot = slotOf(now), taken = new Set(gathered.filter(g => g.key.split(':')[2] === String(slot)).map(g => g.key.split(':').pop()));
     const chopped = choppedRows.map(g => g.key.split(':').pop());
@@ -279,8 +284,64 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
     await Promise.all(invites.map(async iv => { const [sq] = await sb(`squads?id=eq.${iv.squad_id}&select=name`); iv.name = sq ? sq.name : '?'; }));
     return { hero: { nick, role: h.role, xp: h.xp, level: L.level, into: L.into, need: L.need, hp: h.hp, x: h.x, z: h.z, face: h.face, spec: SPEC[h.role] },
       squad: sqv, invites: invites.filter(i => i.name !== '?'), week: wk, combat, world, title: h.title || null, coins, inventory: items.filter(i => i.qty > 0), quests: qs, achievements: achs, nodes: nodesFor(date).map(n => ({ ...n, taken: taken.has(n.id) })), respawnAt: (slot + 1) * NODE_RESPAWN, rolePrice: ROLE_PRICE, chopped, date,
-      res: resv, inbox };
+      res: resv, inbox, extra };
   }
+  // ---------- обучение, вход каждый день, друзья, праздник, подземелье ----------
+  async function extraView() {
+    const [tut, lg, rf, rfs, gift, look, ench, war] = await Promise.all([store.get('tut/' + nick), store.get('login/' + nick), store.get('ref/' + nick), store.get('refs/' + nick), store.get('gift/' + nick), store.get('look/' + nick), store.get('ench/' + nick), owarView()]);
+    const l = lg || {}, streak = l.last === date ? l.streak : l.last === prevDay(date) ? l.streak : 0;
+    return { tut: tut || { step: 0, done: false }, login: { claimed: l.last === date, streak, next: loginReward(streak + 1), nextDay: streak % 7 + 1 },
+      ref: { by: rf?.by || null, n: rfs?.n || 0 }, ny: nySeason(now), gift: gift === date, look: look || { cur: {}, owned: [] }, ench: ench || {}, war };
+  }
+  async function spend(n) { const p = await store.get('p/' + nick); if (!p || (p.coins || 0) < n) throw new Bad(409, 'money', `Не хватает монет: нужно ${n}.`); p.coins -= n; await store.set('p/' + nick, p); }
+  async function giveItems(list, who = nick) { for (const [it, q] of list || []) await setItem(it, q, who); }
+  async function tutCheck(h, b, items) {
+    const t = (await store.get('tut/' + nick)) || { step: 0, done: false }; if (t.done) return t;
+    const st = TUT[t.step]; if (!st) return t; let ok = false;
+    if (st.id === 'meet' || st.id === 'market') ok = Number.isFinite(+b.x) && Math.hypot(+b.x - st.x, +b.z - st.z) <= st.r;
+    else if (st.id === 'gather') ok = (items || await inv()).some(i => ['wood', 'herb', 'ore', 'mushroom', 'gem'].includes(i.item) && i.qty > 0) || (await sb(`reward_log?nick=eq.${N}&key=like.${enc('g:')}*&select=key&limit=1`)).length > 0;
+    else if (st.id === 'fight') ok = (await sb(`fights?nick=eq.${N}&status=eq.won&select=id&limit=1`)).length > 0;
+    if (!ok) return null;
+    const ins = await sb('reward_log', { method: 'POST', body: { nick, key: `tut:${st.id}`, gold: TUT_STEP_COINS, xp: 0 }, prefer: 'resolution=ignore-duplicates,return=representation' });
+    if (ins && ins.length) await addCoins(TUT_STEP_COINS);
+    t.step++; let fin = false;
+    if (t.step >= TUT.length) { const ins2 = await sb('reward_log', { method: 'POST', body: { nick, key: 'tut:done', gold: TUT_DONE.coins, xp: TUT_DONE.xp }, prefer: 'resolution=ignore-duplicates,return=representation' });
+      if (ins2 && ins2.length) { await addCoins(TUT_DONE.coins); h.xp += TUT_DONE.xp; await sb(`heroes?nick=eq.${N}`, { method: 'PATCH', body: { xp: h.xp } }); await giveItems(TUT_DONE.items); fin = true; }
+      t.done = true; }
+    await store.set('tut/' + nick, t); return { ...t, passed: st, fin };
+  }
+  // ---------- война орденов ----------
+  async function owarFlags(id) { const vals = await gm(OWAR.flags.map(f => `owar/${id}/${f.id}`)); return OWAR.flags.map((f, i) => ({ ...f, inf: (vals[i] || {}).inf || {} })); }
+  const flagOwner = inf => { let best = null, bv = 0; for (const [o, v] of Object.entries(inf)) if (v > bv) { bv = v; best = o; } return best; };
+  async function owarSettle(w) {
+    const done = await store.get('owar/settled'); if (done === w.id) return;
+    const lock = await sb('reward_log', { method: 'POST', body: { nick: 'orders', key: 'owar:' + w.id }, prefer: 'resolution=ignore-duplicates,return=representation' });
+    await store.set('owar/settled', w.id); if (!lock || !lock.length) return;
+    const flags = await owarFlags(w.id), who = (await store.get(`owar/${w.id}/who`)) || {}, held = {};
+    if (!Object.keys(who).length) return; // в эту войну никто не сражался
+    for (const f of flags) { const o = flagOwner(f.inf); if (o) held[o] = (held[o] || 0) + 1; }
+    const ids = Object.keys(held), top = Math.max(0, ...Object.values(held)), winners = ids.filter(i => held[i] === top && top > 0);
+    const orders = Object.fromEntries((await gm(ids.map(i => 'order/' + i))).filter(Boolean).map(o => [o.id, o]));
+    for (const id of ids) { const o = orders[id]; if (!o) continue; const pts = OWAR.flagPts * held[id]; o.pts = (o.pts || 0) + pts; const wk = weekKey(new Date(now)); o.week = o.week?.wk === wk ? { wk, pts: o.week.pts + pts } : { wk, pts };
+      o.log = [{ at: now, t: `⚔️ Война орденов: удержано флагов — ${held[id]}, +${pts} очков${winners.includes(id) ? '. ПОБЕДА!' : ''}` }, ...(o.log || [])].slice(0, 30); await store.set('order/' + id, o); }
+    for (const [n, x] of Object.entries(who)) { const win = winners.includes(x.o), c = Math.min(OWAR.partCap, OWAR.partCoins + x.n * OWAR.perPress) + (win ? OWAR.winBonus : 0);
+      await addCoins(c, n); const [hh] = await sb(`heroes?nick=eq.${enc(n)}&select=xp`); if (hh) await sb(`heroes?nick=eq.${enc(n)}`, { method: 'PATCH', body: { xp: hh.xp + x.n * OWAR.partXp } });
+      await inboxAdd(n, { t: 'order', text: `⚔️ Война орденов окончена${win ? ' — твой орден ПОБЕДИЛ!' : '.'} Тебе +${c} монет и +${x.n * OWAR.partXp} опыта.`, at: now }); }
+    const res = { id: w.id, winners: winners.map(i => ({ id: i, name: orders[i]?.name || '?', color: orders[i]?.color || '#E8B931' })), flags: flags.map(f => { const o = flagOwner(f.inf); return { id: f.id, owner: o, name: orders[o]?.name || null, color: orders[o]?.color || null }; }) };
+    await store.set('owar/last', res);
+    await chron('owar', winners.length ? `⚔️ Война орденов окончена! Победил${winners.length > 1 ? 'и' : ''}: ${res.winners.map(x => '«' + x.name + '»').join(', ')} — флагов: ${top}.` : '⚔️ Война орденов окончена — флаги никто не взял.');
+  }
+  async function owarView() {
+    const w = owarWindow(now), active = now >= w.start && now < w.end, prev = owarLast(now);
+    if (prev) await owarSettle(prev);
+    const last = await store.get('owar/last');
+    if (!active) return { active: false, start: w.start, end: w.end, last };
+    const flags = await owarFlags(w.id), oids = [...new Set(flags.flatMap(f => Object.keys(f.inf)))], os = Object.fromEntries((await gm(oids.map(i => 'order/' + i))).filter(Boolean).map(o => [o.id, o]));
+    return { active: true, start: w.start, end: w.end, last, flags: flags.map(f => { const own = flagOwner(f.inf); return { id: f.id, owner: own, name: os[own]?.name || null, color: os[own]?.color || null,
+      top: Object.entries(f.inf).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([o, v]) => ({ id: o, name: os[o]?.name || '?', color: os[o]?.color || '#999', v })) }; }) };
+  }
+  async function myOrder() { const oid = await store.get('om/' + nick), o = oid && await store.get('order/' + oid); return o && o.members?.[nick] ? o : null; }
+  async function dungeonPool(sq) { const k = 'dung/' + sq.id, p = await store.get(k); return p && p.date === date ? p : null; }
   async function resView() {
     const [rp, bl, fort, decor] = await Promise.all([rpgGet(), builds(), cfgGet('fort'), store.get('decor')]);
     return { wlvl: rp.wlvl || 0, buffs: rp.buffs || {}, orderDone: rp.orderDay === date, order: dailyOrder(date), builds: bl, fort: fort || { pts: 0 }, decor: (decor || {})[nick] || [] };
@@ -524,6 +585,13 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
         const [last] = await sb(`fights?nick=eq.${N}&enemy_id=eq.${e.id}&status=eq.won&select=updated_at&order=updated_at.desc&limit=1`);
         if (last && now - Date.parse(last.updated_at) < respawnOf(e)) throw new Bad(409, 'dead', 'Этот враг уже повержен. Он вернётся позже.');
         const hp = hpNow(h, hs.hp); if (hp < hs.hp * 0.15) throw new Bad(409, 'weak', 'Ты слишком ранен. Отдохни немного: здоровье восстанавливается само.');
+        if (e.dungeon) { // подземелье: только орденом, раз в день
+          const sq = await myOrder(); if (!sq) throw new Bad(409, 'order', 'Горного короля в одиночку не одолеть. Вступи в орден (🏰 Орден) и приходите хотя бы вдвоём.');
+          const ms = Object.keys(sq.members || {}), hs2 = await sb(`heroes?nick=in.(${ms.map(m => enc(m)).join(',')})&select=nick,x,z,updated_at`), ep = e.path[0];
+          const here = hs2.filter(x => x.nick === nick || (x.x != null && Math.hypot(x.x - ep[0], x.z - ep[1]) < DUNGEON.near && now - Date.parse(x.updated_at) < DUNGEON.freshMin * 6e4));
+          if (here.length < DUNGEON.needMembers) throw new Bad(409, 'order', `Нужно ${DUNGEON.needMembers} героя из ордена у входа в шахту. Сейчас рядом: ${here.length}.`);
+          let pool = await dungeonPool(sq); if (pool?.done) throw new Bad(409, 'done', 'Сегодня ваш орден уже победил Горного короля. Он вернётся завтра!');
+          if (!pool) { pool = { date, max: DUNGEON.hpPer * Math.max(DUNGEON.needMembers, Math.min(ms.length, 6)), hits: {}, done: false }; pool.hp = pool.max; await store.set('dung/' + sq.id, pool); } }
         const f = newFight(e, hs, hp, now - MIN_GAP); f.ex = +p.x.toFixed(2); f.ez = +p.z.toFixed(2);
         const [row] = await sb('fights', { method: 'POST', body: { nick, enemy_id: e.id, status: 'active', f, updated_at: new Date(now).toISOString() }, prefer: 'return=representation' });
         fr = row; log = [`${KINDS[e.kind].name} (ур. ${e.lvl}) вступает в бой!`];
@@ -545,6 +613,17 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
           if (bev && isBossEvent(bev.kind)) { const dealt = (eBefore - f.eHp) + (e.kind === 'skeleton' && f.eHp <= 0 ? 120 : 0); await contrib(bev.id, Math.max(1, dealt / 4)); // даже слабый удар засчитывается
             const up = await evUpdate(bev.id, c => (c.progress = Math.min(c.goal, c.progress + dealt), c)); log.push(`Общее здоровье босса: ${Math.max(0, up.goal - up.progress)} из ${up.goal}.`);
             if (up.progress >= up.goal) await closeEvent(up, 'won'); } }
+        if (e.dungeon && eBefore > f.eHp) { const sq = await myOrder(); const pool = sq && await dungeonPool(sq);
+          if (pool && !pool.done) { const dealt = eBefore - f.eHp; pool.hp = Math.max(0, pool.hp - dealt); pool.hits[nick] = (pool.hits[nick] || 0) + dealt;
+            log.push(`Общее здоровье Горного короля: ${pool.hp} из ${pool.max}.`);
+            if (pool.hp <= 0) { pool.done = true; await store.set('dung/' + sq.id, pool);
+              for (const who of Object.keys(pool.hits)) { const ins = await sb('reward_log', { method: 'POST', body: { nick: who, key: `dg:${sq.id}:${date}`, gold: DUNGEON.rewardCoins, xp: DUNGEON.rewardXp }, prefer: 'resolution=ignore-duplicates,return=representation' });
+                if (!ins || !ins.length) continue; const got = DUNGEON.loot.filter(([, c]) => Math.random() < c).map(([i]) => i);
+                for (const i of got) await setItem(i, 1, who); await addCoins(DUNGEON.rewardCoins, who);
+                const [hh] = await sb(`heroes?nick=eq.${enc(who)}&select=xp`); if (hh) await sb(`heroes?nick=eq.${enc(who)}`, { method: 'PATCH', body: { xp: hh.xp + DUNGEON.rewardXp } });
+                await inboxAdd(who, { t: 'reward', text: `⛏ Орден «${sq.name}» победил Горного короля! +${DUNGEON.rewardXp} опыта, +${DUNGEON.rewardCoins} монет${got.length ? ', добыча: ' + got.map(i => ITEMS[i].name).join(', ') : ''}.`, at: now }); }
+              await chron('boss', `⛏ Орден «${sq.name}» одолел Горного короля в глубинах шахты!`, nick); log.push('⛏ Горный король повержен! Награда пришла всем, кто бился.'); }
+            else await store.set('dung/' + sq.id, pool); } }
         if (e.duel && status !== 'active') { const won = status === 'won', d = await duelDone(e, won), wins = (await duelsToday()).filter(t => t.status === 'won').length;
           let rw = null; if (won && wins <= ARENA_RULES.paidWins) { rw = duelReward(e.lvl); const ins = await sb('reward_log', { method: 'POST', body: { nick, key: `f:${fr.id}`, gold: rw.coins, xp: rw.xp }, prefer: 'resolution=ignore-duplicates,return=representation' });
             if (ins && ins.length) { h.xp += rw.xp; await sb(`heroes?nick=eq.${N}`, { method: 'PATCH', body: { xp: h.xp } }); await addCoins(rw.coins); } else rw = null; }
@@ -553,6 +632,7 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
           return json(200, { ...(await state(h)), log, result: won ? 'won' : 'lost', arena: true, reward: rw ? { ...rw, items: [] } : null }); }
         if (status === 'won') {
           const rw = enemyReward(e), loot = [];
+          { const eqp = await equipped(); for (const [pid, bo] of Object.entries(PET_BONUS)) if (eqp.includes(pid)) { if (bo.coins) rw.coins = Math.round(rw.coins * (1 + bo.coins)); if (bo.xp) rw.xp = Math.round(rw.xp * (1 + bo.xp)); } }
           const ins = await sb('reward_log', { method: 'POST', body: { nick, key: `f:${fr.id}`, gold: rw.coins, xp: rw.xp }, prefer: 'resolution=ignore-duplicates,return=representation' });
           if (ins && ins.length) {
             for (const [it, ch] of LOOT[e.kind]) if (Math.random() < ch) { loot.push(it); await setItem(it, 1); }
@@ -894,8 +974,89 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
         return json(200, { ...(await state(h)), order: await view(), note: `В казну ордена: ${ITEMS[it].icon} ×${qty}. Ордену +${qty * per} очков.` }); }
       throw new Bad(400, 'bad_op', 'Неизвестное действие ордена.');
     }
+
+    if (action === 'tutorial') {
+      const h = await hero();
+      if (b.op === 'skip') { await store.set('tut/' + nick, { step: TUT.length, done: true, skipped: true }); return json(200, { ...(await state(h)), note: 'Обучение пропущено. Удачи, герой!' }); }
+      const r = await tutCheck(h, b);
+      if (!r || !r.passed) return json(200, { ...(await state(h)), tutOk: false });
+      return json(200, { ...(await state(h)), tutOk: true, note: r.fin ? `🎓 Обучение пройдено! Награда: ${ITEMS.iron_sword.name}, 3 зелья, +${TUT_DONE.coins} монет. Надень меч в «🎒 Герой».` : `✅ ${r.passed.text} — готово! +${TUT_STEP_COINS} монет.` });
+    }
+    if (action === 'daily') {
+      const h = await hero(), k = 'login/' + nick, l = (await store.get(k)) || {};
+      if (l.last === date) throw new Bad(409, 'claimed', 'Сегодняшняя награда уже получена. Приходи завтра!');
+      const streak = l.last === prevDay(date) ? (l.streak || 0) + 1 : 1, rw = loginReward(streak);
+      const ins = await sb('reward_log', { method: 'POST', body: { nick, key: `login:${date}`, gold: rw.coins || 0, xp: 0 }, prefer: 'resolution=ignore-duplicates,return=representation' });
+      if (!ins || !ins.length) throw new Bad(409, 'claimed', 'Сегодняшняя награда уже получена.');
+      await store.set(k, { last: date, streak, best: Math.max(l.best || 0, streak) });
+      const items = [...(rw.items || [])]; if (rw.chest) items.push([rw.chest[Math.floor(Math.random() * rw.chest.length)], 1]);
+      await addCoins(rw.coins || 0); await giveItems(items);
+      return json(200, { ...(await state(h)), daily: { streak, day: rw.day, coins: rw.coins || 0, items }, note: `🎁 День ${rw.day}: ${[rw.coins ? `+${rw.coins} монет` : '', ...items.map(([i, n]) => ITEMS[i].name + (n > 1 ? ' ×' + n : ''))].filter(Boolean).join(', ')}` });
+    }
+    if (action === 'ref') {
+      const h = await hero(), from = normalize(String(b.from || '')).slice(0, 40);
+      if (!from || from === nick) throw new Bad(400, 'self', 'Нельзя пригласить самого себя.');
+      if ((await store.get('ref/' + nick))?.by) throw new Bad(409, 'done', 'Ты уже пришёл по приглашению.');
+      if (h.xp > REF.maxXp) throw new Bad(409, 'old', 'Награда за приглашение — только для новых героев.');
+      const [inv0] = await sb(`heroes?nick=eq.${enc(from)}&select=nick`); if (!inv0) throw new Bad(404, 'no_hero', 'Пригласивший герой не найден.');
+      const rk = 'refs/' + from, rs = (await store.get(rk)) || { n: 0, list: [] }; if (rs.n >= REF.maxInvites) throw new Bad(409, 'limit', 'У этого героя уже максимум приглашённых.');
+      const ins = await sb('reward_log', { method: 'POST', body: { nick, key: 'ref:new', gold: REF.newCoins, xp: 0 }, prefer: 'resolution=ignore-duplicates,return=representation' });
+      if (!ins || !ins.length) throw new Bad(409, 'done', 'Награда за приглашение уже получена.');
+      await store.set('ref/' + nick, { by: from, at: now }); await addCoins(REF.newCoins); await giveItems(REF.newItems);
+      rs.n++; rs.list = [...(rs.list || []), nick].slice(-REF.maxInvites); await store.set(rk, rs); await addCoins(REF.inviterCoins, from);
+      let horse = false; if (rs.n === REF.horseAt) { await setItem('horse', 1, from); horse = true; }
+      await inboxAdd(from, { t: 'reward', text: `@${nick} пришёл в королевство по твоему приглашению! +${REF.inviterCoins} монет.${horse ? ` Это уже ${REF.horseAt}-й друг — дарим тебе коня! 🐴` : ` Позови ещё ${Math.max(0, REF.horseAt - rs.n)} — и получишь коня.`}`, coins: REF.inviterCoins, at: now });
+      await chron('ref', `@${nick} пришёл в королевство по приглашению @${from}.`, nick);
+      return json(200, { ...(await state(h)), note: `🤝 Ты пришёл по приглашению @${from}! Подарок: +${REF.newCoins} монет и 3 зелья.` });
+    }
+    if (action === 'gift') {
+      const h = await hero(); if (!nySeason(now) && !demo) throw new Bad(409, 'season', 'Подарки под ёлкой — с 1 декабря.');
+      await at(h, +b.x, +b.z); if (Math.hypot(h.x - TREE.x, h.z - TREE.z) > TREE.r + 1) throw new Bad(409, 'far', 'Подойди к ёлке на площади.');
+      if ((await store.get('gift/' + nick)) === date) throw new Bad(409, 'taken', 'Сегодняшний подарок уже у тебя. Приходи завтра!');
+      const ins = await sb('reward_log', { method: 'POST', body: { nick, key: `gift:${date}`, gold: 0, xp: 0 }, prefer: 'resolution=ignore-duplicates,return=representation' });
+      if (!ins || !ins.length) throw new Bad(409, 'taken', 'Сегодняшний подарок уже у тебя.');
+      const g = pickGift(Math.random()); await store.set('gift/' + nick, date); await addCoins(g.coins || 0); await giveItems(g.items);
+      return json(200, { ...(await state(h)), gift: g, note: `🎄 Подарок: ${[g.coins ? `+${g.coins} монет` : '', ...(g.items || []).map(([i, n]) => ITEMS[i].name + (n > 1 ? ' ×' + n : ''))].filter(Boolean).join(', ')}!` });
+    }
+    if (action === 'dungeon') { // состояние общего здоровья Горного короля для отряда
+      await hero(); const sq = await myOrder(); if (!sq) return json(200, { dungeon: null });
+      const p = await dungeonPool(sq); return json(200, { dungeon: p ? { hp: p.hp, max: p.max, done: p.done, hits: p.hits } : null });
+    }
+
+    if (action === 'look') { // внешний вид: купить и надеть
+      const h = await hero(), k = 'look/' + nick, L = (await store.get(k)) || { cur: {}, owned: [] }, kind = String(b.kind || ''), id = String(b.id || '');
+      const cat = LOOKS[kind]; if (!cat) throw new Bad(400, 'bad', 'Неизвестный вид.'); const it = id ? cat.list[id] : null; if (id && !it) throw new Bad(400, 'bad', 'Такого нет.');
+      const key = kind + ':' + id;
+      if (b.op === 'buy') { if (!it) throw new Bad(400, 'bad', 'Выбери вещь.'); if (L.owned.includes(key)) throw new Bad(409, 'have', 'Это уже твоё.');
+        await spend(it.price); L.owned.push(key); L.cur[kind] = id; await store.set(k, L);
+        return json(200, { ...(await state(h)), note: `✨ ${it.name} — теперь твоё!` }); }
+      if (id && !L.owned.includes(key)) throw new Bad(409, 'not_owned', 'Сначала купи это.');
+      L.cur[kind] = id; await store.set(k, L); return json(200, { ...(await state(h)), note: id ? `Надето: ${it.name}.` : 'Снято.' });
+    }
+    if (action === 'enchant') { // заточка оружия самоцветами у кузнеца
+      const h = await hero(); await at(h, +b.x, +b.z); if (!near(h.x, h.z, NPC.kuznets, 4.5)) throw new Bad(409, 'far', 'Точить оружие можно только у кузнеца Гордея во дворе замка.');
+      const it = String(b.item || ''); if (!GEAR[it] || gearSlot(it) !== 'weapon') throw new Bad(400, 'bad', 'Точить можно только оружие.');
+      const [row] = await sb(`inventory?nick=eq.${N}&item=eq.${enc(it)}&select=qty`); if (!row || row.qty < 1) throw new Bad(404, 'no_item', 'У тебя нет этого оружия.');
+      const k = 'ench/' + nick, E = (await store.get(k)) || {}, l = E[it] || 0; if (l >= ENCH.max) throw new Bad(409, 'max', 'Это оружие уже заточено до предела +10!');
+      const cost = ENCH.cost(l); await needCheck({ gem: cost.gem }); await spend(cost.coins); await setItem('gem', -cost.gem);
+      const ok = Math.random() < ENCH.chance[l]; let note;
+      if (ok) { E[it] = l + 1; note = `⚒ Удача! ${ITEMS[it].name} +${l + 1}. Атака +${ENCH.atk * (l + 1)}.`; if (l + 1 >= 7) await chron('ench', `⚒ @${nick} заточил ${ITEMS[it].name} до +${l + 1}!`, nick); }
+      else { const nl = l >= ENCH.dropFrom ? l - 1 : l; E[it] = nl; note = nl < l ? `💥 Неудача… заточка слетела до +${nl}.` : `💥 Неудача… самоцветы рассыпались, но оружие цело (+${l}).`; }
+      await store.set(k, E); return json(200, { ...(await state(h)), enchant: { ok, lvl: E[it] }, note });
+    }
+    if (action === 'owar') { // война орденов: укрепить флаг
+      const h = await hero(), w = owarWindow(now); if (!(now >= w.start && now < w.end)) throw new Bad(409, 'closed', 'Война орденов идёт по воскресеньям с 19:00 до 20:00.');
+      const oid = await store.get('om/' + nick), o = oid && await store.get('order/' + oid); if (!o || !o.members?.[nick]) throw new Bad(409, 'no_order', 'Сражаться за флаги могут только члены орденов. Вступи в орден!');
+      const f = OWAR.flags.find(x => x.id === b.flag); if (!f) throw new Bad(400, 'bad', 'Нет такого флага.');
+      await at(h, +b.x, +b.z); if (Math.hypot(h.x - f.x, h.z - f.z) > OWAR.r + 1) throw new Bad(409, 'far', 'Подойди к флагу ближе.');
+      const ck = 'owarcd/' + nick, last = (await store.get(ck)) || 0; if (now - last < OWAR.cd) throw new Bad(429, 'cd', `Флаг можно укреплять раз в ${OWAR.cd / 1000} с. Ещё ${Math.ceil((OWAR.cd - (now - last)) / 1000)} с.`);
+      await store.set(ck, now);
+      const fk = `owar/${w.id}/${f.id}`, cur = (await store.get(fk)) || { inf: {} }, pw = 1 + Math.floor(levelOf(h.xp).level / 10); cur.inf[oid] = (cur.inf[oid] || 0) + pw; await store.set(fk, cur);
+      const wk2 = `owar/${w.id}/who`, who = (await store.get(wk2)) || {}; who[nick] = { o: oid, n: ((who[nick] || {}).n || 0) + 1 }; await store.set(wk2, who);
+      const own = flagOwner(cur.inf); return json(200, { ...(await state(h)), note: `🚩 ${f.name}: «${o.name}» +${pw} влияния${own === oid ? ' — флаг ваш!' : ''}` });
+    }
     if (action === 'equip') {
-      const it = ITEMS[b.item]; if (!it || !['gear', 'artifact'].includes(it.type)) throw new Bad(400, 'bad_item', 'Это нельзя надеть.');
+      const it = ITEMS[b.item]; if (!it || !['gear', 'artifact', 'pet'].includes(it.type)) throw new Bad(400, 'bad_item', 'Это нельзя надеть.');
       const [row] = await sb(`inventory?nick=eq.${N}&item=eq.${enc(b.item)}&select=qty,equipped`); if (!row || row.qty < 1) throw new Bad(404, 'no_item', 'Этого предмета нет.');
       if (!row.equipped && GEAR[b.item]) { // надеваем: снимаем вещь из того же слота (амулетов можно три — снимаем самый слабый)
         const sl = gearSlot(b.item), on = (await sb(`inventory?nick=eq.${N}&equipped=eq.true&select=item`)).map(r => r.item).filter(i => GEAR[i] && gearSlot(i) === sl);

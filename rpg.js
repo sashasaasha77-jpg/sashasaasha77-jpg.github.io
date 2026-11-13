@@ -7,6 +7,7 @@ import { initEnemies, tick as enemyTick, startFight, buildKnight } from './enemi
 import { initWorld, tick as worldTick, render as worldRender, warAction, doWar, blockedExtra } from './world-ui.js';
 import { roleIdFor } from './roles.mjs';
 import { buildHero } from './figure.js';
+import { lookKey } from './extras.mjs';
 import { activeGear, gearSlot } from './combat.mjs';
 import { buildHorse, rideHorse, horseVariant } from './monsters.js';
 import { initNet, connect, disconnect, tick as netTick, NET, retrack, reloadSquadChat } from './net.js';
@@ -156,9 +157,9 @@ function toggleFpv(on) {
   try { localStorage.setItem('kp-fpv', F.on ? '1' : '0'); } catch { } W.toast && W.toast(F.on ? '👁 Вид от первого лица. Смотри по сторонам, ведя пальцем или мышью по экрану' : 'Обычный вид'); W.redraw();
 }
 function ensureHero(w) {
-  const rid = G.state?.hero?.role, role = (rid && W.ROLES.find(r => r.id === rid)) || w.role, wp = myWeapon(), key = w.nick + '|' + role.id + '|' + wp;
+  const rid = G.state?.hero?.role, role = (rid && W.ROLES.find(r => r.id === rid)) || w.role, wp = myWeapon(), lk = lookKey(G.state?.extra?.look?.cur), key = w.nick + '|' + role.id + '|' + wp + '|' + lk;
   if (S.hero && S.heroOf === key) return;
-  const old = S.hero, wpChanged = old && S.wp !== wp; S.hero = buildHero(role, w.nick, wp); S.heroOf = key; S.role = role; S.wp = wp; if (wpChanged && S.on) retrack(); // другие увидят новое оружие
+  const old = S.hero, wpChanged = old && (S.wp !== wp || S.lk !== lk); S.hero = buildHero(role, w.nick, wp, lk); S.heroOf = key; S.role = role; S.wp = wp; S.lk = lk; if (wpChanged && S.on) retrack(); // другие увидят новое оружие и наряд
   if (old) { S.hero.position.copy(old.position); S.hero.rotation.copy(old.rotation); S.hero.visible = old.visible; W.scene.remove(old); }
   W.scene.add(S.hero);
 }

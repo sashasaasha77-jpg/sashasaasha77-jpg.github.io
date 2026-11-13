@@ -10,6 +10,7 @@ const DEF = { heroes: () => ({ level: 1, xp: 0, hp: 100, x: null, z: null, face:
   squad_quests: () => ({ status: 'active', stage: 0, progress: {}, contrib: {}, updated_at: new Date().toISOString() }), world_events: () => ({ updated_at: new Date().toISOString(), data: {}, progress: 0 }), event_contrib: () => ({ points: 0, data: {} }), territories: () => ({ updated_at: new Date().toISOString() }), chronicle: () => ({ at: new Date().toISOString() }), chat: () => ({ at: new Date().toISOString() }), fights: () => ({ started_at: new Date().toISOString() }) };
 export const emptyDb = () => ({ t: { world_config: [], world_events: [], event_contrib: [], territories: [], heroes: [], inventory: [], quests: [], achievements: [], reward_log: [], chronicle: [], fights: [], squads: [], squad_members: [], squad_invites: [], squad_quests: [], chat: [] }, ids: {}, blobs: {} });
 function match(row, k, v) {
+  if (v.startsWith('not.')) return !match(row, k, v.slice(4));
   const [op, ...rest] = v.split('.'); const val = rest.join('.');
   if (op === 'eq') return String(row[k]) === val; if (op === 'neq') return String(row[k]) !== val; if (op === 'lt') return String(row[k]) < val; if (op === 'gt') return String(row[k]) > val;
   if (op === 'in') return val.slice(1, -1).split(',').map(decodeURIComponent).map(v => v.replace(/^"(.*)"$/, '$1')).includes(String(row[k]));

@@ -34,7 +34,7 @@ export const POI = {
   far_sw: { name: 'юго-западная окраина', x: R(-3), z: R(3) },
   arena: { name: 'арена за рекой', x: R(1), z: R(10) - 5 },
   market: { name: 'рынок к востоку от замка', x: R(6) - 8, z: R(0) },
-  swamp: { name: 'болото к западу от замка', x: -40, z: R(0) },
+  swamp: { name: 'болото далеко на западе', x: -145.6, z: R(0) },
 };
 
 export const ITEMS = {
@@ -157,6 +157,8 @@ export function nodesFor(date) {
   for (const [kind, cnt, salt] of [['rock', 24, 0x5bd1e995], ['tree', 12, 0x27d4eb2f], ['bush', 10, 0x165667b1]]) { const before = out.length; pick(block, kind, cnt, salt);
     for (let q = before; q < out.length; q++) Object.assign(out[q], { kind, type: kind === 'tree' ? 'wood' : kind === 'rock' ? 'ore' : 'herb', n: kind === 'bush' ? 1 : 2 }); }
   { const before = out.length; pick(SWAMP_SPOTS.map(([x, z]) => ({ x, z, kind: 'pile' })), 'mush', 7, 0x7f4a7c15); for (let q = before; q < out.length; q++) Object.assign(out[q], { type: 'mushroom', n: 2 }); } // грибы на болоте
+  { const before = out.length; pick(MINE_SPOTS.map(([x, z]) => ({ x, z, kind: 'pile' })), 'gem', 5, 0x2c1b3c6d); for (let q = before; q < out.length; q++) Object.assign(out[q], { type: 'gem', n: 1 }); } // самоцветы в горах
+  { const before = out.length; pick(MINE_SPOTS.map(([x, z]) => ({ x: x + 1.6, z: z - 1.2, kind: 'rock' })), 'mrock', 6, 0x45d9f3b); for (let q = before; q < out.length; q++) Object.assign(out[q], { type: 'ore', n: 3 }); } // богатая руда у шахты
   return out;
 }
 // старые деревья мира (их расставляет карта): рубить можно, сервер проверяет только близость героя и лимит
@@ -256,6 +258,9 @@ export const DECOR = {
   woodpile: { name: 'Поленница', icon: '🪵', need: { wood: 24 } },
   well: { name: 'Колодец', icon: '🪣', need: { ore: 18, wood: 12 } },
   banner: { name: 'Знамя рода', icon: '🚩', need: { ore: 12, wood: 12, herb: 6 } },
+  lantern: { name: 'Фонарь у крыльца', icon: '🏮', need: { ore: 8, gem: 1 } },
+  garden: { name: 'Огород', icon: '🥕', need: { herb: 12, wood: 6 } },
+  garland: { name: 'Гирлянда', icon: '✨', need: { gem: 2, herb: 6 } },
 };
 // заказ торговца дня: одинаковый для всех, меняется каждый день; платит втрое больше обычной цены
 export function dailyOrder(date) {
@@ -321,7 +326,7 @@ Object.assign(RECIPES, {
 MARKET_RARE.push(['steel_helm', 150], ['swift_boots', 160], ['amulet_luck', 140], ['war_axe', 220], ['elven_bow', 220], ['chainmail', 180]);
 
 // ---------------- Болото к западу от замка (13.11.2026) ----------------
-export const SWAMP_SPOTS = [[-47, -6], [-48.5, 11], [-53, -10.5], [-56, 7.5], [-59.5, -3.5], [-61, 12.5], [-66, 2.5], [-64.5, -3], [-51.5, 14.5], [-57, 15.5], [-44.5, 3]];
+export const SWAMP_SPOTS = [[-152.6, -6], [-154.1, 11], [-158.6, -10.5], [-161.6, 7.5], [-165.1, -3.5], [-166.6, 12.5], [-171.6, 2.5], [-170.1, -3], [-157.1, 14.5], [-162.6, 15.5], [-150.1, 3]];
 Object.assign(ITEMS, {
   mushroom: { name: 'Болотный гриб', type: 'res', icon: '🍄' },
   witch_hat: { name: 'Шляпа ведьмы', type: 'gear', icon: '🧙', slot: 'head', rar: 'epic' },
@@ -334,3 +339,11 @@ Object.assign(RECIPES, {
 });
 BUFFS.potion_rage = { key: 'rage', min: 10 };
 SHOP.sell.mushroom = 4;
+
+// ---------------- Горы и шахта, питомцы (14.11.2026) ----------------
+import { MINE_SPOTS, PETS, GEM } from './extras.mjs';
+Object.assign(ITEMS, { gem: { name: GEM.name, type: 'res', icon: GEM.icon } });
+for (const [id, p] of Object.entries(PETS)) ITEMS[id] = { name: p.name, type: 'pet', icon: p.icon };
+SHOP.sell.gem = GEM.sell; SHOP.buy.pet_fox = PETS.pet_fox.price; SHOP.buy.pet_owl = PETS.pet_owl.price;
+POI.mine = { name: 'горы и шахта на северо-западе', x: -40, z: -40 };
+SLOTS.pet = { name: 'Питомец', n: 1 };

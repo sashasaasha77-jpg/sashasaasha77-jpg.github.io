@@ -155,7 +155,57 @@ const EXTRA = {
     m(u.body, B(0.18, 0.16, 0.08), 0x6B4A2A, [-0.33, 0.55, 0.05], [0, 0.5, 0], 1);
   },
 };
-const MAKE = { golem, kikimora, utopets, skeleton, dragon, lich, giant, witch };
+
+function troll() { // Горный тролль: сутулый, серо-зелёный, с дубиной-сталактитом
+  const g = rig({ neck: 1.75, sh: 0.62, shy: 1.5, hip: 0.3, hipy: 0.75 }), u = g.userData, skin = 0x7A8A6A, dk = 0x5A6A4E, fur = 0x6B5038;
+  m(u.body, S(0.62, 1), skin, [0, 1.3, 0]); u.body.children.at(-1).scale.set(1.1, 1, 0.85); m(u.body, B(0.95, 0.4, 0.62), fur, [0, 0.85, 0]); u.body.rotation.x = 0.3;
+  m(u.head, S(0.3, 1), skin, [0, 0.12, 0.18]); m(u.head, S(0.12, 0), dk, [0, 0.06, 0.45], null, 1); for (const x of [-0.11, 0.11]) m(u.head, S(0.045, 0), 0, [x, 0.18, 0.43], null, 0).material = glow(0xFFD23A);
+  for (const x of [-0.12, 0.12]) m(u.head, K(0.04, 0.14, 4), 0xF5EBDC, [x, -0.06, 0.42], [0.3, 0, 0], 0);
+  for (const x of [-0.3, 0.3]) m(u.head, K(0.07, 0.22, 4), dk, [x, 0.3, 0.1], [0, 0, x > 0 ? -0.6 : 0.6], 1);
+  for (const a of [u.armL, u.armR]) { m(a, C(0.17, 0.14, 0.75, 7), skin, [0, -0.38, 0.05]); m(a, S(0.18, 0), dk, [0, -0.85, 0.1], null, 1); }
+  m(u.armR, C(0.08, 0.2, 1.3, 6), 0x8C857B, [0, -1.2, 0.5], [1.2, 0, 0], 1);
+  for (const l of [u.legL, u.legR]) { m(l, C(0.16, 0.13, 0.6, 7), skin, [0, -0.3, 0]); m(l, B(0.3, 0.14, 0.4), dk, [0, -0.66, 0.08], null, 1); }
+  for (const [x, y, z] of [[0.25, 1.75, -0.2], [-0.3, 1.65, -0.25]]) m(u.body, new THREE.OctahedronGeometry(0.1, 0), 0x7FD8FF, [x, y, z], null, 1);
+  return g;
+}
+function mountain_king() { // Горный король: огромный голем с короной из кристаллов
+  const g = golem(), u = g.userData;
+  for (let i = 0; i < 5; i++) { const a = (i - 2) * 0.32; m(u.head, new THREE.OctahedronGeometry(0.09 + (i === 2 ? 0.05 : 0), 0), i === 2 ? 0xB36AFF : 0x7FD8FF, [Math.sin(a) * 0.22, 0.48 + (i === 2 ? 0.08 : 0), 0.04 + Math.cos(a) * 0.05], null, 1); }
+  m(u.head, C(0.27, 0.27, 0.08, 10), 0xE8B931, [0, 0.42, 0.04], null, 1);
+  for (const [x, y, z] of [[0, 1.3, 0.31], [0.3, 1.0, 0.31], [-0.3, 1.0, 0.31]]) m(u.body, new THREE.OctahedronGeometry(0.11, 0), 0, [x, y, z], null, 0).material = glow(0xB36AFF);
+  for (const a of [u.armL, u.armR]) m(a, new THREE.OctahedronGeometry(0.14, 0), 0x7FD8FF, [0, 0.15, 0], null, 1);
+  return g;
+}
+function snowking() { // Снежный король: великан в белой шубе, с короной и посохом-сосулькой
+  const g = rig({ neck: 2.55, sh: 0.95, shy: 2.25, hip: 0.4, hipy: 1.05 }), u = g.userData, coat = 0xF2F6FA, blue = 0x5E9BC8, ice = 0xBFEFFF, skin = 0xDDEBF5;
+  m(u.body, C(0.7, 1.1, 1.9, 12), coat, [0, 1.6, 0]); m(u.body, C(0.75, 0.75, 0.18, 12), blue, [0, 1.2, 0], null, 1); m(u.body, C(1.12, 1.15, 0.25, 12), 0xFFFFFF, [0, 0.72, 0], null, 1);
+  for (let i = 0; i < 4; i++) m(u.body, S(0.07, 0), blue, [0, 2.1 - i * 0.28, 0.66 + i * 0.05], null, 0);
+  m(u.head, S(0.42, 1), skin, [0, 0.3, 0.05]); for (const x of [-0.14, 0.14]) m(u.head, S(0.06, 0), 0, [x, 0.38, 0.4], null, 0).material = glow(0x7FE8FF);
+  m(u.head, K(0.34, 0.7, 10), 0xFFFFFF, [0, -0.12, 0.3], [Math.PI + 0.5, 0, 0], 1); // борода
+  m(u.head, C(0.36, 0.4, 0.22, 10), 0xE8B931, [0, 0.72, 0.03], null, 1); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; m(u.head, K(0.07, 0.28, 4), ice, [Math.sin(a) * 0.34, 0.95, 0.03 + Math.cos(a) * 0.34], null, 1); }
+  for (const a of [u.armL, u.armR]) { m(a, C(0.26, 0.32, 1.3, 8), coat, [0, -0.6, 0]); m(a, C(0.34, 0.34, 0.2, 8), 0xFFFFFF, [0, -1.25, 0], null, 1); m(a, S(0.24, 0), skin, [0, -1.45, 0.05], null, 1); }
+  m(u.armR, C(0.06, 0.06, 3.2, 6), 0xA8D8F0, [0, -1.3, 0.4], [0.1, 0, 0], 1); m(u.armR, new THREE.OctahedronGeometry(0.3, 0), 0, [0, 0.35, 0.55], null, 0).material = glow(0xBFEFFF);
+  for (const l of [u.legL, u.legR]) { m(l, C(0.3, 0.28, 0.6, 8), blue, [0, -0.3, 0]); m(l, B(0.55, 0.35, 0.75), 0xFFFFFF, [0, -0.85, 0.1], null, 1); }
+  return g;
+}
+// питомцы: идут следом за героем
+export function buildPet(id) {
+  W = window.W; THREE = W.THREE; const g = new THREE.Group(), body = piv(g, 0, 0, 0); g.userData = { body, legs: [] };
+  if (id === 'pet_owl') { const br = 0x8A6A4A, cr = 0xE8DCC8;
+    m(body, S(0.2, 1), br, [0, 0.32, 0]); body.children.at(-1).scale.set(1, 1.2, 0.95); m(body, S(0.13, 1), cr, [0, 0.3, 0.1], null, 0);
+    m(body, S(0.16, 1), br, [0, 0.6, 0.02]); for (const x of [-0.06, 0.06]) { m(body, S(0.055, 1), 0xFFFFFF, [x, 0.62, 0.15], null, 0); m(body, S(0.03, 0), 0x1A1210, [x, 0.62, 0.19], null, 0); m(body, K(0.035, 0.1, 4), br, [x * 1.6, 0.76, 0.02], null, 0.8); }
+    m(body, K(0.03, 0.06, 4), 0xE8B931, [0, 0.57, 0.19], [Math.PI / 2, 0, 0], 0);
+    for (const s of [-1, 1]) { const w = piv(body, s * 0.19, 0.4, 0); m(w, S(0.1, 0), 0x6B4E34, [s * 0.03, -0.05, 0], null, 0.8).scale.set(0.5, 1.4, 1); g.userData.legs.push(w); }
+    g.userData.fly = true; g.scale.setScalar(1.1); return g; }
+  const fox = id === 'pet_fox', c = fox ? 0xE07A2E : 0x8E949E, belly = fox ? 0xF5EBDC : 0xD8DCE2;
+  m(body, S(0.2, 1), c, [0, 0.32, 0]); body.children.at(-1).scale.set(0.85, 0.8, 1.5); m(body, S(0.12, 1), belly, [0, 0.27, 0.12], null, 0).scale.set(1, 0.8, 1.4);
+  const head = piv(body, 0, 0.45, 0.3); m(head, S(0.14, 1), c, [0, 0, 0]); m(head, K(0.07, 0.17, 6), belly, [0, -0.03, 0.15], [Math.PI / 2, 0, 0], 0.8); m(head, S(0.025, 0), 0x1A1210, [0, -0.02, 0.24], null, 0);
+  for (const x of [-0.06, 0.06]) { m(head, K(0.05, 0.13, 4), c, [x, 0.13, -0.01], null, 1); m(head, S(0.022, 0), 0x1A1210, [x, 0.03, 0.12], null, 0); }
+  for (const [x, z] of [[-0.09, 0.17], [0.09, 0.17], [-0.09, -0.17], [0.09, -0.17]]) { const l = piv(body, x, 0.24, z); m(l, C(0.035, 0.03, 0.24, 5), fox ? 0x3A2A1E : 0x6E747E, [0, -0.12, 0], null, 0.8); g.userData.legs.push(l); }
+  const tail = piv(body, 0, 0.36, -0.28); m(tail, S(0.1, 1), c, [0, 0.02, -0.14], null, 1).scale.set(0.8, 0.8, 1.9); m(tail, S(0.06, 1), belly, [0, 0.03, -0.32], null, 0); g.userData.tail = tail;
+  g.scale.setScalar(fox ? 1 : 1.2); return g;
+}
+const MAKE = { troll, mountain_king, snowking, golem, kikimora, utopets, skeleton, dragon, lich, giant, witch };
 export function buildMonster(kind, scale) {
   W = window.W; THREE = W.THREE; const g = MAKE[kind](); if (W.HQ && EXTRA[kind]) EXTRA[kind](g.userData); if (scale && scale !== 1) g.scale.multiplyScalar(scale);
   g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return g;

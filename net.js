@@ -3,7 +3,10 @@
 import { createClient } from './sb.js';
 import { localCall } from './rpg-local.mjs';
 import { buildHorse, rideHorse, horseVariant } from './monsters.js';
+import { lookKey } from './extras.mjs';
 import { activeGear, gearSlot } from './combat.mjs';
+const lkOf = g => lookKey(g?.extra?.look?.cur), elOf = g => { const w = wpOf(g); return w ? ((g?.extra?.ench || {})[w] || 0) : 0; };
+const petOf = g => ((g?.inventory || []).find(i => i.equipped && /^pet_/.test(i.item)) || {}).item || '';
 const wpOf = g => activeGear((g?.inventory || []).filter(i => i.equipped).map(i => i.item)).find(i => gearSlot(i) === 'weapon') || '';
 const SB_URL = 'https://otgwiroxifqtktbipbsu.supabase.co', SB_KEY = 'sb_publishable_YM1peVWMHKlyAy1kCx0D2w_SjoGpgEt';
 let W, K, THREE, R, client = null, ch = null, me = null, onRefresh = () => { };
@@ -55,23 +58,23 @@ export async function connect(info, refresh) {
   }
   ch.subscribe(async status => {
     if (status !== 'SUBSCRIBED') return; NET.ready = true;
-    const p = R.state().pos; await ch.track({ nick: me.nick, role: me.role, lvl: me.level, sq: squadId(), wp: wpOf(R.game()), x: p ? +p.x.toFixed(1) : 0, z: p ? +p.z.toFixed(1) : 0 });
+    const p = R.state().pos; await ch.track({ nick: me.nick, role: me.role, lvl: me.level, sq: squadId(), wp: wpOf(R.game()), pet: petOf(R.game()), lk: lkOf(R.game()), el: elOf(R.game()), x: p ? +p.x.toFixed(1) : 0, z: p ? +p.z.toFixed(1) : 0 });
     if (!info.demo) loadChat();
   });
 }
 export function disconnect() { if (ch) { try { ch.untrack(); client.removeChannel(ch); } catch { } } ch = null; NET.ready = false; for (const n of [...NET.others.keys()]) removeOther(n); NET.online.clear(); }
-export function retrack() { if (!ch || !NET.ready || !me) return; const p = R.state().pos, g = R.game(); ch.track({ nick: me.nick, role: g?.hero.role || me.role, lvl: g?.hero.level || me.level, sq: squadId(), wp: wpOf(g), x: p ? +p.x.toFixed(1) : 0, z: p ? +p.z.toFixed(1) : 0 }); }
+export function retrack() { if (!ch || !NET.ready || !me) return; const p = R.state().pos, g = R.game(); ch.track({ nick: me.nick, role: g?.hero.role || me.role, lvl: g?.hero.level || me.level, sq: squadId(), wp: wpOf(g), pet: petOf(g), lk: lkOf(g), el: elOf(g), x: p ? +p.x.toFixed(1) : 0, z: p ? +p.z.toFixed(1) : 0 }); }
 
 // ---------------- другие герои ----------------
 function upsert(nick, m, fromPresence) {
   let o = NET.others.get(nick);
   const role = W.ROLES.find(r => r.id === m.role) || W.ROLES[0];
-  if (o && fromPresence && (o.role !== role.id || (o.wp || '') !== (m.wp || ''))) { // сменил роль или оружие — пересобираем фигуру
-    const ng = R.buildHero(role, nick, m.wp || ''); ng.position.copy(o.g.position); ng.rotation.copy(o.g.rotation); W.scene.remove(o.g); W.scene.add(ng); o.g = ng; o.role = role.id; o.wp = m.wp || ''; }
-  if (!o) { o = { nick, role: role.id, wp: m.wp || '', g: R.buildHero(role, nick, m.wp || ''), lab: document.createElement('div'), x: m.x || 0, z: m.z || 0, tx: m.x || 0, tz: m.z || 0, f: 0, tf: 0, t: Math.random() * 9, last: performance.now() };
+  if (o && fromPresence && (o.role !== role.id || (o.wp || '') !== (m.wp || '') || (o.lk || '') !== (m.lk || ''))) { // сменил роль, оружие или наряд — пересобираем фигуру
+    const ng = R.buildHero(role, nick, m.wp || '', m.lk || ''); o.lk = m.lk || ''; ng.position.copy(o.g.position); ng.rotation.copy(o.g.rotation); W.scene.remove(o.g); W.scene.add(ng); o.g = ng; o.role = role.id; o.wp = m.wp || ''; }
+  if (!o) { o = { nick, role: role.id, wp: m.wp || '', lk: m.lk || '', g: R.buildHero(role, nick, m.wp || '', m.lk || ''), lab: document.createElement('div'), x: m.x || 0, z: m.z || 0, tx: m.x || 0, tz: m.z || 0, f: 0, tf: 0, t: Math.random() * 9, last: performance.now() };
     o.g.position.set(o.x, 0, o.z); W.scene.add(o.g); o.lab.className = 'lbl rp'; W.$('labels').appendChild(o.lab); NET.others.set(nick, o); }
   else if (fromPresence && !o.moving && Number.isFinite(m.x)) { o.tx = m.x; o.tz = m.z; }
-  o.lvl = m.lvl; o.sq = m.sq;
+  o.lvl = m.lvl; o.sq = m.sq; if (fromPresence) { o.pet = m.pet || ''; o.el = m.el || 0; o.aura = (m.lk || '').split('.')[3] || ''; }
 }
 function removeOther(nick) { const o = NET.others.get(nick); if (!o) return; W.scene.remove(o.g); if (o.horse) W.scene.remove(o.horse); o.lab.remove(); NET.others.delete(nick); }
 
@@ -177,7 +180,7 @@ export function initNet(world, k, rpg) {
   document.head.appendChild(c);
   const b = document.createElement('button'); b.id = 'chatBtn'; b.className = 'btn btn-paper'; b.type = 'button'; b.textContent = '💬 Чат'; document.body.appendChild(b);
   const p = document.createElement('div'); p.id = 'chat'; p.className = 'panel';
-  p.innerHTML = `<div class="tabs2"><button type="button" data-t="world" class="on">Королевство</button><button type="button" data-t="squad">Отряд</button><button type="button" id="chatOnline" title="Кто сейчас играет"></button><button type="button" id="chatX" aria-label="Свернуть">✕</button></div><div id="chatList"></div><div id="chatWho" hidden></div><div id="chatRe" hidden>↩ Ответ <b></b><button type="button" aria-label="Отменить ответ">✕</button></div><form id="chatF"><input id="chatIn" maxlength="200" placeholder="Сообщение…" autocomplete="off"><button class="btn btn-gold" type="submit">➤</button></form>`;
+  p.innerHTML = `<div class="tabs2"><button type="button" data-t="world" class="on">Королевство</button><button type="button" data-t="squad" hidden>Отряд</button><button type="button" id="chatOnline" title="Кто сейчас играет"></button><button type="button" id="chatX" aria-label="Свернуть">✕</button></div><div id="chatList"></div><div id="chatWho" hidden></div><div id="chatRe" hidden>↩ Ответ <b></b><button type="button" aria-label="Отменить ответ">✕</button></div><form id="chatF"><input id="chatIn" maxlength="200" placeholder="Сообщение…" autocomplete="off"><button class="btn btn-gold" type="submit">➤</button></form>`;
   document.body.appendChild(p);
   b.onclick = () => { NET.open = true; document.body.classList.add('chatting'); b.classList.remove('new'); renderChat(); renderChatHead(); };
   W.$('chatX').onclick = () => { NET.open = false; document.body.classList.remove('chatting'); };

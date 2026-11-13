@@ -68,12 +68,13 @@ export const WORLD_EVENTS = {
   dragon: { name: 'Нападение дракона', text: 'Огненный дракон сел у замка! Бейте его всем королевством: каждый удар отнимает у дракона общее здоровье.', boss: 'dragon' },
   lich: { name: 'Восстание лича', text: 'Лич, некромант Чёрного Ордена, поднял скелетов на Северной дороге. Каждый удар по личу и каждый поверженный скелет приближают победу.', boss: 'lich' },
   giant: { name: 'Ледяной великан', text: 'С гор спустился ледяной великан и встал у главного моста. Его общее здоровье — на всё королевство.', boss: 'giant' },
+  snowking: { name: 'Снежный король', text: 'Снежный король пришёл за новогодними подарками! Бейте его всем королевством у ёлки на площади: общее здоровье на всех.', boss: 'snowking', seasonal: true },
   raid: { name: 'Нападение на торговый путь', text: 'Разбойники Ордена грабят южную дорогу. Победы над ними приносят двойные монеты, а общая цель — 15 побед.' },
 };
 // боссы мировых событий: общее здоровье (goal) делится на всё королевство, каждый бьёт свою копию
-export const BOSS_SPOT = { dragon: [R(0), R(2)], lich: [R(0), R(-4)], giant: [0, riverZ(0) - 7] };
+export const BOSS_SPOT = { dragon: [R(0), R(2)], lich: [R(0), R(-4)], giant: [0, riverZ(0) - 7], snowking: [-6.6, 22] };
 export const isBossEvent = kind => !!WORLD_EVENTS[kind]?.boss;
-export function bossGoal(kind, activeHeroes, difficulty = 1) { return Math.round({ dragon: 1200, lich: 1000, giant: 1400 }[kind] * difficulty * Math.max(1, Math.min(activeHeroes, 60)) ** 0.6); }
+export function bossGoal(kind, activeHeroes, difficulty = 1) { return Math.round({ dragon: 1200, lich: 1000, giant: 1400, snowking: 1300 }[kind] * difficulty * Math.max(1, Math.min(activeHeroes, 60)) ** 0.6); }
 export function bossEnemies(ev) {
   const kind = WORLD_EVENTS[ev.kind].boss, lvl = Math.max(3, Math.min(20, ev.data?.lvl || 5)) * 3, [x, z] = BOSS_SPOT[kind]; // боссы и их свита — уровень ×3
   const out = [{ id: `bs${ev.id}`, kind, lvl: lvl + 6, path: [[x, z]], event: ev.id }];

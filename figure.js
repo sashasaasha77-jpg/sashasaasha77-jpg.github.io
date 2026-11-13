@@ -1,6 +1,7 @@
 // «Королевство подписчиков» — модели горожан и рыцарей Ордена.
 // Каждая подвижная часть (туловище, голова, руки, ноги, плащ) собирается из многих деталей
 // и сливается в один меш с цветами вершин + один контур: ~15 вызовов отрисовки на героя вместо ~50.
+import { LOOKS, lookParse } from './extras.mjs';
 let THREE, W;
 const CACHE = new Map();
 
@@ -274,6 +275,18 @@ function torso(k, coat, o = {}) {
   }
 }
 
+// головные уборы (внешний вид героя): сидят поверх родной шапки роли
+function hat(k, h) {
+  if (h === 'feather') { k.add(Cy(0.215, 0.23, 0.08, 14), 0x5B2A8B, { pos: [0, 0.2, -0.01], rot: [-0.15, 0, 0.12], scl: [1.12, 1, 1.08] }); k.add(Sp(0.2, 14, 8, 0, Math.PI / 2), 0x5B2A8B, { pos: [0, 0.22, -0.01], rot: [-0.15, 0, 0.12], scl: [1.1, 0.55, 1.05] });
+    k.add(Co(0.03, 0.42, 6), 0xF5EBDC, { pos: [-0.17, 0.4, -0.08], rot: [-0.5, 0, 0.6] }); k.add(Sp(0.025, 6, 4), C.GOLD, { pos: [-0.14, 0.27, 0.12], ol: false }); }
+  else if (h === 'wizard') { k.add(Cy(0.3, 0.3, 0.03, 16), 0x2A2A6A, { pos: [0, 0.2, 0] }); k.add(Co(0.19, 0.55, 14), 0x2A2A6A, { pos: [0, 0.48, -0.03], rot: [-0.18, 0, 0.12] });
+    for (const [x, y, z] of [[0.08, 0.38, 0.13], [-0.06, 0.5, 0.1], [0.03, 0.62, 0.06]]) k.add(Oc(0.025), 0xFFD23A, { pos: [x, y, z], ol: false }); }
+  else if (h === 'viking') { k.add(Sp(0.215, 14, 8, 0, Math.PI / 2), 0x8E949E, { pos: [0, 0.1, -0.01], scl: [1.06, 1.05, 1.04] }); k.add(Cy(0.22, 0.22, 0.04, 14), C.GOLD2, { pos: [0, 0.11, -0.01], ol: false });
+    for (const q of [-1, 1]) k.add(Co(0.045, 0.24, 8), 0xF5EBDC, { pos: [q * 0.24, 0.24, 0], rot: [0, 0, q * -0.9] }); }
+  else if (h === 'laurel') { k.add(To(0.2, 0.025, 6, 18), 0x4E8A34, { pos: [0, 0.14, -0.01], rot: [Math.PI / 2 - 0.12, 0, 0] }); for (let i = 0; i < 12; i++) { const a = -2.6 + i * 0.47; k.add(Sp(0.03, 6, 4), 0x5E9A3A, { pos: [Math.sin(a) * 0.205, 0.15, Math.cos(a) * 0.2 - 0.01], scl: [1, 0.6, 1.6], ol: false }); } }
+  else if (h === 'santa') { k.add(Cy(0.22, 0.22, 0.07, 14), 0xFFFFFF, { pos: [0, 0.17, -0.01] }); k.add(Co(0.2, 0.42, 14), 0xC8102E, { pos: [0.05, 0.38, -0.05], rot: [-0.4, 0, -0.45] }); k.add(Sp(0.05, 8, 6), 0xFFFFFF, { pos: [0.19, 0.5, -0.17] }); }
+}
+
 // ---------------- горожане ----------------
 // оружие в руке: надетое оружие заменяет предмет роли в правой руке (лук — в левой)
 const BOWS = { bow: {}, hunter_bow: { wood: 0x8A5A32 }, elven_bow: { wood: 0xE8E2C8, tip: 0x7FD07F, grip: 0x2E6B3A } };
@@ -285,20 +298,25 @@ const WLOOK = {
   staff: k => staff(k), oak_staff: k => staff(k, 0x8DD06B), frost_staff: k => staff(k, 0xBFEFFF), lich_scythe: k => glaive(k),
 };
 export const WEAPON_LOOKS = new Set([...Object.keys(WLOOK), ...Object.keys(BOWS)]);
-export function buildHero(role, seed, weapon) {
+export function buildHero(role, seed, weapon, lk = '') {
   THREE = window.W.THREE; W = window.W; Q = W.HQ ? 1.6 : 1;
-  const id = role.id, s = h32(seed ?? role.name ?? id), skin = SKINS[s % SKINS.length], hairC = HAIRS[(s >>> 3) % HAIRS.length], style = (s >>> 7) % 5;
+  const L = lookParse(lk), LC = LOOKS.cape.list[L.cape], LH = LOOKS.hair.list[L.hair];
+  const id = role.id, s = h32(seed ?? role.name ?? id), skin = SKINS[s % SKINS.length], hairC = LH ? LH.color : HAIRS[(s >>> 3) % HAIRS.length], style = (s >>> 7) % 5;
   const coat = role.roof ?? 0xA4161A, tierCape = ['rare', 'epic', 'legendary'].includes(role.tier);
   const wp = WEAPON_LOOKS.has(weapon) && !(id === 'luchnik' && BOWS[weapon]) ? weapon : '';
-  const key = [id, coat, role.tier, skin, hairC, style, wp].join('|');
+  const key = [id, coat, role.tier, skin, hairC, style, wp, lk].join('|');
   let set = CACHE.get(key);
-  if (!set) { const k = new Kit(); dress(k, id, { coat, skin, hairC, style, tierCape, tier: role.tier, wp });
+  if (!set) { const k = new Kit(); dress(k, id, { coat, skin, hairC, style, tierCape: tierCape && !LC, tier: role.tier, wp, noCape: !!LC });
+    if (LC) { k.in('cape'); k.add(Cy(0.2, 0.31, 0.7, 12, true, Math.PI * 0.55, Math.PI * 0.9), LC.color, { pos: [0, -0.35, -0.005], scl: [1, 1, 0.75] });
+      k.add(Cy(0.312, 0.312, 0.045, 12, true, Math.PI * 0.55, Math.PI * 0.9), LC.trim ? 0xFFF2B0 : shade(LC.color, 0.7), { pos: [0, -0.68, -0.005], scl: [1, 1, 0.75], ol: false });
+      k.in('body'); for (const q of [-1, 1]) k.add(Sp(0.035, 8, 6), C.GOLD, { pos: [q * 0.15, 0.85, 0.11] }); }
+    if (L.hat) { k.in('head'); hat(k, L.hat); }
     if (wp && BOWS[wp]) { k.in('armL').push([0, -0.37, 0.02], [0, -1.2, 0]); bow(k, BOWS[wp]); k.pop(); }
     else if (wp) { k.in('armR').push([0, -0.37, 0.02]); WLOOK[wp](k); k.pop(); }
     set = bake(k); CACHE.set(key, set); }
   return rig(set, PIV);
 }
-function dress(k, id, { coat, skin, hairC, style, tierCape, tier, wp }) {
+function dress(k, id, { coat, skin, hairC, style, tierCape, tier, wp, noCape }) {
   const dark = shade(coat, 0.62), O = {};
   let pants = 0x4E3020, boot = 0x2E1E14;
   const hand = side => k.in(side === 'armR' && wp ? '__drop' : side).push([0, -0.37, 0.02]); // предмет роли уходит, если в руке оружие
@@ -415,7 +433,7 @@ function dress(k, id, { coat, skin, hairC, style, tierCape, tier, wp }) {
       hand('armR'); lantern(k); k.pop();
     }
   }
-  if (tierCape || id === 'luchnik') {
+  if ((tierCape || id === 'luchnik') && !noCape) {
     const capeC = tier === 'legendary' ? 0xA4161A : tier === 'epic' ? shade(coat, 0.8) : id === 'luchnik' ? dark : shade(coat, 0.75);
     k.in('cape'); k.add(Cy(0.2, 0.3, 0.66, 12, true, Math.PI * 0.55, Math.PI * 0.9), capeC, { pos: [0, -0.33, -0.005], scl: [1, 1, 0.75] });
     if (tier === 'legendary') k.add(Cy(0.302, 0.302, 0.04, 12, true, Math.PI * 0.55, Math.PI * 0.9), C.GOLD, { pos: [0, -0.64, -0.005], scl: [1, 1, 0.75], ol: false });
