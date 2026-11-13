@@ -60,8 +60,9 @@ function rig(set, P) {
 
 // ---------------- геометрия ----------------
 const B = (w, h, d) => new THREE.BoxGeometry(w, h, d);
-const Cy = (rt, rb, h, s = 10, open = false, t0 = 0, tl = Math.PI * 2) => new THREE.CylinderGeometry(rt, rb, h, s, 1, open, t0, tl);
-const Sp = (r, ws = 12, hs = 9, t0 = 0, tl = Math.PI) => new THREE.SphereGeometry(r, ws, hs, 0, Math.PI * 2, t0, tl);
+let Q = 1; // HQ: более гладкие формы
+const Cy = (rt, rb, h, s = 10, open = false, t0 = 0, tl = Math.PI * 2) => new THREE.CylinderGeometry(rt, rb, h, Math.round(s * Q), 1, open, t0, tl);
+const Sp = (r, ws = 12, hs = 9, t0 = 0, tl = Math.PI) => new THREE.SphereGeometry(r, Math.round(ws * Q), Math.round(hs * Q), 0, Math.PI * 2, t0, tl);
 const Co = (r, h, s = 8) => new THREE.ConeGeometry(r, h, s);
 const To = (R, r, rs = 6, ts = 14, arc = Math.PI * 2) => new THREE.TorusGeometry(R, r, rs, ts, arc);
 const Oc = r => new THREE.OctahedronGeometry(r, 0);
@@ -89,6 +90,15 @@ function face(k, skin, hair, o = {}) {
     k.add(Sp(0.03, 8, 6), C.BLUSH, { pos: [s * 0.12, -0.045, 0.146], scl: [1, 0.6, 0.35], ol: false });
   }
   k.add(To(0.032, 0.0075, 4, 10, Math.PI), C.MOUTH, { pos: [0, -0.06, 0.172], rot: [0.2, 0, Math.PI], ol: false }); // улыбка
+  if (Q > 1) { // HQ: веки, ресницы, ноздри, подбородок
+    for (const s of [-1, 1]) {
+      k.add(Sp(0.046, 12, 8, 0, Math.PI * 0.42), shade(skin, 0.96), { pos: [s * 0.075, 0.024, 0.168], scl: [1, 1.1, 0.55], ol: false });
+      k.add(B(0.05, 0.008, 0.01), 0x2A1A12, { pos: [s * 0.078, 0.052, 0.19], rot: [0, s * -0.25, s * 0.12], ol: false });
+      k.add(Sp(0.008, 6, 4), shade(skin, 0.75), { pos: [s * 0.012, -0.04, 0.2], ol: false });
+    }
+    k.add(Sp(0.03, 10, 6), shade(skin, 0.97), { pos: [0, -0.125, 0.14], scl: [1.3, 0.7, 0.8], ol: false });
+    k.add(Sp(0.012, 6, 4), 0xC0584A, { pos: [0, -0.072, 0.176], scl: [1.6, 0.6, 0.6], ol: false });
+  }
 }
 function hairdo(k, hair, style, opt = {}) {
   const tl = opt.short ? Math.PI * 0.36 : Math.PI * 0.42;
@@ -225,7 +235,13 @@ function legs(k, pants, boot, o = {}) {
     k.add(Cy(0.074, 0.08, 0.15, 8), boot, { pos: [0, -0.36, 0] });
     k.add(Sp(0.076, 8, 6), boot, { pos: [0, -0.405, 0.05], scl: [1, 0.62, 1.35] });
     k.add(To(0.078, 0.016, 4, 10), o.cuff || shade(boot, 1.3), { pos: [0, -0.29, 0], rot: [Math.PI / 2, 0, 0], ol: false });
-    if (o.greave) k.add(Cy(0.084, 0.078, 0.18, 8), o.greave, { pos: [0, -0.2, 0.01] }); }
+    if (o.greave) k.add(Cy(0.084, 0.078, 0.18, 8), o.greave, { pos: [0, -0.2, 0.01] });
+    if (Q > 1) { // HQ: подошва, ремешок, заплатка на колене
+      k.add(Cy(0.08, 0.082, 0.025, 10), shade(boot, 0.55), { pos: [0, -0.44, 0.03], scl: [1, 1, 1.45], ol: false });
+      k.add(To(0.077, 0.01, 4, 12), C.GOLD2, { pos: [0, -0.36, 0], rot: [Math.PI / 2, 0, 0], ol: false });
+      k.add(B(0.022, 0.02, 0.012), C.GOLD, { pos: [0.05, -0.36, 0.06], ol: false });
+      if (!o.greave) k.add(Sp(0.05, 8, 6), shade(pants, 0.82), { pos: [0, -0.14, 0.062], scl: [1, 1, 0.3], ol: false });
+    } }
 }
 function arms(k, sleeve, skin, o = {}) {
   for (const n of ['armL', 'armR']) { k.in(n);
@@ -233,7 +249,11 @@ function arms(k, sleeve, skin, o = {}) {
     else { k.add(Cy(0.068, 0.062, 0.31, 8), sleeve, { pos: [0, -0.155, 0] }); k.add(To(0.062, 0.018, 4, 10), o.cuff || C.CLOTH, { pos: [0, -0.3, 0], rot: [Math.PI / 2, 0, 0], ol: false }); }
     k.add(Sp(0.062, 10, 8), o.glove || skin, { pos: [0, -0.365, 0.005] });
     if (o.pauldron) { k.add(Sp(0.105, 10, 6, 0, Math.PI / 2), o.pauldron, { pos: [0, -0.01, 0], scl: [1.05, 0.8, 1] }); k.add(To(0.1, 0.014, 4, 12), o.pRim || C.GOLD, { pos: [0, -0.01, 0], rot: [Math.PI / 2, 0, 0], ol: false }); }
-    if (o.bracer) k.add(Cy(0.066, 0.06, 0.12, 8), o.bracer, { pos: [0, -0.26, 0] }); }
+    if (o.bracer) k.add(Cy(0.066, 0.06, 0.12, 8), o.bracer, { pos: [0, -0.26, 0] });
+    if (Q > 1) { // HQ: большой палец и складка на локте
+      k.add(Sp(0.026, 8, 6), o.glove || skin, { pos: [n === 'armL' ? 0.05 : -0.05, -0.345, 0.035], scl: [0.8, 1.2, 0.8], ol: false });
+      if (!o.short) k.add(To(0.064, 0.008, 4, 10), shade(sleeve, 0.8), { pos: [0, -0.16, 0], rot: [Math.PI / 2, 0, 0], ol: false });
+    } }
 }
 function torso(k, coat, o = {}) {
   k.in('body');
@@ -245,6 +265,13 @@ function torso(k, coat, o = {}) {
   k.add(B(0.075, 0.06, 0.02), o.buckle || C.GOLD, { pos: [0, 0.57, 0.18], ol: false });
   if (o.trim) k.add(B(0.045, 0.3, 0.012), o.trim, { pos: [0, 0.7, 0.161], ol: false });
   if (o.buttons) for (let i = 0; i < 3; i++) k.add(Sp(0.014, 6, 4), o.buttons, { pos: [0, 0.79 - i * 0.07, 0.165], ol: false });
+  if (Q > 1) { // HQ: подол, сумочка на поясе, рубаха в вырезе
+    const hem = o.hem || 0.17, fl = o.flare || 0.27;
+    k.add(To(1, 0.045, 4, 24), shade(o.skirt || coat, 0.7), { pos: [0, 0.535 - (hem - 0.17) / 2 - hem / 2 + 0.01, 0], rot: [Math.PI / 2, 0, 0], scl: [fl, fl * 0.82, 0.3], ol: false });
+    k.add(B(0.09, 0.1, 0.05), shade(o.belt || C.LEATHER, 1.15), { pos: [-0.17, 0.53, 0.09], rot: [0, -0.6, 0], ol: false });
+    k.add(Sp(0.012, 6, 4), C.GOLD, { pos: [-0.185, 0.565, 0.125], ol: false });
+    k.add(Cy(0.002, 0.05, 0.08, 3), C.CLOTH, { pos: [0, 0.83, 0.15], rot: [-0.25, Math.PI, Math.PI], scl: [1, 1, 0.25], ol: false });
+  }
 }
 
 // ---------------- горожане ----------------
@@ -259,7 +286,7 @@ const WLOOK = {
 };
 export const WEAPON_LOOKS = new Set([...Object.keys(WLOOK), ...Object.keys(BOWS)]);
 export function buildHero(role, seed, weapon) {
-  THREE = window.W.THREE; W = window.W;
+  THREE = window.W.THREE; W = window.W; Q = W.HQ ? 1.6 : 1;
   const id = role.id, s = h32(seed ?? role.name ?? id), skin = SKINS[s % SKINS.length], hairC = HAIRS[(s >>> 3) % HAIRS.length], style = (s >>> 7) % 5;
   const coat = role.roof ?? 0xA4161A, tierCape = ['rare', 'epic', 'legendary'].includes(role.tier);
   const wp = WEAPON_LOOKS.has(weapon) && !(id === 'luchnik' && BOWS[weapon]) ? weapon : '';
@@ -399,7 +426,7 @@ function dress(k, id, { coat, skin, hairC, style, tierCape, tier, wp }) {
 // ---------------- Чёрный Орден ----------------
 const E = { PLATE: 0x34343E, PLATE2: 0x22222A, TRIM: 0x6A1418, RED: 0xA4161A, BLADE: 0x7A808C, EYE: 0xFF3B30 };
 export function buildKnight(kind, scale) {
-  THREE = window.W.THREE; W = window.W;
+  THREE = window.W.THREE; W = window.W; Q = W.HQ ? 1.6 : 1;
   let set = CACHE.get('foe|' + kind);
   if (!set) { const k = new Kit(); armour(k, kind); set = bake(k); CACHE.set('foe|' + kind, set); }
   const r = rig(set, { ...PIV, head: [0, 1.12, 0] }); if (scale) r.scale.setScalar(scale); return r;
@@ -442,7 +469,7 @@ function armour(k, kind) {
 // Все непрозрачные одноцветные toon-меши группы (кроме skip) сливаются в один меш с цветами вершин
 // и по одному контуру на толщину: сотни вызовов отрисовки превращаются в несколько.
 export function flattenStatic(group, skip = []) {
-  THREE = window.W.THREE; W = window.W; group.updateMatrixWorld(true);
+  THREE = window.W.THREE; W = window.W; Q = W.HQ ? 1.6 : 1; group.updateMatrixWorld(true);
   const inv = group.matrixWorld.clone().invert(), buckets = new Map(), main = [], dead = []; let shadow = false;
   const skipped = o => { for (let p = o; p && p !== group; p = p.parent) if (skip.includes(p)) return true; return false; };
   group.traverse(o => {

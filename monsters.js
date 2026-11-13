@@ -104,9 +104,60 @@ function witch() { // Болотная ведьма: сгорбленная, в 
   for (const l of [u.legL, u.legR]) m(l, C(0.06, 0.05, 0.5, 6), 0x2A2018, [0, -0.25, 0]);
   return g;
 }
+
+// HQ (компьютеры): дополнительные детали поверх основной модели
+const EXTRA = {
+  golem(u) { // трещины с лавой, валуны на плечах, мох и кристаллы
+    for (const [x, y, r] of [[-0.2, 1.3, 0.5], [0.25, 1.05, -0.4], [0.05, 1.42, 1.2]]) m(u.body, B(0.03, 0.34, 0.02), 0, [x, y, 0.305], [0, 0, r], 0).material = glow(0xFF7A1A);
+    for (const a of [u.armL, u.armR]) { m(a, S(0.2, 0), 0x7A746C, [0, 0.12, 0], null, 1.2); m(a, S(0.1, 0), 0x4E7A34, [0.05, 0.25, 0.05], null, 0); }
+    for (const [x, z] of [[-0.3, 0.1], [0.2, -0.15], [0.35, 0.2]]) m(u.body, S(0.07, 0), 0x5E8A3A, [x, 1.57, z], null, 0);
+    m(u.head, B(0.5, 0.08, 0.1), 0x6E6862, [0, 0.3, 0.24], [0.2, 0, 0], 1);
+  },
+  kikimora(u) { // грибы и ряска на голове, бородавки, кувшинка на плече
+    for (const [x, z, h] of [[-0.1, -0.02, 0.1], [0.08, -0.08, 0.13], [0.02, 0.06, 0.08]]) { m(u.head, C(0.012, 0.016, h, 5), 0xE8E2C8, [x, 0.3 + h / 2, z], null, 0); m(u.head, S(0.04, 0), 0xB3202A, [x, 0.31 + h, z], null, 1).scale.set(1, 0.5, 1); }
+    for (const [x, y] of [[-0.12, 0.05], [0.14, 0.1], [0.05, -0.02]]) m(u.head, S(0.018, 0), 0x55703A, [x, y, 0.2], null, 0);
+    m(u.body, C(0.14, 0.14, 0.02, 10), 0x4E8A3A, [0.2, 1.3, 0], null, 1); m(u.body, S(0.04, 0), 0xF2E6F0, [0.2, 1.33, 0], null, 0);
+    for (let k = 0; k < 6; k++) { const a = k * 1.05; m(u.body, B(0.05, 0.22, 0.02), 0x3E4A22, [Math.sin(a) * 0.35, 0.4, Math.cos(a) * 0.35], [0, a, 0.2], 0); }
+  },
+  utopets(u) { // ракушки, цепь с камнем, водоросли на голове, пузыри
+    for (const [x, y] of [[-0.15, 1.15], [0.14, 0.9]]) m(u.body, S(0.045, 0), 0xE8DCC8, [x, y, 0.16], null, 0.8).scale.set(1, 0.7, 0.4);
+    for (let i = 0; i < 4; i++) m(u.legL, new THREE.TorusGeometry(0.04, 0.012, 4, 8), 0x55524E, [0.06, -0.55 - i * 0.06, 0.06], [i % 2 ? Math.PI / 2 : 0, 0, 0], 0);
+    m(u.legL, S(0.1, 0), 0x6E6862, [0.08, -0.82, 0.12], null, 1);
+    for (let k = 0; k < 5; k++) m(u.head, B(0.04, 0.3, 0.02), 0x3A6A3A, [-0.16 + k * 0.08, 0.2, -0.17], [0.3, 0, (k - 2) * 0.15], 0);
+    for (const [x, y] of [[0.1, 0.45], [0.16, 0.6], [0.12, 0.72]]) m(u.head, S(0.025 + y * 0.02, 1), 0, [x, y, 0.15], null, 0).material = new THREE.MeshBasicMaterial({ color: 0xCFF4FF, transparent: true, opacity: 0.6 });
+  },
+  skeleton(u) { // ржавый шлем, щит, тазовая кость, светящиеся глаза
+    m(u.head, S(0.2, 1), 0x6A6058, [0, 0.2, -0.01], null, 1).scale.set(1, 0.6, 1); m(u.head, B(0.04, 0.12, 0.05), 0x6A6058, [0, 0.14, 0.18], null, 0.8);
+    for (const x of [-0.06, 0.06]) m(u.head, S(0.018, 0), 0, [x, 0.14, 0.18], null, 0).material = glow(0x7FD8FF);
+    m(u.armL, C(0.22, 0.22, 0.05, 10), 0x5A3A22, [0, -0.45, 0.12], [Math.PI / 2, 0, 0], 1); m(u.armL, S(0.05, 0), 0x8E949E, [0, -0.45, 0.16], null, 0);
+    m(u.body, B(0.26, 0.08, 0.12), 0xEDE6D3, [0, 0.62, 0], null, 1);
+  },
+  dragon(u) { // зубы, ноздри с дымком, чешуя на брюхе, когти
+    for (let i = 0; i < 6; i++) for (const s of [-1, 1]) m(u.head, K(0.035, 0.12, 4), 0xF5EBDC, [s * 0.3, 0.97, 1.7 + i * 0.12], [Math.PI, 0, 0], 0);
+    for (const x of [-0.18, 0.18]) m(u.head, S(0.06, 0), 0x2A0A0A, [x, 1.3, 2.41], null, 0);
+    for (let i = 0; i < 5; i++) m(u.body, C(0.75 - Math.abs(i - 2) * 0.12, 0.75 - Math.abs(i - 2) * 0.12, 0.05, 12, ), 0xC8961E, [0, 1.15 + i * 0.22, 0.6 + Math.sin(i * 0.8) * 0.1], [Math.PI / 2 - 0.3, 0, 0], 0).scale.set(1, 1, 0.3);
+    for (const l of [u.legL, u.legR]) for (const x of [-0.14, 0, 0.14]) m(l, K(0.05, 0.2, 4), 0xF5EBDC, [x, -1.02, 0.85], [Math.PI / 2, 0, 0], 0);
+  },
+  lich(u) { // летающие огоньки-души, книга, цепи на мантии
+    for (let i = 0; i < 3; i++) { const a = i * 2.1; m(u.body, S(0.06, 1), 0, [Math.sin(a) * 0.7, 1.6 + i * 0.12, Math.cos(a) * 0.7], null, 0).material = glow(0x9CFF8A); }
+    m(u.armL, B(0.24, 0.3, 0.06), 0x5A1E3A, [0, -0.78, 0.1], [0.2, 0, 0], 1); m(u.armL, B(0.2, 0.26, 0.065), 0xE8DCC8, [0, -0.78, 0.1], [0.2, 0, 0], 0);
+    for (let i = 0; i < 6; i++) m(u.body, new THREE.TorusGeometry(0.035, 0.01, 4, 8), 0xB8860B, [-0.25 + i * 0.1, 1.15 - Math.sin(i / 5 * Math.PI) * 0.12, 0.34], [0, i % 2 ? Math.PI / 2 : 0, 0], 0);
+  },
+  giant(u) { // сосульки на руках, иней на плечах, пояс
+    for (const a of [u.armL, u.armR]) for (const x of [-0.15, 0.05, 0.18]) m(a, K(0.05, 0.3, 4), 0xDFF6FF, [x, -1.98, 0.1], [Math.PI, 0, 0], 0.8);
+    m(u.body, B(1.55, 0.18, 0.95), 0x6A5040, [0, 1.25, 0], null, 1); m(u.body, B(0.24, 0.24, 0.1), 0xB8C8D0, [0, 1.25, 0.5], null, 1);
+    for (const x of [-0.6, 0.6]) m(u.body, S(0.2, 0), 0xFFFFFF, [x, 2.55, 0], null, 0);
+  },
+  witch(u) { // бородавки, свеча на шляпе, пояс со склянками, сумка
+    m(u.head, C(0.025, 0.025, 0.1, 6), 0xF2E6C8, [0.18, 0.33, 0.12], null, 0); m(u.head, K(0.02, 0.06, 5), 0, [0.18, 0.41, 0.12], null, 0).material = glow(0xFFC23A);
+    m(u.body, C(0.3, 0.33, 0.05, 10), 0x5A3A22, [0, 0.62, 0], null, 1);
+    for (const [x, c] of [[-0.2, 0x8DFF5A], [0, 0xB36AFF], [0.2, 0xFF6A6A]]) { m(u.body, S(0.05, 1), c, [x, 0.56, 0.28], null, 0.8); m(u.body, C(0.015, 0.015, 0.05, 5), 0x6B4A2A, [x, 0.62, 0.28], null, 0); }
+    m(u.body, B(0.18, 0.16, 0.08), 0x6B4A2A, [-0.33, 0.55, 0.05], [0, 0.5, 0], 1);
+  },
+};
 const MAKE = { golem, kikimora, utopets, skeleton, dragon, lich, giant, witch };
 export function buildMonster(kind, scale) {
-  W = window.W; THREE = W.THREE; const g = MAKE[kind](); if (scale && scale !== 1) g.scale.multiplyScalar(scale);
+  W = window.W; THREE = W.THREE; const g = MAKE[kind](); if (W.HQ && EXTRA[kind]) EXTRA[kind](g.userData); if (scale && scale !== 1) g.scale.multiplyScalar(scale);
   g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return g;
 }
 export const isMonster = kind => !!MAKE[kind];
