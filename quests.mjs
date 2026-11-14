@@ -244,11 +244,12 @@ export const RECIPES = {
 };
 export const BUFFS = { potion_power: { key: 'power', min: 10 }, potion_speed: { key: 'speed', min: 10 } };
 // улучшение оружия у кузнеца: +2 к атаке за уровень; выше +3 — только когда построена Большая кузня
-export const WEAPON = { atk: 2, max: 5, maxNoForge: 3, cost: lv => ({ ore: 3 + 2 * lv, wood: 1 + lv }) };
+export const WEAPON = { atk: 2, max: 100, maxNoForge: 100, cost: lv => ({ ore: 3 + 2 * lv, wood: 1 + lv }), // 14.11.2026: улучшение до +100
+  bonus: lv => lv <= 5 ? lv * 2 : 10 + (lv - 5), step: lv => lv < 5 ? 2 : 1 }; // до +5 по +2 к атаке за ступень, дальше по +1
 // общие стройки во дворе крепости: ресурсы сдают все герои вместе
 export const BUILDS = {
   taverna: { name: 'Таверна', x: 0, z: -13.2, need: { wood: 1200, herb: 400 }, bonus: '+10% опыта за задания всем героям' },
-  kuznya: { name: 'Большая кузня', x: 13.2, z: 0, need: { wood: 800, ore: 1000 }, bonus: 'Ковка у кузнеца на 1 руду дешевле, оружие до +5' },
+  kuznya: { name: 'Большая кузня', x: 13.2, z: 0, need: { wood: 800, ore: 1000 }, bonus: 'Ковка у кузнеца на 1 руду дешевле' },
 };
 // укрепления перед вторжением: очки за сданные ресурсы ослабляют осаду (до −30% к цели обороны)
 export const FORT = { pts: { wood: 1, ore: 2, herb: 0 }, max: 200, cut: 0.3 };
@@ -344,6 +345,6 @@ SHOP.sell.mushroom = 4;
 import { MINE_SPOTS, PETS, GEM } from './extras.mjs';
 Object.assign(ITEMS, { gem: { name: GEM.name, type: 'res', icon: GEM.icon } });
 for (const [id, p] of Object.entries(PETS)) ITEMS[id] = { name: p.name, type: 'pet', icon: p.icon };
-SHOP.sell.gem = GEM.sell; SHOP.buy.pet_fox = PETS.pet_fox.price; SHOP.buy.pet_owl = PETS.pet_owl.price;
+SHOP.sell.gem = GEM.sell; SHOP.buy.pet_fox = PETS.pet_fox.price; SHOP.buy.pet_owl = PETS.pet_owl.price; SHOP.buy.pet_dragon = PETS.pet_dragon.price;
 POI.mine = { name: 'горы и шахта далеко на северо-западе', x: -132.4, z: -132.4 };
 SLOTS.pet = { name: 'Питомец', n: 1 };

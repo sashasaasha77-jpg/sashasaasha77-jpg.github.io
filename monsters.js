@@ -190,7 +190,9 @@ function snowking() { // Снежный король: великан в бело
 }
 // питомцы: идут следом за героем
 export function buildPet(id) {
-  W = window.W; THREE = W.THREE; const g = new THREE.Group(), body = piv(g, 0, 0, 0); g.userData = { body, legs: [] };
+  W = window.W; THREE = W.THREE;
+  if (/^pet_dragon/.test(id)) { const k = +id.slice(-1) || 1, g = new THREE.Group(), d = MAKE.dragon(); d.scale.multiplyScalar([0.18, 0.3, 0.6][k - 1]); g.add(d); g.userData = { body: d, legs: [], fly: true }; return g; }
+  const g = new THREE.Group(), body = piv(g, 0, 0, 0); g.userData = { body, legs: [] };
   if (id === 'pet_owl') { const br = 0x8A6A4A, cr = 0xE8DCC8;
     m(body, S(0.2, 1), br, [0, 0.32, 0]); body.children.at(-1).scale.set(1, 1.2, 0.95); m(body, S(0.13, 1), cr, [0, 0.3, 0.1], null, 0);
     m(body, S(0.16, 1), br, [0, 0.6, 0.02]); for (const x of [-0.06, 0.06]) { m(body, S(0.055, 1), 0xFFFFFF, [x, 0.62, 0.15], null, 0); m(body, S(0.03, 0), 0x1A1210, [x, 0.62, 0.19], null, 0); m(body, K(0.035, 0.1, 4), br, [x * 1.6, 0.76, 0.02], null, 0.8); }
@@ -206,7 +208,9 @@ export function buildPet(id) {
   g.scale.setScalar(fox ? 1 : 1.2); return g;
 }
 const MAKE = { troll, mountain_king, snowking, golem, kikimora, utopets, skeleton, dragon, lich, giant, witch };
+import { buildMon3D } from './hero3d.js';
 export function buildMonster(kind, scale) {
+  { const g3 = buildMon3D(kind, scale || 1); if (g3) return g3; } // настоящая 3D-модель с анимацией (если уже загрузилась)
   W = window.W; THREE = W.THREE; const g = MAKE[kind](); if (W.HQ && EXTRA[kind]) EXTRA[kind](g.userData); if (scale && scale !== 1) g.scale.multiplyScalar(scale);
   g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return g;
 }

@@ -3,10 +3,10 @@
 import { createClient } from './sb.js';
 import { localCall } from './rpg-local.mjs';
 import { buildHorse, rideHorse, horseVariant } from './monsters.js';
-import { lookKey } from './extras.mjs';
+import { lookKey, petShow } from './extras.mjs';
 import { activeGear, gearSlot } from './combat.mjs';
-const lkOf = g => lookKey(g?.extra?.look?.cur), elOf = g => { const w = wpOf(g); return w ? ((g?.extra?.ench || {})[w] || 0) : 0; };
-const petOf = g => ((g?.inventory || []).find(i => i.equipped && /^pet_/.test(i.item)) || {}).item || '';
+const lkOf = g => lookKey(g?.extra?.look?.cur || {}) + (g?.extra?.cls ? '.' + g.extra.cls : ''), elOf = g => { const w = wpOf(g); return w ? ((g?.extra?.ench || {})[w] || 0) : 0; };
+const petOf = g => petShow(((g?.inventory || []).find(i => i.equipped && /^pet_/.test(i.item)) || {}).item || '', g?.extra?.drg);
 const wpOf = g => activeGear((g?.inventory || []).filter(i => i.equipped).map(i => i.item)).find(i => gearSlot(i) === 'weapon') || '';
 const SB_URL = 'https://otgwiroxifqtktbipbsu.supabase.co', SB_KEY = 'sb_publishable_YM1peVWMHKlyAy1kCx0D2w_SjoGpgEt';
 let W, K, THREE, R, client = null, ch = null, me = null, onRefresh = () => { };
@@ -63,6 +63,7 @@ export async function connect(info, refresh) {
   });
 }
 export function disconnect() { if (ch) { try { ch.untrack(); client.removeChannel(ch); } catch { } } ch = null; NET.ready = false; for (const n of [...NET.others.keys()]) removeOther(n); NET.online.clear(); }
+addEventListener('m3d-ready', () => { for (const [nick, o] of NET.others) { const role = W.ROLES.find(r => r.id === o.role) || W.ROLES[0], ng = R.buildHero(role, nick, o.wp || '', o.lk || ''); ng.position.copy(o.g.position); ng.rotation.copy(o.g.rotation); W.scene.remove(o.g); W.scene.add(ng); o.g = ng; } });
 export function retrack() { if (!ch || !NET.ready || !me) return; const p = R.state().pos, g = R.game(); ch.track({ nick: me.nick, role: g?.hero.role || me.role, lvl: g?.hero.level || me.level, sq: squadId(), wp: wpOf(g), pet: petOf(g), lk: lkOf(g), el: elOf(g), x: p ? +p.x.toFixed(1) : 0, z: p ? +p.z.toFixed(1) : 0 }); }
 
 // ---------------- другие герои ----------------

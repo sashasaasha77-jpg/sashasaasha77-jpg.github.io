@@ -2,6 +2,7 @@
 // Каждая подвижная часть (туловище, голова, руки, ноги, плащ) собирается из многих деталей
 // и сливается в один меш с цветами вершин + один контур: ~15 вызовов отрисовки на героя вместо ~50.
 import { LOOKS, lookParse } from './extras.mjs';
+import { m3dReady, buildHero3D } from './hero3d.js';
 let THREE, W;
 const CACHE = new Map();
 
@@ -300,6 +301,7 @@ const WLOOK = {
 export const WEAPON_LOOKS = new Set([...Object.keys(WLOOK), ...Object.keys(BOWS)]);
 export function buildHero(role, seed, weapon, lk = '') {
   THREE = window.W.THREE; W = window.W; Q = W.HQ ? 1.6 : 1;
+  if (W.M3D_ON && m3dReady()) { const g3 = buildHero3D(role, seed, weapon, lk); if (g3) return g3; } // настоящие 3D-модели с анимацией
   const L = lookParse(lk), LC = LOOKS.cape.list[L.cape], LH = LOOKS.hair.list[L.hair];
   const id = role.id, s = h32(seed ?? role.name ?? id), skin = SKINS[s % SKINS.length], hairC = LH ? LH.color : HAIRS[(s >>> 3) % HAIRS.length], style = (s >>> 7) % 5;
   const coat = role.roof ?? 0xA4161A, tierCape = ['rare', 'epic', 'legendary'].includes(role.tier);
@@ -445,6 +447,10 @@ function dress(k, id, { coat, skin, hairC, style, tierCape, tier, wp, noCape }) 
 const E = { PLATE: 0x34343E, PLATE2: 0x22222A, TRIM: 0x6A1418, RED: 0xA4161A, BLADE: 0x7A808C, EYE: 0xFF3B30 };
 export function buildKnight(kind, scale) {
   THREE = window.W.THREE; W = window.W; Q = W.HQ ? 1.6 : 1;
+  if (W.M3D_ON && m3dReady()) { // Чёрный Орден: тёмные рыцари и стрелки
+    const g3 = buildHero3D({ id: 'foe' }, kind, kind === 'archer' ? 'hunter_bow' : kind === 'heavy' ? 'war_axe' : kind === 'lord' || kind === 'commander' ? 'black_blade' : 'iron_sword', '', kind === 'archer' ? 'rogue_hooded' : 'knight');
+    if (g3) { g3.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); if (!/Cape/.test(o.name)) o.material.color.setHex(0x4E4A58); if (/Cape/.test(o.name)) { o.material.map = null; o.material.color.setHex(0x8A1A1A); } } });
+      if (scale) g3.scale.setScalar(scale); return g3; } }
   let set = CACHE.get('foe|' + kind);
   if (!set) { const k = new Kit(); armour(k, kind); set = bake(k); CACHE.set('foe|' + kind, set); }
   const r = rig(set, { ...PIV, head: [0, 1.12, 0] }); if (scale) r.scale.setScalar(scale); return r;

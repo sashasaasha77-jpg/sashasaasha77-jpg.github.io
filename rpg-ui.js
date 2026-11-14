@@ -6,7 +6,7 @@ import { initRes, syncSites, siteAction, buildSheet, heroExtras, wireHeroExtras 
 import { arenaSheet, inArena, initArena } from './arena.js';
 import { marketSheet, inMarket, initMarket } from './market.js';
 import { guildSheet, initGuild } from './guild.js';
-import { initExtras, extrasAfter, extrasTick, rewardsSheet, lookSheet, enchSheet } from './extras-ui.js';
+import { initExtras, extrasAfter, extrasTick, rewardsSheet, lookSheet, enchSheet, classSheet } from './extras-ui.js';
 let W, K, THREE, R; // R — состояние героя из rpg.js
 export const G = { state: null, busy: false, track: null, nodes: new Map(), wait: null, lastVisit: 0, sqWork: null, sqTogether: 0 };
 
@@ -31,7 +31,7 @@ export function act(action, extra = {}, quiet = false) {
 }
 async function send(action, extra, quiet) {
   const st = R.state();
-  const body = { ...extra }; if (st.pos && ['take', 'step', 'done', 'gather', 'sq_take', 'sq_act', 'fight', 'shop', 'market', 'war', 'craft', 'weapon', 'build', 'fort', 'decor', 'order', 'chop', 'tutorial', 'gift', 'enchant', 'owar'].includes(action)) { body.x = +st.pos.x.toFixed(2); body.z = +st.pos.z.toFixed(2); }
+  const body = { ...extra }; if (st.pos && ['take', 'step', 'done', 'gather', 'cls', 'sq_take', 'sq_act', 'fight', 'shop', 'market', 'war', 'craft', 'weapon', 'build', 'fort', 'decor', 'order', 'chop', 'tutorial', 'gift', 'enchant', 'owar', 'ocastle', 'hunt'].includes(action)) { body.x = +st.pos.x.toFixed(2); body.z = +st.pos.z.toFixed(2); }
   let r;
   try {
     if (st.demo) r = await localCall(st.nick, action, body);
@@ -229,14 +229,14 @@ function hero() {
   openSheet(`<div class="npchead"><div>${W.crest(role, 52)}</div><div><small>${role.name} · ${h.spec.title}</small><h2>@${esc(h.nick)}</h2></div></div>
     <p><b>Уровень ${h.level}</b> · опыт ${h.into} / ${h.need} · монеты ${K.fmt(s.coins)}</p><div class="xpbar"><i style="width:${(100 * h.into / h.need).toFixed(1)}%"></i></div>
     <p class="rw">Специализация роли: <b style="color:var(--gold)">${h.spec.title}</b>: ${h.spec.text}.</p>
-    <div class="gRow" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0"><button class="btn btn-gold" type="button" id="hLook">👗 Облик героя</button><button class="btn btn-paper" type="button" id="hEnch">⚒ Заточка оружия</button></div>
+    <div class="gRow" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0"><button class="btn btn-gold" type="button" id="hLook">👗 Облик героя</button><button class="btn btn-paper" type="button" id="hEnch">⚒ Заточка оружия</button><button class="btn btn-gold" type="button" id="hCls">⚔ Класс и умения</button></div>
     ${s.combat ? `<div class="qcard"><h3>Бой</h3><p>❤ Здоровье ${s.combat.hp}/${s.combat.maxHp} · ⚔ Атака ${s.combat.stats.atk} · 🛡 Броня ${s.combat.stats.def} · 💨 Уворот ${Math.round(s.combat.stats.dodge * 100)}% · 💥 Крит ${Math.round(s.combat.stats.crit * 100)}%</p>
       <p>Способность роли: <b style="color:var(--gold)">«${s.combat.ability.name}»</b> — ${s.combat.ability.text} (раз в ${s.combat.ability.cd} с). Зелий: ${s.combat.potions}.</p></div>` : ''}
     ${invHtml(s)}
     <p class="rw">Надетое снаряжение усиливает героя в бою: в каждом слоте работает одна вещь, амулетов — до трёх. Новое оружие куёт кузнец, редкое выпадает с врагов и боссов, а ещё его продают на рынке. Здоровье восстанавливается само вне боя.</p>
     ${heroExtras()}
     <h2 style="font-size:22px">Достижения</h2><div class="ach">${Object.entries(ACH).map(([id, a]) => `<div class="${got.has(id) ? '' : 'no'}">${got.has(id) ? '🏅' : '🔒'} <span><b>${a.name}</b><br>${a.text}</span></div>`).join('')}</div>`,
-    b => { b.querySelectorAll('[data-it]').forEach(x => x.onclick = async () => { await act('equip', { item: x.dataset.it }, true); hero(); }); wireHeroExtras(b, hero); b.querySelector('#hLook').onclick = () => lookSheet(); b.querySelector('#hEnch').onclick = () => enchSheet(); });
+    b => { b.querySelectorAll('[data-it]').forEach(x => x.onclick = async () => { await act('equip', { item: x.dataset.it }, true); hero(); }); wireHeroExtras(b, hero); b.querySelector('#hLook').onclick = () => lookSheet(); b.querySelector('#hEnch').onclick = () => enchSheet(); b.querySelector('#hCls').onclick = () => classSheet(); });
 }
 
 export function render() {

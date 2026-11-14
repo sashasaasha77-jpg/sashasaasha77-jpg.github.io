@@ -1,4 +1,5 @@
 // Ордены (семьи): окно ордена, список орденов и рейтинг недели, основание ордена, задания главы, вклад в казну, ссылка-приглашение.
+import { castleSheet } from './extras-ui.js';
 import { ITEMS } from './quests.mjs';
 import { G, act, openSheet } from './rpg-ui.js';
 
@@ -34,6 +35,7 @@ function render(o, focusId) {
       ${goalHtml}
       <div class="gRow">${donate}</div><small class="rw">В казну: 🪵 и 🌿 — по 1 очку, 🪨 — 2 очка за штуку.</small>
       <h3 style="margin:14px 0 6px">Воины ордена (${m.members.length}/${R.maxMembers})</h3><div class="gM">${m.members.map((x, i) => `<div><span>${x.nick === m.head ? '👑' : i + 1}</span><b style="flex:1">@${esc(x.nick)}</b><small>${fmt(x.week)} за нед. · ${fmt(x.pts)} всего</small>${head && x.nick !== m.head ? `<button class="link" type="button" data-kick="${esc(x.nick)}">исключить</button>` : ''}</div>`).join('')}</div>
+      <button class="btn btn-gold" type="button" id="gCastle" style="width:100%;margin:12px 0 2px">🏰 Замок ордена — строим вместе</button>
       <h3 style="margin:14px 0 6px">Позвать друзей</h3><p class="rw">Отправь ссылку другу: он откроет игру и сразу увидит кнопку «Вступить» в твой орден.</p>
       <div class="gRow"><input id="gLink" readonly value="${esc(inviteUrl(m.id))}"><button class="btn btn-gold" type="button" id="gCopy" style="padding:6px 12px;font-size:13px">Скопировать</button></div>
       ${goalSet}
@@ -57,6 +59,7 @@ function render(o, focusId) {
     const v = id => (b.querySelector('#' + id) || {}).value || '';
     const f = b.querySelector('#gFound'); if (f) f.onclick = () => op(f, { op: 'found', name: v('gName'), motto: v('gMotto'), color });
     const sv = b.querySelector('#gSave'); if (sv) sv.onclick = () => op(sv, { op: 'edit', motto: v('gMotto'), color });
+    const gc = b.querySelector('#gCastle'); if (gc) gc.onclick = () => castleSheet();
     const lv = b.querySelector('#gLeave'); if (lv) lv.onclick = () => { if (lv.dataset.sure) op(lv, { op: 'leave' }); else { lv.dataset.sure = 1; lv.textContent = 'Точно выйти? Нажми ещё раз'; } };
     const cp = b.querySelector('#gCopy'); if (cp) cp.onclick = async () => { const t = v('gLink'); try { await navigator.clipboard.writeText(t); } catch { const i = b.querySelector('#gLink'); i.select(); document.execCommand && document.execCommand('copy'); } W.toast('Ссылка скопирована — отправь её другу'); };
     const fx = b.querySelector('.gO.focus'); if (fx) fx.scrollIntoView({ block: 'center' });

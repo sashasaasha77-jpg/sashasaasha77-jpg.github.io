@@ -25,7 +25,7 @@ export function craftSheet(npc, back) {
   const lv = res().wlvl, max = built('kuznya') ? WEAPON.max : WEAPON.maxNoForge, wc = WEAPON.cost(lv);
   openSheet(`<h2>${npc === 'mag' ? 'Зелья мага' : 'Кузня'}</h2><p class="rw">${npc === 'mag' ? 'Эльдар сварит зелье из твоих трав.' : `Гордей скуёт снаряжение из руды и брёвен.${forge ? ' Большая кузня построена — руды нужно на 1 меньше.' : ''}`}</p>
     <div class="ach res">${list.map(([id, r]) => row(ITEMS[id].icon, ITEMS[id].name, `${r.text}<br>${cost(needOf(r))} · у тебя ${have(id)}`, button(`data-craft="${id}"`, 'Сделать', can(needOf(r))))).join('')}
-    ${npc === 'kuznets' ? row('⚔️', `Улучшить оружие: +${lv} → +${lv + 1}`, lv >= max ? (max < WEAPON.max ? `Больше +${max} без Большой кузни нельзя. Постройте её всем королевством!` : 'Оружие уже лучшее.') : `Атака +${WEAPON.atk}<br>${cost(wc)}`, button('data-weapon', 'Улучшить', lv < max && can(wc))) : ''}</div>${backBtn(back)}`,
+    ${npc === 'kuznets' ? row('⚔️', `Улучшить оружие: +${lv} → +${lv + 1}`, lv >= max ? (max < WEAPON.max ? `Больше +${max} без Большой кузни нельзя. Постройте её всем королевством!` : 'Оружие уже лучшее.') : `Атака +${WEAPON.step(lv)} (всего +${WEAPON.bonus(lv + 1)})<br>${cost(wc)}`, button('data-weapon', 'Улучшить', lv < max && can(wc))) : ''}</div>${backBtn(back)}`,
     b => wire(b, back, [['[data-craft]', async x => { await act('craft', { recipe: x.dataset.craft }); craftSheet(npc, back); }], ['[data-weapon]', async () => { await act('weapon', {}); craftSheet(npc, back); }]]));
 }
 export function buildSheet(id, back) {

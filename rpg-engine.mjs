@@ -5,8 +5,8 @@ import { roleIdFor, levelOf } from './roles.mjs';
 import { censor } from './censor.mjs';
 import { ORDER, COLORS, GOALS, orderLevel, levelBonus, nextLevelPts, validName } from './orders.mjs';
 import { questsFor, applySpec, nodesFor, NPC, POI, ITEMS, SPEC, ACH, SQUAD, SQUADQ, SHOP, RES, RECIPES, BUFFS, WEAPON, BUILDS, FORT, DECOR, dailyOrder, slotOf, ROLE_PRICE, CHOP, ARENA, MARKET, MARKET_STALLS, marketPrices, RESPAWN_MS as NODE_RESPAWN } from './quests.mjs';
-import { activeGear, heroStats, ABIL, MOVES, MIN_GAP, KINDS, LOOT, ENEMIES, RESPAWN_MS, enemyById, enemyPos, enemyReward, newFight, resolveRound, cooldownLeft, isNight, GEAR, gearSlot, gearScore, duelStats, duelReward, elo, ARENA_RULES } from './combat.mjs';
-import { TUT, TUT_STEP_COINS, TUT_DONE, loginReward, prevDay, REF, nySeason, TREE, pickGift, SNOW, nextSaturday, PETS, PET_BONUS, MINE, DUNGEON, LOOKS, ENCH, OWAR, owarWindow, owarLast } from './extras.mjs';
+import { activeGear, heroStats, ABIL, MOVES, MIN_GAP, KINDS, LOOT, ENEMIES, RESPAWN_MS, enemyById, enemyPos, enemyReward, newFight, resolveRound, cooldownLeft, isNight, GEAR, gearSlot, gearScore, duelStats, duelReward, elo, ARENA_RULES, CLASSES, SKILLS, classSkills, applyClass, CLASS_LVL, CLASS_CHANGE } from './combat.mjs';
+import { TUT, TUT_STEP_COINS, TUT_DONE, loginReward, prevDay, REF, nySeason, TREE, pickGift, SNOW, nextSaturday, PETS, PET_BONUS, MINE, DUNGEON, LOOKS, ENCH, OWAR, owarWindow, owarLast, OCASTLE, HUNT, huntSpot, huntHeat, DRAGON, dragonStage } from './extras.mjs';
 import { mergeConfig, TERR, CAPTURE_ORDER, SIEGE, TASKS, invasionGoal, invasionEnemies, occupiers, WORLD_EVENTS, RAIDERS, TITLES, isBossEvent, bossGoal, bossEnemies } from './world.mjs';
 
 export class Bad extends Error { constructor(status, code, msg) { super(msg); this.status = status; this.code = code; } }
@@ -153,7 +153,7 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
   }
   async function shadowStats(e) {
     const [eq, rp] = await Promise.all([sb(`inventory?nick=eq.${enc(e.duel)}&equipped=eq.true&select=item`), rpgGet(e.duel)]);
-    const s = heroStats(e.role, e.lvl, eq.map(r => r.item).filter(i => GEAR[i])); s.atk += (rp.wlvl || 0) * WEAPON.atk; return duelStats(e.duel, e.role, e.lvl, s);
+    const s = heroStats(e.role, e.lvl, eq.map(r => r.item).filter(i => GEAR[i])); s.atk += WEAPON.bonus(rp.wlvl || 0); return duelStats(e.duel, e.role, e.lvl, s);
   }
   async function arenaGet() { const a = (await store.get('arena')) || {}; a.r = a.r || {}; a.log = a.log || []; return a; }
   const arenaMe = (a, n = nick) => a.r[n] || { r: ARENA_RULES.start, w: 0, l: 0 };
@@ -191,9 +191,10 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
   // личные данные героя для ресурсов (уровень оружия, временные эффекты, заказ дня) — в хранилище, без новых таблиц
   async function rpgGet(who = nick) { return (await store.get('rpg/' + who)) || {}; }
   async function rpgSet(v, who = nick) { await store.set('rpg/' + who, v); }
-  async function statsOf(h) { const [eq, rp, en] = await Promise.all([equipped(), rpgGet(), store.get('ench/' + nick)]); const s = heroStats(h.role, levelOf(h.xp).level, eq);
+  async function statsOf(h) { const [eq, rp, en, cl] = await Promise.all([equipped(), rpgGet(), store.get('ench/' + nick), store.get('cls/' + nick)]); const s = applyClass(heroStats(h.role, levelOf(h.xp).level, eq), cl);
+    if (eq.includes('pet_dragon')) s.atk += DRAGON[dragonStage(await store.get('drg/' + nick)) - 1].bonus.atk;
     { const wpn = activeGear(eq).find(i => gearSlot(i) === 'weapon'); if (wpn && en && en[wpn]) s.atk += en[wpn] * ENCH.atk; }
-    s.atk += (rp.wlvl || 0) * WEAPON.atk; if ((rp.buffs?.rage || 0) > now) s.atk = Math.round(s.atk * 1.4); else if ((rp.buffs?.power || 0) > now) s.atk = Math.round(s.atk * 1.25); return s; }
+    s.atk += WEAPON.bonus(rp.wlvl || 0); if ((rp.buffs?.rage || 0) > now) s.atk = Math.round(s.atk * 1.4); else if ((rp.buffs?.power || 0) > now) s.atk = Math.round(s.atk * 1.25); return s; }
   async function builds() { return (await cfgGet('builds')) || {}; }
   // хватает ли ресурсов; списать
   async function needCheck(need) { const it = await inv(), have = k => (it.find(i => i.item === k) || {}).qty || 0;
@@ -288,10 +289,11 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
   }
   // ---------- обучение, вход каждый день, друзья, праздник, подземелье ----------
   async function extraView() {
-    const [tut, lg, rf, rfs, gift, look, ench, war] = await Promise.all([store.get('tut/' + nick), store.get('login/' + nick), store.get('ref/' + nick), store.get('refs/' + nick), store.get('gift/' + nick), store.get('look/' + nick), store.get('ench/' + nick), owarView()]);
+    const [tut, lg, rf, rfs, gift, look, ench, war, castles, hunt, drg, cls] = await Promise.all([store.get('tut/' + nick), store.get('login/' + nick), store.get('ref/' + nick), store.get('refs/' + nick), store.get('gift/' + nick), store.get('look/' + nick), store.get('ench/' + nick), owarView(), store.get('ocastles'), store.get('hunt/' + date), store.get('drg/' + nick), store.get('cls/' + nick)]);
     const l = lg || {}, streak = l.last === date ? l.streak : l.last === prevDay(date) ? l.streak : 0;
     return { tut: tut || { step: 0, done: false }, login: { claimed: l.last === date, streak, next: loginReward(streak + 1), nextDay: streak % 7 + 1 },
-      ref: { by: rf?.by || null, n: rfs?.n || 0 }, ny: nySeason(now), gift: gift === date, look: look || { cur: {}, owned: [] }, ench: ench || {}, war };
+      ref: { by: rf?.by || null, n: rfs?.n || 0 }, ny: nySeason(now), gift: gift === date, look: look || { cur: {}, owned: [] }, ench: ench || {}, drg: drg || 0, cls: cls || null, war, castles: castles || {},
+      hunt: { hint: huntSpot(date).hint, found: (hunt?.finders || []).length, mine: (hunt?.finders || []).includes(nick), first: hunt?.finders?.[0] || null } };
   }
   async function spend(n) { const p = await store.get('p/' + nick); if (!p || (p.coins || 0) < n) throw new Bad(409, 'money', `Не хватает монет: нужно ${n}.`); p.coins -= n; await store.set('p/' + nick, p); }
   async function giveItems(list, who = nick) { for (const [it, q] of list || []) await setItem(it, q, who); }
@@ -310,6 +312,10 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
       t.done = true; }
     await store.set('tut/' + nick, t); return { ...t, passed: st, fin };
   }
+  // ---------- замок ордена ----------
+  async function castleOf(oid) { return (await store.get('ocastle/' + oid)) || { lvl: 0, got: {}, top: {} }; }
+  async function castlesPublish(o, c) { const all = (await store.get('ocastles')) || {}; all[o.id] = { spot: c.spot, lvl: c.lvl, name: o.name, color: o.color }; await store.set('ocastles', all); }
+  async function myCastleBonus() { const oid = await store.get('om/' + nick); if (!oid) return 0; const all = (await store.get('ocastles')) || {}; return OCASTLE.bonus(all[oid]?.lvl || 0); }
   // ---------- война орденов ----------
   async function owarFlags(id) { const vals = await gm(OWAR.flags.map(f => `owar/${id}/${f.id}`)); return OWAR.flags.map((f, i) => ({ ...f, inf: (vals[i] || {}).inf || {} })); }
   const flagOwner = inf => { let best = null, bv = 0; for (const [o, v] of Object.entries(inf)) if (v > bv) { bv = v; best = o; } return best; };
@@ -592,13 +598,13 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
           if (here.length < DUNGEON.needMembers) throw new Bad(409, 'order', `Нужно ${DUNGEON.needMembers} героя из ордена у входа в шахту. Сейчас рядом: ${here.length}.`);
           let pool = await dungeonPool(sq); if (pool?.done) throw new Bad(409, 'done', 'Сегодня ваш орден уже победил Горного короля. Он вернётся завтра!');
           if (!pool) { pool = { date, max: DUNGEON.hpPer * Math.max(DUNGEON.needMembers, Math.min(ms.length, 6)), hits: {}, done: false }; pool.hp = pool.max; await store.set('dung/' + sq.id, pool); } }
-        const f = newFight(e, hs, hp, now - MIN_GAP); f.ex = +p.x.toFixed(2); f.ez = +p.z.toFixed(2);
+        const f = newFight(e, hs, hp, now - MIN_GAP); f.ex = +p.x.toFixed(2); f.ez = +p.z.toFixed(2); f.sk = classSkills(await store.get('cls/' + nick), levelOf(h.xp).level);
         const [row] = await sb('fights', { method: 'POST', body: { nick, enemy_id: e.id, status: 'active', f, updated_at: new Date(now).toISOString() }, prefer: 'return=representation' });
         fr = row; log = [`${KINDS[e.kind].name} (ур. ${e.lvl}) вступает в бой!`];
       } else {
         const f = fr.f;
         if (now - f.last < MIN_GAP) throw new Bad(429, 'fast', 'Не так быстро!');
-        const isAb = ABIL[h.role] && move === ABIL[h.role].id; if (!isAb && MOVES[move] == null) throw new Bad(400, 'bad_move', 'Неизвестное действие.');
+        const isAb = (ABIL[h.role] && move === ABIL[h.role].id) || (SKILLS[move] && (f.sk || []).includes(move)); if (!isAb && MOVES[move] == null) throw new Bad(400, 'bad_move', 'Неизвестное действие.');
         const left = cooldownLeft(f, move, h.role, now); if (left > 0) throw new Bad(429, 'cooldown', `Ещё ${Math.ceil(left / 1000)} с перезарядки.`);
         if (move === 'potion') { const [pot] = await sb(`inventory?nick=eq.${N}&item=eq.potion&select=qty`); if (!pot || pot.qty < 1) throw new Bad(409, 'no_potion', 'Нет зелий. Купи у торговца.'); await setItem('potion', -1); }
         f.hMax = hs.hp; f.cds[move] = now;
@@ -632,9 +638,14 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
           return json(200, { ...(await state(h)), log, result: won ? 'won' : 'lost', arena: true, reward: rw ? { ...rw, items: [] } : null }); }
         if (status === 'won') {
           const rw = enemyReward(e), loot = [];
+          { const cb = await myCastleBonus(); if (cb) { rw.coins = Math.round(rw.coins * (1 + cb)); rw.xp = Math.round(rw.xp * (1 + cb)); } }
           { const eqp = await equipped(); for (const [pid, bo] of Object.entries(PET_BONUS)) if (eqp.includes(pid)) { if (bo.coins) rw.coins = Math.round(rw.coins * (1 + bo.coins)); if (bo.xp) rw.xp = Math.round(rw.xp * (1 + bo.xp)); } }
+          let drgNote = null; { const eqp = await equipped(); if (eqp.includes('pet_dragon')) { const n0 = (await store.get('drg/' + nick)) || 0, st0 = dragonStage(n0), st1 = dragonStage(n0 + 1), bo = DRAGON[st0 - 1].bonus;
+            rw.coins = Math.round(rw.coins * (1 + bo.coins)); rw.xp = Math.round(rw.xp * (1 + bo.xp)); await store.set('drg/' + nick, n0 + 1);
+            if (st1 > st0) { drgNote = `${DRAGON[st1 - 1].icon} Твой дракон вырос: теперь это ${DRAGON[st1 - 1].name}!`; await chron('pet', `🐲 У @${nick} дракон вырос — ${DRAGON[st1 - 1].name}!`, nick); } } }
           const ins = await sb('reward_log', { method: 'POST', body: { nick, key: `f:${fr.id}`, gold: rw.coins, xp: rw.xp }, prefer: 'resolution=ignore-duplicates,return=representation' });
           if (ins && ins.length) {
+            if (drgNote) log.push(drgNote);
             for (const [it, ch] of LOOT[e.kind]) if (Math.random() < ch) { loot.push(it); await setItem(it, 1); }
             if (e.raid) rw.coins *= 2;
             { const oid = await store.get('om/' + nick); if (oid) { const o = await store.get('order/' + oid); if (o && o.members?.[nick]) { // орден: бонус монет по уровню ордена и очки ордену
@@ -769,7 +780,7 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
       const rp = await rpgGet(), lv = rp.wlvl || 0, max = (await builds()).kuznya?.done ? WEAPON.max : WEAPON.maxNoForge;
       if (lv >= max) throw new Bad(409, 'max', max < WEAPON.max ? `Больше +${max} кузнец не сможет. Нужна Большая кузня — постройте её всем королевством.` : 'Оружие уже лучшее в королевстве.');
       await pay(WEAPON.cost(lv)); rp.wlvl = lv + 1; await rpgSet(rp);
-      return json(200, { ...(await state(h)), note: `Оружие улучшено до +${lv + 1}: атака +${WEAPON.atk}.` });
+      return json(200, { ...(await state(h)), note: `Оружие улучшено до +${lv + 1}: атака +${WEAPON.bonus(lv + 1)} всего.` });
     }
     if (action === 'use') {
       const it = String(b.item), [row] = await sb(`inventory?nick=eq.${N}&item=eq.${enc(it)}&select=qty`); if (!row || row.qty < 1) throw new Bad(409, 'no_item', 'Этого нет в сумке.');
@@ -1037,6 +1048,15 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
       if (id && !L.owned.includes(key)) throw new Bad(409, 'not_owned', 'Сначала купи это.');
       L.cur[kind] = id; await store.set(k, L); return json(200, { ...(await state(h)), note: id ? `Надето: ${it.name}.` : 'Снято.' });
     }
+    if (action === 'cls') { // выбор класса героя с 20 уровня: первый раз бесплатно, смена — за монеты
+      const h = await hero(), lv = levelOf(h.xp).level, id = String(b.id || ''); if (!CLASSES[id]) throw new Bad(400, 'bad', 'Нет такого класса.');
+      if (lv < CLASS_LVL) throw new Bad(409, 'lvl', `Класс можно выбрать с ${CLASS_LVL} уровня.`);
+      if (await activeFight()) throw new Bad(409, 'fight', 'Сначала закончи бой.');
+      const cur = await store.get('cls/' + nick); if (cur === id) throw new Bad(409, 'same', 'Ты уже ' + CLASSES[id].name + '.');
+      if (cur) await spend(CLASS_CHANGE); await store.set('cls/' + nick, id);
+      if (!cur) await chron('class', `${CLASSES[id].icon} @${nick} выбрал путь: ${CLASSES[id].name}!`, nick);
+      return json(200, { ...(await state(h)), note: `${CLASSES[id].icon} Теперь ты ${CLASSES[id].name}! Новые умения появятся в бою.` });
+    }
     if (action === 'enchant') { // заточка оружия самоцветами у кузнеца
       const h = await hero(); await at(h, +b.x, +b.z); if (!near(h.x, h.z, NPC.kuznets, 4.5)) throw new Bad(409, 'far', 'Точить оружие можно только у кузнеца Гордея во дворе замка.');
       const it = String(b.item || ''); if (!GEAR[it] || gearSlot(it) !== 'weapon') throw new Bad(400, 'bad', 'Точить можно только оружие.');
@@ -1058,6 +1078,37 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
       const fk = `owar/${w.id}/${f.id}`, cur = (await store.get(fk)) || { inf: {} }, pw = 1 + Math.floor(levelOf(h.xp).level / 10); cur.inf[oid] = (cur.inf[oid] || 0) + pw; await store.set(fk, cur);
       const wk2 = `owar/${w.id}/who`, who = (await store.get(wk2)) || {}; who[nick] = { o: oid, n: ((who[nick] || {}).n || 0) + 1 }; await store.set(wk2, who);
       const own = flagOwner(cur.inf); return json(200, { ...(await state(h)), note: `🚩 ${f.name}: «${o.name}» +${pw} влияния${own === oid ? ' — флаг ваш!' : ''}` });
+    }
+
+    if (action === 'ocastle') { // замок ордена: занять участок, сдать ресурсы
+      const h = await hero(), o = await myOrder(); if (!o) throw new Bad(409, 'no_order', 'Замок строят ордены. Вступи в орден или основай свой!');
+      const c = await castleOf(o.id);
+      if (c.spot == null) { const all = (await store.get('ocastles')) || {}, taken = new Set(Object.values(all).map(x => x.spot)); const free = OCASTLE.spots.findIndex((_, i) => !taken.has(i));
+        if (free < 0) throw new Bad(409, 'no_spot', 'Свободных участков под замки не осталось.'); c.spot = free; await store.set('ocastle/' + o.id, c); await castlesPublish(o, c); }
+      if (b.op !== 'donate') return json(200, { ...(await state(h)), castle: { ...c, id: o.id } });
+      const [sx, sz] = OCASTLE.spots[c.spot]; await at(h, +b.x, +b.z); if (Math.hypot(h.x - sx, h.z - sz) > OCASTLE.r + 2) throw new Bad(409, 'far', 'Сдавать ресурсы можно только на участке своего замка.');
+      const L = OCASTLE.levels[c.lvl]; if (!L) throw new Bad(409, 'max', 'Ваша Великая цитадель уже построена!');
+      const it = String(b.item); if (!L.need[it]) throw new Bad(400, 'bad_item', 'Это для замка не нужно.');
+      const left = L.need[it] - (c.got[it] || 0), [row] = await sb(`inventory?nick=eq.${N}&item=eq.${enc(it)}&select=qty`), n = Math.min(left, row ? row.qty : 0, Math.max(1, Math.round(+b.qty || 1)));
+      if (left <= 0) throw new Bad(409, 'enough', `${ITEMS[it].name} для этого уровня уже хватает.`); if (n <= 0) throw new Bad(409, 'need_items', `Нет: ${ITEMS[it].name}.`);
+      await setItem(it, -n); const fresh = await castleOf(o.id); fresh.got[it] = (fresh.got[it] || 0) + n; fresh.top[nick] = (fresh.top[nick] || 0) + n; let up = false;
+      if (Object.entries(L.need).every(([k, v]) => (fresh.got[k] || 0) >= v)) { fresh.lvl++; fresh.got = {}; up = true; }
+      await store.set('ocastle/' + o.id, fresh); await castlesPublish(o, fresh);
+      if (up) { await chron('ocastle', `🏰 Орден «${o.name}» построил: ${OCASTLE.names[fresh.lvl]}!`, nick); for (const m of Object.keys(o.members || {})) if (m !== nick) await inboxAdd(m, { t: 'order', text: `🏰 Замок ордена вырос: ${OCASTLE.names[fresh.lvl]}! Всем членам +${Math.round(OCASTLE.bonus(fresh.lvl) * 100)}% опыта и монет.`, at: now }); }
+      return json(200, { ...(await state(h)), castle: { ...fresh, id: o.id }, note: up ? `🏰 Замок вырос: ${OCASTLE.names[fresh.lvl]}! Бонус ордена: +${Math.round(OCASTLE.bonus(fresh.lvl) * 100)}% опыта и монет.` : `Сдано в замок: ${ITEMS[it].icon} ${n}.` });
+    }
+    if (action === 'hunt') { // охота за сокровищами: копать
+      const h = await hero(); await at(h, +b.x, +b.z);
+      const ck = 'huntcd/' + nick, last = (await store.get(ck)) || 0; if (now - last < HUNT.cd) throw new Bad(429, 'cd', `Лопата ещё не остыла: подожди ${Math.ceil((HUNT.cd - (now - last)) / 1000)} с.`);
+      await store.set(ck, now); const sp = huntSpot(date), d = Math.hypot(h.x - sp.x, h.z - sp.z), heat = huntHeat(d);
+      if (heat !== 'found') return json(200, { ...(await state(h)), hunt: { heat: d < 10 ? 3 : d < 25 ? 2 : d < 60 ? 1 : 0 }, note: '⛏ ' + heat });
+      const k = 'hunt/' + date, hu = (await store.get(k)) || { finders: [] }; if (hu.finders.includes(nick)) throw new Bad(409, 'done', 'Ты уже нашёл сегодняшний клад. Завтра будет новая загадка!');
+      if (hu.finders.length >= HUNT.maxFinders) return json(200, { ...(await state(h)), note: '⛏ Сундук на месте… но уже пуст. Опередили! Завтра будет новая загадка.' });
+      hu.finders.push(nick); await store.set(k, hu); const first = hu.finders.length === 1; let note;
+      if (first) { const it = HUNT.firstItems[Math.floor(Math.random() * HUNT.firstItems.length)]; await setItem(it, 1); await addCoins(HUNT.firstCoins);
+        await chron('hunt', `🗺 @${nick} первым нашёл клад дня! Внутри: ${ITEMS[it].name}.`, nick); note = `🗺 Ты ПЕРВЫЙ нашёл клад! ${ITEMS[it].icon} ${ITEMS[it].name} и +${HUNT.firstCoins} монет!`; }
+      else { await addCoins(HUNT.nextCoins); await setItem('gem', HUNT.nextGem); note = `🗺 Клад найден! Первым был @${hu.finders[0]}, но и тебе досталось: +${HUNT.nextCoins} монет и 💎.`; }
+      return json(200, { ...(await state(h)), hunt: { found: true, first }, note });
     }
     if (action === 'equip') {
       const it = ITEMS[b.item]; if (!it || !['gear', 'artifact', 'pet'].includes(it.type)) throw new Bad(400, 'bad_item', 'Это нельзя надеть.');

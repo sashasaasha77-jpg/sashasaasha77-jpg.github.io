@@ -53,9 +53,9 @@ const ROLE_TIPS = {
 
 const LINES = {
   rasporyaditel: { hi: 'Добро пожаловать к замку! Король в добром здравии и рад каждому подданному.', about: 'Я слежу за порядком у ворот и знаю всё, что творится в королевстве.' },
-  torgovets: { hi: 'Подходи, подходи! Ткани, специи, подковы, всё самое лучшее!', about: 'Лавка скоро откроется по-настоящему: можно будет покупать и продавать снаряжение за монеты.' },
-  kuznets: { hi: 'Осторожно, искры! Хороший меч куётся не спеша.', about: 'Мечи, подковы, засовы для ворот: всё отсюда. Скоро буду ковать снаряжение для героев.' },
-  traktirshchik: { hi: 'Заходи, грейся! В «Золотой подкове» всегда тепло и всегда есть новости.', about: 'В таверне собираются отряды. Здесь же будут объявлять общие задания.' },
+  torgovets: { hi: 'Подходи, подходи! Ткани, специи, подковы, всё самое лучшее!', about: 'Лавка открыта: зелья, оружие, питомцы, а для смельчаков — драконье яйцо!' },
+  kuznets: { hi: 'Осторожно, искры! Хороший меч куётся не спеша.', about: 'Кую и улучшаю оружие, а самоцветами из шахты точу его до блеска.' },
+  traktirshchik: { hi: 'Заходи, грейся! В «Золотой подкове» всегда тепло и всегда есть новости.', about: 'Здесь собираются ордена и шепчутся о кладах. Слыхал загадку дня?' },
   khranitel: { hi: 'Тише... лес слушает. Ты пришёл с миром?', about: 'Я берегу королевский лес за рекой. Говорят, по ночам у северной крепости горят чужие костры.' },
   mag: { hi: 'Звёзды предсказали твой приход. Ну, или почти предсказали.', about: 'Я изучаю древние артефакты. Один из них, говорят, спрятан где-то в королевстве.' },
 };
@@ -96,14 +96,22 @@ function build() {
 }
 
 // ---------------- диалог ----------------
+// голоса жителей (озвучка ElevenLabs): файлы voice/<npc>-hi.mp3 и voice/<npc>-about.mp3; если файла нет — молча пропускаем
+let VA = null, VLast = {};
+function voice(id, kind) {
+  try { if (localStorage.getItem('kp-sfx') === '0') return; } catch { }
+  const k = id + '-' + kind, t = Date.now(); if (VLast[k] && t - VLast[k] < 45000) return; VLast[k] = t;
+  try { if (VA) VA.pause(); VA = new Audio('voice/' + k + '.mp3'); VA.volume = 0.9; VA.play().catch(() => { }); } catch { }
+}
 function say(n, title, text, opts) {
+  { const L = LINES[n.id]; if (L && text === L.hi) voice(n.id, 'hi'); else if (L && text === L.about) voice(n.id, 'about'); }
   const body = W.$('sheetBody'), [role, name] = NAMES[n.id];
   body.innerHTML = `<div class="npchead"><div class="npcava">${W.crest({ tier: LOOKS[n.id].tier, name: role, svg: W.ROLES.find(r => r.id === LOOKS[n.id].id).svg }, 52)}</div><div><small>${role}</small><h2>${name}</h2></div></div>
     <p class="npcsay">${text}</p><div class="npcopts">${opts.map((o, i) => `<button class="btn ${i ? 'btn-paper' : 'btn-gold'}" type="button" data-o="${i}">${o[0]}</button>`).join('')}</div>`;
   body.querySelectorAll('[data-o]').forEach(b => b.onclick = () => opts[+b.dataset.o][1]());
   W.$('sheet').classList.add('show');
 }
-function close() { W.$('sheetX').click(); }
+function close() { try { VA && VA.pause(); } catch { } W.$('sheetX').click(); }
 function talk(n) {
   n.wave = 1.6; const L = LINES[n.id], me = api.state(), role = me.role;
   const opts = () => [
@@ -175,6 +183,7 @@ export function marks() {
 }
 export function initNpc(world, k, rpgApi) {
   W = world; K = k; THREE = W.THREE; api = rpgApi;
+  addEventListener('m3d-ready', () => { for (const n of NPCS) { const nh = api.buildHero({ ...LOOKS[n.id], name: NAMES[n.id][0] }, NAMES[n.id][0]); n.g.remove(n.hero); n.g.add(nh); n.hero = nh; } });
   const css = document.createElement('style'); css.textContent = `
   #talk { position: fixed; z-index: 4; left: 50%; transform: translateX(-50%); bottom: calc(max(14px, env(safe-area-inset-bottom)) + 46px); padding: 10px 16px; font-size: 15px; }
   @media (pointer: coarse) { #talk { left: auto; right: max(16px, env(safe-area-inset-right)); transform: none; bottom: calc(max(18px, env(safe-area-inset-bottom)) + 124px); max-width: calc(100% - 170px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; } } /* над чатом и правее джойстика */

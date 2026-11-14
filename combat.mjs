@@ -51,6 +51,27 @@ export const ABIL = {
   gertsog: { id: 'decree', name: 'Герцогский приказ', cd: 18, text: 'Лечит 20% и атака +25% на 3 хода' },
   korol: { id: 'decree', name: 'Королевская воля', cd: 16, text: 'Лечит 20% и атака +25% на 3 хода' },
 };
+// ---------- классы героя (с 20 уровня) и их умения ----------
+export const CLASS_LVL = 20, CLASS_CHANGE = 6000;
+export const CLASSES = {
+  knight: { name: 'Рыцарь', icon: '🛡️', text: 'Крепкий воин: +10% здоровья и +3 защиты', pass: { hp: 0.10, def: 3 } },
+  mage: { name: 'Маг', icon: '🔮', text: 'Повелитель стихий: +10% атаки', pass: { atk: 0.10 } },
+  archer: { name: 'Лучник', icon: '🏹', text: 'Меткий стрелок: +6% крита и +4% уворота', pass: { crit: 0.06, dodge: 0.04 } },
+};
+export const SKILLS = {
+  k_cleave: { cls: 'knight', lvl: 20, name: 'Рассекающий удар', cd: 10, text: 'Урон ×1.6 и броня врага −50% на 2 хода' },
+  k_wall: { cls: 'knight', lvl: 35, name: 'Несокрушимая стена', cd: 16, text: 'Блок на 2 хода и лечение 15%' },
+  k_wrath: { cls: 'knight', lvl: 50, name: 'Гнев короля', cd: 22, text: 'Урон ×2.8, нельзя увернуться' },
+  m_frost: { cls: 'mage', lvl: 20, name: 'Ледяная стрела', cd: 12, text: 'Урон ×1.4 сквозь броню и заморозка врага на ход' },
+  m_shield: { cls: 'mage', lvl: 35, name: 'Магический щит', cd: 16, text: 'Лечит 25% и защищает от удара' },
+  m_meteor: { cls: 'mage', lvl: 50, name: 'Метеор', cd: 24, text: 'Урон ×3.2 сквозь броню' },
+  a_double: { cls: 'archer', lvl: 20, name: 'Двойной выстрел', cd: 9, text: 'Два выстрела по ×0.9' },
+  a_trap: { cls: 'archer', lvl: 35, name: 'Капкан', cd: 18, text: 'Удар ×0.8, враг пропускает 2 хода' },
+  a_rain: { cls: 'archer', lvl: 50, name: 'Дождь стрел', cd: 22, text: 'Урон ×2.5 и два критических удара' },
+};
+export const classSkills = (cls, lvl) => Object.entries(SKILLS).filter(([, s]) => s.cls === cls && lvl >= s.lvl).map(([id]) => id);
+export function applyClass(s, cls) { const p = CLASSES[cls]?.pass; if (!p) return s;
+  if (p.hp) s.hp = Math.round(s.hp * (1 + p.hp)); if (p.def) s.def += p.def; if (p.atk) s.atk = Math.round(s.atk * (1 + p.atk)); if (p.crit) s.crit = (s.crit || 0) + p.crit; if (p.dodge) s.dodge = (s.dodge || 0) + p.dodge; return s; }
 export const MOVES = { attack: 1.0, defend: 1.0, dodge: 1.0, potion: 6 }; // перезарядка базовых действий, с
 export const MIN_GAP = 800; // не чаще одного действия за 0,8 с
 
@@ -162,6 +183,18 @@ export function resolveRound(f, move, role, hs, rnd, now) {
     else if (id === 'warcry') { b.atkUp = 3; b.atkUpV = 0.35; hit(1); }
     else if (id === 'decree') { heal(0.2); b.atkUp = 3; b.atkUpV = 0.25; }
   }
+  else if (SKILLS[move] && (f.sk || []).includes(move)) {
+    log.push(`«${SKILLS[move].name}»!`);
+    if (move === 'k_cleave') { hit(1.6); b.eDefDown = 2; }
+    else if (move === 'k_wall') { b.guard = 2; defend = 1; heal(0.15); }
+    else if (move === 'k_wrath') hit(2.8, { sure: true });
+    else if (move === 'm_frost') { hit(1.4, { pierce: true, sure: true }); b.stun = 1; }
+    else if (move === 'm_shield') { heal(0.25); defend = 1; }
+    else if (move === 'm_meteor') hit(3.2, { pierce: true, sure: true });
+    else if (move === 'a_double') { hit(0.9); if (f.eHp > 0) hit(0.9); }
+    else if (move === 'a_trap') { hit(0.8, { sure: true }); b.skip = 2; }
+    else if (move === 'a_rain') { b.crit = Math.max(b.crit || 0, 2); hit(2.5, { sure: true }); }
+  }
   if (b.guard && move !== 'stance') { defend = 1; dec('guard'); } else if (move === 'stance') dec('guard');
   // --- ход врага ---
   if (f.eHp > 0) {
@@ -199,7 +232,7 @@ export function resolveRound(f, move, role, hs, rnd, now) {
   return log;
 }
 export function cooldownLeft(f, move, role, now) {
-  const ab = ABIL[role], cd = move === ab?.id ? ab.cd : MOVES[move]; if (cd == null) return null;
+  const ab = ABIL[role], cd = move === ab?.id ? ab.cd : SKILLS[move] ? SKILLS[move].cd : MOVES[move]; if (cd == null) return null;
   return Math.max(0, (f.cds[move] || 0) + cd * 1000 - now);
 }
 
@@ -236,5 +269,5 @@ ENEMIES.push(
   { id: 't4', kind: 'troll', lvl: 30, path: [[-132.4, -148.4], [-138.4, -150.4]], speed: 0.4 },
   { id: 'mk', kind: 'mountain_king', lvl: 22, path: [[-142.9, -143.9]], dungeon: true },
 );
-Object.assign(SLOT_OF, { pet_fox: 'pet', pet_owl: 'pet', pet_wolf: 'pet' });
-Object.assign(GEAR, { pet_fox: {}, pet_owl: {}, pet_wolf: { atk: 2 } });
+Object.assign(SLOT_OF, { pet_fox: 'pet', pet_owl: 'pet', pet_wolf: 'pet', pet_dragon: 'pet' });
+Object.assign(GEAR, { pet_fox: {}, pet_owl: {}, pet_wolf: { atk: 2 }, pet_dragon: {} });

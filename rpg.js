@@ -7,6 +7,7 @@ import { initEnemies, tick as enemyTick, startFight, buildKnight } from './enemi
 import { initWorld, tick as worldTick, render as worldRender, warAction, doWar, blockedExtra } from './world-ui.js';
 import { roleIdFor } from './roles.mjs';
 import { buildHero } from './figure.js';
+import { animate3d, loadM3D, m3dReady } from './hero3d.js';
 import { lookKey } from './extras.mjs';
 import { activeGear, gearSlot } from './combat.mjs';
 import { buildHorse, rideHorse, horseVariant } from './monsters.js';
@@ -34,6 +35,7 @@ function setSit(v) { S.sit = v; if (S.sitBtn) S.sitBtn.setAttribute('aria-presse
 function toggleSit() { if (!S.on || S.jy > 0) return; if (S.mount) setMount(false); setSit(!S.sit); }
 // поза поверх обычной анимации: сидит на земле / поджимает ноги в прыжке
 function poseHero(h, dt) {
+  if (h.userData.a3) { h.userData.mode = S.mount ? 'ride' : S.sit ? 'sit' : S.jy > 0 ? 'jump' : null; return; }
   const u = h.userData, L = (a, b, k) => a + (b - a) * k;
   S.sitK += ((S.sit ? 1 : 0) - S.sitK) * Math.min(1, dt * 9); const k = S.sitK;
   if (k > 0.01) { u.body.position.y = L(u.body.position.y, -0.34, k); u.body.rotation.x = L(u.body.rotation.x, -0.06, k);
@@ -42,6 +44,7 @@ function poseHero(h, dt) {
   if (S.jy > 0) { u.legL.rotation.x = -0.7; u.legR.rotation.x = 0.35; u.armL.rotation.x = -2.6; u.armR.rotation.x = -2.6; u.body.position.y = 0; }
 }
 function animateHero(h, t, speed) {
+  if (h.userData.a3) { animate3d(h, t, speed); return; }
   const u = h.userData, k = Math.min(1, speed / 3), run = speed > 4.2, f = run ? 13 : 9, a = (run ? 0.9 : 0.6) * k, s = Math.sin(t * f);
   u.legL.rotation.x = s * a; u.legR.rotation.x = -s * a; u.armL.rotation.x = -s * a * 0.9; u.armR.rotation.x = s * a * 0.6;
   u.body.position.y = Math.abs(Math.sin(t * f)) * 0.05 * k + (k ? 0 : Math.sin(t * 2) * 0.008);
@@ -157,7 +160,7 @@ function toggleFpv(on) {
   try { localStorage.setItem('kp-fpv', F.on ? '1' : '0'); } catch { } W.toast && W.toast(F.on ? '👁 Вид от первого лица. Смотри по сторонам, ведя пальцем или мышью по экрану' : 'Обычный вид'); W.redraw();
 }
 function ensureHero(w) {
-  const rid = G.state?.hero?.role, role = (rid && W.ROLES.find(r => r.id === rid)) || w.role, wp = myWeapon(), lk = lookKey(G.state?.extra?.look?.cur), key = w.nick + '|' + role.id + '|' + wp + '|' + lk;
+  const rid = G.state?.hero?.role, role = (rid && W.ROLES.find(r => r.id === rid)) || w.role, wp = myWeapon(), lk = lookKey(G.state?.extra?.look?.cur || {}) + (G.state?.extra?.cls ? '.' + G.state.extra.cls : ''), key = w.nick + '|' + role.id + '|' + wp + '|' + lk + '|' + (W.M3D_ON && m3dReady() ? '3d' : '');
   if (S.hero && S.heroOf === key) return;
   const old = S.hero, wpChanged = old && (S.wp !== wp || S.lk !== lk); S.hero = buildHero(role, w.nick, wp, lk); S.heroOf = key; S.role = role; S.wp = wp; S.lk = lk; if (wpChanged && S.on) retrack(); // другие увидят новое оружие и наряд
   if (old) { S.hero.position.copy(old.position); S.hero.rotation.copy(old.rotation); S.hero.visible = old.visible; W.scene.remove(old); }
@@ -169,6 +172,7 @@ async function start() {
   if (w.error) { W.toast(w.error); return; }
   if (S.on || S.loading) return;
   if (!grid.size) buildObstacles();
+  if (!window.W.ECO && !window.W.M3D_OFF) { window.W.M3D_ON = W.M3D_ON = true; loadM3D(); } // 3D-герои с анимацией (в эко-режиме — простые фигурки)
   if (S.nick !== w.nick) G.state = null; S.nick = w.nick; S.demo = !!w.demo; S.role = w.role;
   S.loading = true; await act('hero', {}, true); S.loading = false;
   ensureHero(w);
@@ -264,5 +268,6 @@ export function init(world, k) {
   initWorld(W, K, { state: () => S, buildKnight }); W.TICKS.push(worldTick);
   addEventListener('pagehide', () => { save(); if (S.on) saveServer(true); });
   document.addEventListener('visibilitychange', () => { if (document.hidden && S.on) saveServer(); });
+  addEventListener('m3d-ready', () => { const w = who(); if (w && !w.error && S.on) ensureHero(w); });
   window.RPG = { start, stop, state: S, toggleMount, blocked, buildObstacles, refreshHero: () => { const w = who(); if (w && !w.error) ensureHero(w); } };
 }

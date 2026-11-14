@@ -1,8 +1,9 @@
 // Чёрный Орден на карте: рыцари в чёрных доспехах, лагерь с шатрами, частоколом, костром и катапультой, экран боя.
 let SV = null; // общий вектор для проекции подписей
 // Ход боя считает сервер (rpg-engine.mjs + combat.mjs); здесь — только вид и кнопки.
-import { ENEMIES, KINDS, INTENT, DUEL_INTENT, ABIL, CAMP, enemyPos, enemyStats, cooldownLeft, MOVES, isNight } from './combat.mjs';
+import { SKILLS, ENEMIES, KINDS, INTENT, DUEL_INTENT, ABIL, CAMP, enemyPos, enemyStats, cooldownLeft, MOVES, isNight } from './combat.mjs';
 import { buildMonster, isMonster } from './monsters.js';
+import { act3d, attackClip, monAct, wantMon, m3dReady } from './hero3d.js';
 import { isBossEvent } from './world.mjs';
 import { G, act } from './rpg-ui.js';
 import { buildKnight as figKnight, flattenStatic, buildHero } from './figure.js';
@@ -71,13 +72,13 @@ function renderFight() {
   const c = G.state?.combat, f = c?.fight, p = W.$('fight'); document.body.classList.toggle('fighting', !!f && R.state().on);
   if (!f) { FP = null; return; }
   const es = f.es || enemyStats({ kind: f.kind, lvl: f.lvl }), now = Date.now(), ab = c.ability;
-  const moves = [['attack', '⚔️ Атака', '1'], ['defend', '🛡️ Защита', '2'], ['dodge', '💨 Уворот', '3'], ...(ab ? [[ab.id, '✨ ' + ab.name, '4']] : []), ['potion', '🧪 Зелье', '5'], ['flee', '🏃 Отступить', '6']];
+  const moves = [['attack', '⚔️ Атака', '1'], ['defend', '🛡️ Защита', '2'], ['dodge', '💨 Уворот', '3'], ...(ab ? [[ab.id, '✨ ' + ab.name, '4']] : []), ['potion', '🧪 Зелье', '5'], ['flee', '🏃 Отступить', '6'], ...(f.sk || []).map((id, i) => [id, '🌟 ' + SKILLS[id].name, String(7 + i)])];
   const key = f.enemy + '|' + moves.map(m => m[0]).join(',');
   if (!FP || FP.key !== key || !p.contains(FP.eBar)) {
     p.innerHTML = `<div class="bars"><div><span data-f="eName"></span><div class="bar2"><i data-f="eBar" style="background:#ff4a3a"></i></div><span data-f="eHp"></span></div>
       <div>Ты · ${R.state().role?.name || ''}<div class="bar2"><i data-f="hBar" style="background:#7BD15A"></i></div><span data-f="hHp"></span></div></div>
       <div class="intent" data-f="intent"></div>
-      <div class="moves">${moves.map(([mv, label, k]) => `<button class="btn ${mv === ab?.id ? 'btn-gold' : 'btn-paper'}" type="button" data-mv="${mv}"><span>${label}</span><small>${k}</small></button>`).join('')}</div>
+      <div class="moves">${moves.map(([mv, label, k]) => `<button class="btn ${mv === ab?.id ? 'btn-gold' : 'btn-paper'}" type="button" data-mv="${mv}"${SKILLS[mv] ? ' style="border-color:#8A5CFF;background:linear-gradient(#5A3FA8,#3A2878);color:#fff"' : ''}><span>${label}</span><small>${k}</small></button>`).join('')}</div>
       <div class="log" data-f="log"></div>`;
     FP = { key }; p.querySelectorAll('[data-f]').forEach(el => FP[el.dataset.f] = el);
     FP.btns = [...p.querySelectorAll('[data-mv]')]; FP.btns.forEach(b => b.onpointerdown = e => { e.preventDefault(); move(b.dataset.mv); });
@@ -99,7 +100,7 @@ let moving = false, pendingMv = null;
 async function move(mv) {
   const f = G.state?.combat?.fight; if (!f || moving) return; moving = true; pendingMv = mv; renderFight();
   const before = { e: f.eHp, h: f.hHp }, o = EN.get(f.enemy) || (SH && SH.id === f.enemy ? SH : null), hero = R.state();
-  if (['attack', G.state.combat.ability?.id].includes(mv)) swing(hero.hero);
+  if (['attack', G.state.combat.ability?.id].includes(mv) || SKILLS[mv]) swing(hero.hero);
   const r = await act('fight', { enemy: f.enemy, move: mv }, true); moving = false; pendingMv = null;
   if (!r) { renderFight(); return; } if (r.status !== 200) { W.toast(r.data.message || 'Не получилось'); renderFight(); return; }
   fightLog.push(...(r.data.log || [])); if (fightLog.length > 12) fightLog = fightLog.slice(-12);
@@ -113,8 +114,8 @@ async function move(mv) {
   if (mv === 'flee') fightLog = [];
   renderFight();
 }
-function swing(g) { const a = g?.userData?.armR; if (!a) return; a.rotation.x = -2.2; setTimeout(() => { a.rotation.x = 0; }, 260); }
-function hurt(g) { g.scale.multiplyScalar(0.9); setTimeout(() => g.scale.multiplyScalar(1 / 0.9), 150); }
+function swing(g) { if (g?.userData?.a3) { g.userData.a3.map ? monAct(g, 'attack', 1.3) : act3d(g, attackClip(((G.state?.inventory || []).find(i => i.equipped && /sword|blade|axe|hammer|bow|staff|scythe/.test(i.item)) || {}).item), 1.3); return; } const a = g?.userData?.armR; if (!a) return; a.rotation.x = -2.2; setTimeout(() => { a.rotation.x = 0; }, 260); }
+function hurt(g) { if (g?.userData?.a3) monAct(g, 'hit', 1.4); g.scale.multiplyScalar(0.9); setTimeout(() => g.scale.multiplyScalar(1 / 0.9), 150); }
 
 // ---------------- цикл ----------------
 let dynKey = '';
@@ -146,6 +147,7 @@ export function tick(now, dt) {
     else p = enemyPos(o.e, t);
     const far = Math.hypot(W.target.x - p.x, W.target.z - p.z) > 60; o.g.visible = !far; // дальних не рисуем и не анимируем
     if (far) { o.lab.style.display = 'none'; continue; }
+    if (W.M3D_ON && !o.g.userData.a3 && !(o.up > now)) { o.up = now + 1500; if (isMonster(o.e.kind) ? wantMon(o.e.kind) : m3dReady()) { const ng = buildKnight(o.e.kind); if (ng.userData.a3) { ng.position.copy(o.g.position); ng.rotation.copy(o.g.rotation); W.scene.remove(o.g); W.scene.add(ng); o.g = ng; } } } // рядом — меняем на 3D-модель
     o.g.position.set(p.x, 0, p.z); let df = p.face - o.g.rotation.y; df = Math.atan2(Math.sin(df), Math.cos(df)); o.g.rotation.y += df * Math.min(1, dt * 6);
     o.t += dt; R.animate(o.g, o.t, p.moving ? (o.e.speed || 1.1) : 0);
     if (st.on && st.pos && Math.hypot(st.pos.x - p.x, st.pos.z - p.z) < 26) {
@@ -168,5 +170,6 @@ export async function startFight(id) { fightLog = []; const r = await act('fight
 export function initEnemies(world, k, rpg) {
   W = world; K = k; THREE = W.THREE; R = rpg; css(); campFx = camp();
   for (const e of ENEMIES) { const g = buildKnight(e.kind); W.scene.add(g); const lab = document.createElement('div'); lab.className = 'lbl foe'; lab.style.display = 'none'; W.$('labels').appendChild(lab); EN.set(e.id, { e, g, lab, t: Math.random() * 9 }); }
-  addEventListener('keydown', e => { if (!G.state?.combat?.fight || e.target.closest?.('input,textarea')) return; const map = { Digit1: 'attack', Digit2: 'defend', Digit3: 'dodge', Digit4: G.state.combat.ability?.id, Digit5: 'potion', Digit6: 'flee' }; if (map[e.code]) { e.preventDefault(); move(map[e.code]); } });
+  addEventListener('m3d-ready', () => { for (const o of EN.values()) { if (o.g.userData.a3 || !o.g.visible || !(isMonster(o.e.kind) ? wantMon(o.e.kind) : m3dReady())) continue; const ng = buildKnight(o.e.kind); if (!ng.userData.a3) continue; ng.position.copy(o.g.position); ng.rotation.copy(o.g.rotation); ng.visible = o.g.visible; W.scene.remove(o.g); W.scene.add(ng); o.g = ng; } }); // 3D-модели подгрузились — заменяем фигурки
+  addEventListener('keydown', e => { if (!G.state?.combat?.fight || e.target.closest?.('input,textarea')) return; const map = { Digit1: 'attack', Digit2: 'defend', Digit3: 'dodge', Digit4: G.state.combat.ability?.id, Digit5: 'potion', Digit6: 'flee', Digit7: G.state.combat.fight.sk?.[0], Digit8: G.state.combat.fight.sk?.[1], Digit9: G.state.combat.fight.sk?.[2] }; if (map[e.code]) { e.preventDefault(); move(map[e.code]); } });
 }
