@@ -1058,7 +1058,7 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
       return json(200, { ...(await state(h)), note: `${CLASSES[id].icon} Теперь ты ${CLASSES[id].name}! Новые умения появятся в бою.` });
     }
     if (action === 'enchant') { // заточка оружия самоцветами у кузнеца
-      const h = await hero(); await at(h, +b.x, +b.z); if (!near(h.x, h.z, NPC.kuznets, 4.5)) throw new Bad(409, 'far', 'Точить оружие можно только у кузнеца Гордея во дворе замка.');
+      const h = await hero(); // 14.11.2026: точить можно где угодно — без похода к кузнецу
       const it = String(b.item || ''); if (!GEAR[it] || gearSlot(it) !== 'weapon') throw new Bad(400, 'bad', 'Точить можно только оружие.');
       const [row] = await sb(`inventory?nick=eq.${N}&item=eq.${enc(it)}&select=qty`); if (!row || row.qty < 1) throw new Bad(404, 'no_item', 'У тебя нет этого оружия.');
       const k = 'ench/' + nick, E = (await store.get(k)) || {}, l = E[it] || 0; if (l >= ENCH.max) throw new Bad(409, 'max', 'Это оружие уже заточено до предела +10!');

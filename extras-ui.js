@@ -118,13 +118,13 @@ export function classSheet() {
 }
 export function enchSheet() {
   const s = G.state, E = s.extra.ench || {}, gems = (s.inventory.find(i => i.item === 'gem') || {}).qty || 0, p = R.state().pos;
-  const nearK = p && Math.hypot(p.x + 8.4, p.z + 3.2) < 4.5;
+  const nearK = true; // точить можно где угодно
   const ws = s.inventory.filter(i => GEAR[i.item] && gearSlot(i.item) === 'weapon' && i.qty > 0);
   const row = i => { const l = E[i.item] || 0, c = ENCH.cost(l), ch = Math.round((ENCH.chance[l] ?? 0) * 100), it = ITEMS[i.item];
     return `<div class="enR"><span class="enI">${it.icon}</span><span style="flex:1"><b>${it.name}</b> <b style="color:${l ? hex(enchColor(l) || 0xFFD23A) : 'var(--muted)'}">+${l}</b>${i.equipped ? ' <small>в руках</small>' : ''}<br>
       <small>${l >= ENCH.max ? 'Предел достигнут!' : `Следующая: +${l + 1} (атака +${ENCH.atk * (l + 1)}) · 💎 ${c.gem} и ${c.coins} 🪙 · шанс ${ch}%${l >= ENCH.dropFrom ? ' · при неудаче −1' : ''}`}</small></span>
       ${l < ENCH.max ? `<button class="btn btn-gold" type="button" data-en="${i.item}" ${nearK && gems >= c.gem ? '' : 'disabled'}>Точить</button>` : ''}</div>`; };
-  openSheet(`<h2>⚒ Заточка оружия</h2><p class="rw">Кузнец Гордей точит оружие самоцветами 💎 из шахты на северо-западе. Каждая ступень — +${ENCH.atk} к атаке. С +4 оружие светится синим, с +7 — фиолетовым, на +10 — золотом. Чем выше заточка, тем меньше шанс${''}; с +${ENCH.dropFrom} неудача снимает одну ступень.</p>
+  openSheet(`<h2>⚒ Заточка оружия</h2><p class="rw">Точи оружие самоцветами 💎 из шахты на северо-западе — прямо отсюда, где бы ты ни был. Каждая ступень — +${ENCH.atk} к атаке. С +4 оружие светится синим, с +7 — фиолетовым, на +10 — золотом. Чем выше заточка, тем меньше шанс${''}; с +${ENCH.dropFrom} неудача снимает одну ступень.</p>
     <p>💎 Самоцветов: <b>${gems}</b> · 🪙 ${K.fmt(s.coins)}</p>${nearK ? '' : '<p class="rw" style="color:var(--gold)">Подойди к кузнецу во дворе замка — точить можно только у него.</p>'}
     ${ws.length ? `<div class="enL">${ws.map(row).join('')}</div>` : '<p class="rw">У тебя пока нет оружия. Закажи у кузнеца или найди в бою.</p>'}`, b => {
     b.querySelectorAll('[data-en]').forEach(x => x.onclick = async () => { x.disabled = true; const r = await act('enchant', { item: x.dataset.en }, true);
