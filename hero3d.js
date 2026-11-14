@@ -46,7 +46,7 @@ function hatMesh(h) {
   else if (h === 'viking') { M(new THREE.SphereGeometry(0.46, 16, 8, 0, 6.29, 0, 1.57), 0x8E949E, [0, 0.38, 0]); for (const s of [-1, 1]) M(new THREE.ConeGeometry(0.09, 0.5, 8), 0xF5EBDC, [s * 0.5, 0.65, 0], [0, 0, s * -0.9]); }
   else if (h === 'laurel') { M(new THREE.TorusGeometry(0.42, 0.05, 6, 20), 0x4E8A34, [0, 0.5, 0], [1.45, 0, 0]); }
   else if (h === 'santa') { M(new THREE.CylinderGeometry(0.46, 0.46, 0.14, 16), 0xFFFFFF, [0, 0.5, 0]); M(new THREE.ConeGeometry(0.42, 0.85, 16), 0xC8102E, [0.1, 0.9, -0.1], [-0.4, 0, -0.45]); M(new THREE.SphereGeometry(0.1, 8, 6), 0xFFFFFF, [0.42, 1.18, -0.36]); }
-  else if (h === 'crown') { M(new THREE.CylinderGeometry(0.36, 0.38, 0.22, 12, 1, true), 0xE8B931, [0, 0.58, 0]); for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; M(new THREE.ConeGeometry(0.07, 0.2, 4), 0xE8B931, [Math.sin(a) * 0.36, 0.78, Math.cos(a) * 0.36]); } }
+  else if (h === 'crown') { M(new THREE.CylinderGeometry(0.36, 0.38, 0.22, 12, 1, true), 0xE8B931, [0, 0.58, 0]).material.side = THREE.DoubleSide; for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283; M(new THREE.ConeGeometry(0.07, 0.2, 4), 0xE8B931, [Math.sin(a) * 0.36, 0.78, Math.cos(a) * 0.36]); } }
   return g;
 }
 
@@ -62,8 +62,17 @@ export function buildHero3D(role, seed, weapon, lk = '', modelOverride) {
     if (m) { m.visible = true; const tint = WTINT[weapon]; if (tint) { m.material = m.material.clone(); m.material.color.setHex(tint); } } }
   // плащ и шапки из «Облика»
   const LC = LOOKS.cape.list[L.cape]; if (LC) model.traverse(o => { if (o.isMesh && /_Cape$/.test(o.name)) { o.material = o.material.clone(); o.material.map = null; o.material.color.setHex(LC.color); } });
+  if (role.id === 'korol') { // король: пурпурные доспехи с золотом, алый плащ, горностаевый воротник, большая корона
+    const tint = (o, c) => { o.material = o.material.clone(); o.material.color.setHex(c); };
+    model.traverse(o => { if (!o.isMesh) return; if (/_Body$|_Leg(Left|Right)$/.test(o.name)) tint(o, 0xB98AF0); else if (/_Arm(Left|Right)$/.test(o.name)) tint(o, 0xFFF0B8); else if (/_Cape$/.test(o.name) && !LC) { tint(o, 0xC21E2E); o.material.map = null; } });
+    const ch = byName.chest; if (ch) { const fur = new THREE.MeshToonMaterial({ color: 0xFFFDF5, gradientMap: W.grad }), dot = new THREE.MeshToonMaterial({ color: 0x1A1A1A, gradientMap: W.grad });
+      const col = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.16, 10, 20), fur); col.rotation.x = Math.PI / 2; col.position.set(0, 0.3, 0); col.scale.set(1, 0.8, 0.7); ch.add(col);
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, d = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 5), dot); d.position.set(Math.sin(a) * 0.5, 0.3 + 0.1, Math.cos(a) * 0.5 * 0.7); ch.add(d); } } }
+  if (role.id === 'korol' && byName.head) { const br = new THREE.MeshToonMaterial({ color: 0x6B3E1E, gradientMap: W.grad }), hd = byName.head;
+    const bd = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), br); bd.scale.set(0.3, 0.26, 0.16); bd.position.set(0, 0.2, 0.33); hd.add(bd);
+    for (const sx of [-1, 1]) { const mu = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.12, 4, 8), br); mu.rotation.z = sx * 1.2; mu.position.set(sx * 0.08, 0.22, 0.4); hd.add(mu); } }
   const head = byName.head; let hat = L.hat || (ROYAL[role.id] ? 'crown' : '');
-  if (hat && head) { model.traverse(o => { if (o.isMesh && /_Hat$|_Helmet$|_Hood$/.test(o.name) && !o.isSkinnedMesh) o.visible = false; }); head.add(hatMesh(hat)); }
+  if (hat && head) { model.traverse(o => { if (o.isMesh && /_Hat$|_Helmet$|_Hood$/.test(o.name) && !o.isSkinnedMesh) o.visible = false; }); { const hm = hatMesh(hat); if (hat === 'crown' && role.id === 'korol') { hm.scale.setScalar(1.2); hm.position.y += 0.1; } head.add(hm); } }
   const mixer = new THREE.AnimationMixer(model), actions = {};
   for (const [n, c] of Object.entries(CLIPS)) actions[n] = mixer.clipAction(c);
   const u = outer.userData; Object.assign(u, { a3: { mixer, actions, cur: null, last: 0, one: null, oneUntil: 0, model: name }, hand: byName['handslot.r'],
