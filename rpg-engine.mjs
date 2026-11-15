@@ -908,7 +908,7 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
         await setItem(it, -qty); await addCoins(coins); await store.set(key, mk);
         return json(200, { ...(await state(h)), market: view(), note: `${st.who}: беру! ${ITEMS[it].name} ×${qty} — ${coins} монет.` }); }
       if (b.op === 'buy') { const rare = P.rare.item === it, q = P.res[it]; if (!rare && !q) throw new Bad(400, 'no_item', 'Такого товара сегодня нет.');
-        const qty = rare ? 1 : Math.max(1, Math.min(50, Math.round(+b.qty || 1))), price = (rare ? P.rare.price : q.buy) * qty;
+        const qty = rare ? 1 : Math.max(1, Math.min(999, Math.round(+b.qty || 1))), price = (rare ? P.rare.price : q.buy) * qty;
         const p = await store.get('p/' + nick); if (!p || p.coins < price) throw new Bad(409, 'poor', `Нужно ${price} монет.`);
         p.coins -= price; await store.set('p/' + nick, p); await setItem(it, qty);
         return json(200, { ...(await state(h)), market: view(), note: `Куплено на рынке: ${ITEMS[it].name} ×${qty} за ${price} монет.` }); }

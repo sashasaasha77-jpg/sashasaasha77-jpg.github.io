@@ -14,40 +14,44 @@ export async function marketSheet() {
 }
 function render(m) {
   const s = G.state, have = it => (s.inventory.find(i => i.item === it) || {}).qty || 0, here = inMarket(R.state().pos);
+  // поле «сколько штук»: своё количество для покупки и продажи
+  const qin = (id, max, val, price) => `<input class="mkQ" type="number" min="1" max="${max}" value="${val}" data-qid="${id}"${price ? ` data-price="${price}"` : ''} style="width:64px;padding:5px 6px;font:inherit;font-size:14px;font-weight:700;border-radius:8px;border:2px solid #0E1424;text-align:center" ${here ? '' : 'disabled'}>`;
   const sb = (attr, txt, cls, dis) => `<button class="btn ${cls}" type="button" ${attr} style="padding:5px 9px;font-size:13px" ${dis || !here ? 'disabled' : ''}>${txt}</button>`;
   const hot = m.day.hot, trader = s.hero?.role === 'torgovets';
   const rows = MARKET_STALLS.map(st => { const it = st.item, p = m.res[it], n = have(it);
     return `<div class="mkS${p.hot ? ' hot' : ''}"><div class="mkH"><span style="font-size:24px">${st.icon}</span><span style="flex:1"><b>${st.name} ${st.who}</b><br><small>${ITEMS[it].name}: у тебя ${n}</small></span>${p.hot ? '<em>🔥 в цене</em>' : ''}</div>
       <div class="mkP"><span>Скупает по <b>${p.sell} 🪙</b>${p.glut < 100 ? ` <i>(завален товаром: −${100 - p.glut}% до утра)</i>` : ''}</span>
-        <span class="mkB">${sb(`data-sell="${it}" data-q="1"`, 'Продать', 'btn-gold', n < 1)}${n >= 10 ? sb(`data-sell="${it}" data-q="10"`, '×10', 'btn-gold') : ''}${n > 1 ? sb(`data-sell="${it}" data-q="${n}"`, `Все ×${n}`, 'btn-gold') : ''}</span></div>
-      <div class="mkP"><span>Продаёт по <b>${p.buy} 🪙</b></span><span class="mkB">${[1, 5].map(q => sb(`data-buy="${it}" data-q="${q}"`, q === 1 ? 'Купить' : '×' + q, 'btn-paper', s.coins < p.buy * q)).join('')}</span></div></div>`; }).join('');
+        <span class="mkB">${qin('s' + it, Math.max(1, n), 1)}${sb(`data-sell="${it}" data-q="in" data-in="s${it}"`, 'Продать', 'btn-gold', n < 1)}${n > 1 ? sb(`data-sell="${it}" data-q="${n}"`, `Все ×${n}`, 'btn-gold') : ''}</span></div>
+      <div class="mkP"><span>Продаёт по <b>${p.buy} 🪙</b></span><span class="mkB">${qin('b' + it, 999, 1, p.buy)}${sb(`data-buy="${it}" data-q="in" data-in="b${it}"`, `Купить · <b data-sum="b${it}">${p.buy}</b> 🪙`, 'btn-paper', s.coins < p.buy)}</span></div></div>`; }).join('');
   const rare = m.rare, ri = ITEMS[rare.item];
   openSheet(`<h2>🛒 Рынок</h2><p class="mkI">У тебя 🪙 ${window.K.fmt(s.coins)} монет. Купцы платят за ресурсы больше, чем лавка на площади.
     Товар дня — <b>${ITEMS[hot].name.toLowerCase()}</b>: за него дают почти вдвое! Чем больше всё королевство продаёт, тем ниже цена; к утру она снова растёт.${trader ? ' <b>Ты торговец: тебе платят на 15% больше, а редкий товар дешевле.</b>' : ''}</p>
     ${here ? '' : '<p class="mkW">Торговать можно, только стоя на рынке: он к востоку от замка, по дороге из восточных ворот.</p>'}
     ${rows}
     <h2 class="mkT">🤝 Ряды игроков</h2><p class="mkI">Покупай у других героев или выставь своё по своей цене. Товар лежит на прилавке до 2 дней, деньги придут сами (пошлина ${Math.round(m.fee * 100)}%).</p>
-    ${lotsHtml(m, sb, s)}
+    ${lotsHtml(m, sb, s, qin)}
     ${sellForm(m, s, here)}
     <div class="mkS rare"><div class="mkH"><span style="font-size:24px">${ri.icon}</span><span style="flex:1"><b>Редкий товар дня</b><br><small>${ri.name}${have(rare.item) ? ` · у тебя ${have(rare.item)}` : ''}</small></span>
       ${sb(`data-buy="${rare.item}" data-q="1"`, `Купить за ${rare.price} 🪙`, 'btn-gold', s.coins < rare.price)}</div></div>`,
     b => { b.querySelectorAll('input').forEach(i => { i.addEventListener('keydown', e => e.stopPropagation()); i.addEventListener('keyup', e => e.stopPropagation()); });
-      b.querySelectorAll('[data-take]').forEach(x => x.onclick = () => lotAct(x, { op: 'take', lot: x.dataset.take, qty: +x.dataset.q }));
+      const qOf = x => { if (x.dataset.q !== 'in') return +x.dataset.q; const i = b.querySelector(`[data-qid="${x.dataset.in}"]`); return Math.max(1, Math.min(+i.max || 999, Math.round(+i.value || 1))); };
+      b.querySelectorAll('.mkQ').forEach(i => i.addEventListener('input', () => { const sum = b.querySelector(`[data-sum="${i.dataset.qid}"]`); if (sum && i.dataset.price) sum.textContent = (Math.max(1, Math.round(+i.value || 1)) * +i.dataset.price).toLocaleString('ru-RU'); }));
+      b.querySelectorAll('[data-take]').forEach(x => x.onclick = () => lotAct(x, { op: 'take', lot: x.dataset.take, qty: qOf(x) }));
       b.querySelectorAll('[data-cancel]').forEach(x => x.onclick = () => lotAct(x, { op: 'cancel', lot: x.dataset.cancel }));
       const f = b.querySelector('#mkForm'); if (f) { const sel = f.querySelector('select'), pr = f.querySelector('[name=price]'), qt = f.querySelector('[name=qty]'), sum = f.querySelector('.mkSum');
         const upd = () => { const o = sel.selectedOptions[0]; if (o && +qt.value > +o.dataset.max) qt.value = o.dataset.max; sum.textContent = `Получишь ~${Math.floor((+qt.value || 0) * (+pr.value || 0) * (1 - m.fee))} 🪙`; };
         sel.onchange = () => { const o = sel.selectedOptions[0]; pr.value = o.dataset.hint; qt.value = Math.min(+o.dataset.max, 10); upd(); }; pr.oninput = qt.oninput = upd; if (sel.options.length) sel.onchange();
         f.querySelector('[data-list]').onclick = e => lotAct(e.currentTarget, { op: 'list', item: sel.value, qty: +qt.value, price: +pr.value }); }
-      b.querySelectorAll('[data-sell]').forEach(x => x.onclick = () => trade(x, 'sell'));
-      b.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => trade(x, 'buy')); });
+      b.querySelectorAll('[data-sell]').forEach(x => x.onclick = () => trade(x, 'sell', qOf(x)));
+      b.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => trade(x, 'buy', qOf(x))); });
 }
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-function lotsHtml(m, sb, s) {
+function lotsHtml(m, sb, s, qin) {
   if (!m.lots.length) return '<p class="mkI" style="opacity:.75">Пока никто ничего не выставил. Будь первым!</p>';
   return `<div class="mkL">${m.lots.map(l => { const it = ITEMS[l.item] || { name: l.item, icon: '📦' };
     return `<div class="mkO${l.mine ? ' mine' : ''}"><span style="font-size:20px">${it.icon}</span><span style="flex:1"><b>${it.name} ×${l.qty}</b><br><small>${l.price} 🪙 за шт. · ${l.mine ? 'твой лот' : '@' + esc(l.seller)}</small></span><span class="mkB">${l.mine
       ? sb(`data-cancel="${l.id}"`, 'Снять', 'btn-paper')
-      : sb(`data-take="${l.id}" data-q="1"`, 'Купить', 'btn-gold', s.coins < l.price) + (l.qty > 1 ? sb(`data-take="${l.id}" data-q="${l.qty}"`, `Все · ${l.qty * l.price} 🪙`, 'btn-gold', s.coins < l.qty * l.price) : '')}</span></div>`; }).join('')}</div>`;
+      : (l.qty > 1 ? qin('t' + l.id, l.qty, 1, l.price) : '') + sb(`data-take="${l.id}" data-q="${l.qty > 1 ? 'in' : 1}" data-in="t${l.id}"`, `Купить · <b data-sum="t${l.id}">${l.price}</b> 🪙`, 'btn-gold', s.coins < l.price) + (l.qty > 1 ? sb(`data-take="${l.id}" data-q="${l.qty}"`, `Все · ${l.qty * l.price} 🪙`, 'btn-gold', s.coins < l.qty * l.price) : '')}</span></div>`; }).join('')}</div>`;
 }
 function sellForm(m, s, here) {
   const mine = m.lots.filter(l => l.mine).length;
@@ -60,8 +64,8 @@ function sellForm(m, s, here) {
     <div class="mkP"><span class="mkSum"></span><button class="btn btn-gold" type="button" data-list style="padding:6px 12px;font-size:13px" ${here && mine < m.maxLots ? '' : 'disabled'}>Выставить</button></div></div>`;
 }
 async function lotAct(x, body) { x.disabled = true; const r = await act('market', body); if (r && r.status === 200 && r.data.market) render(r.data.market); else marketSheet(); }
-async function trade(x, op) {
-  x.disabled = true; const r = await act('market', { op, item: x.dataset[op], qty: +x.dataset.q });
+async function trade(x, op, qty) {
+  x.disabled = true; const r = await act('market', { op, item: x.dataset[op], qty: qty || 1 });
   if (r && r.status === 200 && r.data.market) render(r.data.market); else marketSheet();
 }
 

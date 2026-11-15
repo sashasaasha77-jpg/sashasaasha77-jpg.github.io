@@ -231,7 +231,7 @@ export const RES = ['wood', 'herb', 'ore'];
 export const RESPAWN_MS = 5 * 60e3; // ресурсы на карте возвращаются каждые 5 минут
 export const slotOf = now => Math.floor(now / RESPAWN_MS);
 // смена роли за монеты: цена — по редкости новой роли
-export const ROLE_PRICE = { zhitel: 300, torgovets: 300, kuznets: 300, strazhnik: 800, luchnik: 800, alkhimik: 800, rytsar: 2000, mag: 2000, sovetnik: 5000, graf: 5000, gertsog: 15000 };
+export const ROLE_PRICE = { zhitel: 3000, torgovets: 3000, kuznets: 3000, strazhnik: 8000, luchnik: 8000, alkhimik: 8000, rytsar: 20000, mag: 20000, sovetnik: 50000, graf: 50000, gertsog: 150000 }; // 15.11.2026: ×10 от старых цен
 // рецепты: у кого варить/ковать, что нужно, что получится
 export const RECIPES = {
   potion: { npc: 'mag', need: { herb: 3 }, text: 'Лечит половину здоровья' },

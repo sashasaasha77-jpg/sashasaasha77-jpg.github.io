@@ -181,24 +181,63 @@ function warTick(now, p) {
 
 // ---------------- замок ордена ----------------
 export const CM = new Map();
-function castleModel(lvl, color) {
+export function castleModel(lvl, color) { // замок ордена: у каждого из 6 уровней своя, всё более богатая постройка
   const THREE = W.THREE, g = new THREE.Group(), col = parseInt((color || '#E8B931').slice(1), 16), M = (geo, c, pos, rot) => W.mesh(g, geo, c, { pos, rot, ol: 1.2 });
-  const stone = 0x9C948A, wood = 0x7A4E2C, dark = 0x5A3A22, roof = 0x6A3A2A;
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(OCASTLE.r, 40), W.toon(lvl >= 3 ? 0xB8AE9C : 0x8C7A5A)); ground.rotation.x = -Math.PI / 2; ground.position.y = 0.03; g.add(ground);
-  const flag = (x, z, h) => { M(new THREE.CylinderGeometry(0.06, 0.07, h, 6), 0x3A2A1E, [x, h / 2, z]); M(new THREE.BoxGeometry(0.9, 0.55, 0.04), col, [x + 0.47, h - 0.35, z]); };
-  if (lvl === 0) { flag(0, 0, 3); M(new THREE.BoxGeometry(1.2, 0.6, 0.1), wood, [0, 1.2, 0.2]); return g; }
-  if (lvl === 1) { for (let a = 0.6; a < 5.7; a += 0.22) { const x = Math.sin(a) * 6, z = Math.cos(a) * 6; M(new THREE.CylinderGeometry(0.14, 0.16, 1.6, 6), wood, [x, 0.8, z]); }
-    for (const [x, z] of [[-2, -1.5], [2.2, -0.5]]) { M(new THREE.ConeGeometry(1.5, 2.1, 4), col, [x, 1.05, z], [0, 0.785, 0]); } M(new THREE.CylinderGeometry(0.5, 0.6, 0.3, 8), 0x55524E, [0, 0.15, 1.8]); flag(0, -3.5, 4); return g; }
-  const wallM = lvl >= 3 ? stone : wood, wh = lvl >= 3 ? 2.6 : 2.0, half = 6;
-  for (const [x, z, w, d] of [[0, -half, 2 * half, 0.6], [-half, 0, 0.6, 2 * half], [half, 0, 0.6, 2 * half], [-half / 2 - 0.9, half, half - 1.8, 0.6], [half / 2 + 0.9, half, half - 1.8, 0.6]]) M(new THREE.BoxGeometry(w, wh, d), wallM, [x, wh / 2, z]);
-  if (lvl >= 3) for (let i = -5; i <= 5; i += 1.25) for (const [x, z] of [[i, -half], [-half, i], [half, i]]) M(new THREE.BoxGeometry(0.45, 0.45, 0.45), stone, [x, wh + 0.22, z]);
-  const tower = (x, z, r, h) => { M(new THREE.CylinderGeometry(r, r * 1.08, h, 12), lvl >= 3 ? stone : wood, [x, h / 2, z]); M(new THREE.ConeGeometry(r * 1.3, r * 1.6, 12), lvl >= 5 ? 0xE8B931 : col, [x, h + r * 0.8, z]); };
-  if (lvl === 2) { tower(-half, -half, 1.1, 4.2); M(new THREE.BoxGeometry(3, 2.2, 2.5), wood, [1.5, 1.1, -2]); M(new THREE.ConeGeometry(2.3, 1.4, 4), roof, [1.5, 2.9, -2], [0, 0.785, 0]); }
-  if (lvl === 3) { tower(-half, -half, 1.3, 5); tower(half, -half, 1.3, 5); M(new THREE.BoxGeometry(4, 3.5, 3.5), stone, [0, 1.75, -2]); M(new THREE.ConeGeometry(3, 1.8, 4), roof, [0, 4.4, -2], [0, 0.785, 0]); }
-  if (lvl >= 4) { for (const [x, z] of [[-half, -half], [half, -half], [-half, half], [half, half]]) tower(x, z, 1.4, lvl >= 5 ? 6.5 : 5.5);
-    const kh = lvl >= 5 ? 7.5 : 5.5; M(new THREE.BoxGeometry(5, kh, 4.5), stone, [0, kh / 2, -1.5]); tower(0, -1.5, 1.6, kh + 2.5);
-    for (const x of [-1.6, 1.6]) M(new THREE.BoxGeometry(0.9, 1.6, 0.06), col, [x, kh - 1.4, 0.8]); }
-  M(new THREE.BoxGeometry(2.4, wh * 0.9, 0.2), dark, [0, wh * 0.45, half + 0.1]); flag(-1.6, half + 0.6, wh + 2.2); flag(1.6, half + 0.6, wh + 2.2);
+  const glow = (geo, c, pos) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: c })); m.position.set(...pos); g.add(m); return m; };
+  const stone = lvl >= 5 ? 0xD8D0C2 : 0xB0A898, trim = lvl >= 5 ? 0xE8B931 : 0x8C857B, wood = 0x8A5A32, dark = 0x4E3020, roofC = lvl >= 5 ? 0xE8B931 : col, gold = 0xE8B931;
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(OCASTLE.r, 48), W.toon(lvl >= 3 ? 0xC9BFA9 : lvl >= 1 ? 0xA8946A : 0x8C7A5A)); ground.rotation.x = -Math.PI / 2; ground.position.y = 0.03; g.add(ground);
+  const banner = (x, z, h, big) => { M(new THREE.CylinderGeometry(0.06, 0.07, h, 6), 0x3A2A1E, [x, h / 2, z]); M(new THREE.SphereGeometry(0.1, 8, 6), gold, [x, h + 0.05, z]);
+    M(new THREE.BoxGeometry(big ? 1.3 : 0.9, big ? 0.8 : 0.55, 0.05), col, [x + (big ? 0.68 : 0.47), h - (big ? 0.5 : 0.35), z]); };
+  const torch = (x, z, h = 1.4) => { M(new THREE.CylinderGeometry(0.05, 0.06, h, 6), dark, [x, h / 2, z]); glow(new THREE.ConeGeometry(0.14, 0.32, 8), 0xFFB040, [x, h + 0.14, z]); };
+  const fire = (x, z) => { for (let i = 0; i < 6; i++) { const a = i / 6 * 6.28; M(new THREE.SphereGeometry(0.16, 6, 5), 0x6E6A60, [x + Math.sin(a) * 0.45, 0.1, z + Math.cos(a) * 0.45]); } glow(new THREE.ConeGeometry(0.28, 0.75, 7), 0xFF7A2A, [x, 0.4, z]); glow(new THREE.ConeGeometry(0.15, 0.5, 7), 0xFFD060, [x, 0.38, z]); };
+  const tent = (x, z, ry, c) => { M(new THREE.ConeGeometry(1.35, 1.9, 4), c, [x, 0.95, z], [0, ry + 0.785, 0]); M(new THREE.BoxGeometry(0.5, 0.9, 0.05), dark, [x + Math.sin(ry) * 0.95, 0.45, z + Math.cos(ry) * 0.95], [0, ry, 0]); };
+  const barrel = (x, z) => M(new THREE.CylinderGeometry(0.28, 0.28, 0.6, 10), wood, [x, 0.3, z]);
+  const crate = (x, z) => M(new THREE.BoxGeometry(0.55, 0.55, 0.55), 0xA8783E, [x, 0.28, z]);
+  // зубцы по линии
+  const merlons = (x1, z1, x2, z2, y, c) => { const L = Math.hypot(x2 - x1, z2 - z1), n = Math.max(2, Math.round(L / 0.8)); for (let i = 0; i <= n; i += 2) { const k = i / n; M(new THREE.BoxGeometry(0.42, 0.42, 0.42), c, [x1 + (x2 - x1) * k, y + 0.21, z1 + (z2 - z1) * k]); } };
+  const wall = (x1, z1, x2, z2, h, th, c) => { const L = Math.hypot(x2 - x1, z2 - z1); M(new THREE.BoxGeometry(L, h, th), c, [(x1 + x2) / 2, h / 2, (z1 + z2) / 2], [0, -Math.atan2(z2 - z1, x2 - x1), 0]); };
+  const rtower = (x, z, r, h, roofCol, crown) => { M(new THREE.CylinderGeometry(r, r * 1.1, h, 14), stone, [x, h / 2, z]); M(new THREE.CylinderGeometry(r * 1.18, r * 1.18, 0.35, 14), trim, [x, h + 0.17, z]);
+    if (crown) for (let i = 0; i < 8; i++) { const a = i / 8 * 6.28; M(new THREE.BoxGeometry(0.32, 0.38, 0.32), stone, [x + Math.sin(a) * r * 1.05, h + 0.54, z + Math.cos(a) * r * 1.05]); }
+    M(new THREE.ConeGeometry(r * 1.25, r * 2.1, 14), roofCol, [x, h + (crown ? 0.7 : 0.35) + r * 1.05, z]); M(new THREE.BoxGeometry(0.22, 0.5, 0.05), 0x2A2420, [x, h * 0.62, z + r * 1.02]); };
+  const palisade = (R0, gap) => { for (let a = 0; a < 6.283; a += 0.17) { if (Math.abs(((a + Math.PI) % 6.283) - Math.PI) < gap) continue; const x = Math.sin(a) * R0, z = Math.cos(a) * R0; M(new THREE.CylinderGeometry(0.17, 0.19, 2.0, 6), wood, [x, 1.0, z]); M(new THREE.ConeGeometry(0.19, 0.4, 6), dark, [x, 2.2, z]); } };
+  if (lvl === 0) { // флаг ордена: расчищенная поляна, шатёр и костёр
+    for (let a = 0; a < 6.283; a += 0.35) M(new THREE.DodecahedronGeometry(0.28, 0), 0x8C857B, [Math.sin(a) * 6.5, 0.12, Math.cos(a) * 6.5]);
+    banner(0, -1, 3.6, true); tent(-2.2, -1.5, 0.4, col); fire(1.2, 1.4); crate(2.6, -1.4); barrel(2.0, -2.0); return g; }
+  if (lvl === 1) { // лагерь: частокол, шатры, костёр, оружейная стойка
+    palisade(6.4, 0.35); tent(-2.6, -2.2, 0.5, col); tent(2.6, -2.2, -0.5, col); tent(0, -3.6, 0, 0xF2E6CC); fire(0, 0.6);
+    M(new THREE.BoxGeometry(1.6, 0.1, 0.1), dark, [-3.2, 1.0, 1.8]); for (let i = 0; i < 4; i++) M(new THREE.BoxGeometry(0.06, 1.1, 0.06), 0x9AA0AA, [-3.8 + i * 0.4, 0.75, 1.85]);
+    barrel(3.2, 1.6); barrel(3.6, 2.2); crate(2.8, 2.6); banner(-1.2, 6.1, 3.6, true); banner(1.2, 6.1, 3.6, true); torch(-1.2, 5.6); torch(1.2, 5.6); return g; }
+  if (lvl === 2) { // деревянный форт: частокол-квадрат, две сторожевые башни, длинный дом
+    const H = 6; for (const [x1, z1, x2, z2] of [[-H, -H, H, -H], [-H, -H, -H, H], [H, -H, H, H], [-H, H, -1.4, H], [1.4, H, H, H]]) { const L = Math.hypot(x2 - x1, z2 - z1), n = Math.round(L / 0.42); for (let i = 0; i <= n; i++) { const k = i / n, x = x1 + (x2 - x1) * k, z = z1 + (z2 - z1) * k; M(new THREE.CylinderGeometry(0.2, 0.22, 2.3, 6), wood, [x, 1.15, z]); M(new THREE.ConeGeometry(0.22, 0.45, 6), dark, [x, 2.5, z]); } }
+    for (const x of [-1.9, 1.9]) { M(new THREE.BoxGeometry(1.4, 4.2, 1.4), wood, [x, 2.1, H]); M(new THREE.BoxGeometry(1.8, 0.2, 1.8), dark, [x, 4.25, H]); M(new THREE.ConeGeometry(1.35, 1.3, 4), roofC, [x, 5.0, H], [0, 0.785, 0]); banner(x, H + 0.3, 6.4); }
+    for (const x of [-0.65, 0.65]) M(new THREE.BoxGeometry(1.2, 2.0, 0.15), dark, [x, 1.0, H + 0.1]);
+    M(new THREE.BoxGeometry(5.2, 2.4, 3.0), 0xC9A06A, [0, 1.2, -2.6]); M(new THREE.CylinderGeometry(1.9, 1.9, 5.6, 3), 0x8A3A2A, [0, 2.95, -2.6], [0, 0, Math.PI / 2]);
+    for (const x of [-1.6, 0, 1.6]) M(new THREE.BoxGeometry(0.6, 0.6, 0.05), 0x3A2A1E, [x, 1.4, -1.07]); fire(-3.2, 1.4); barrel(3.4, 1.0); crate(3.8, 1.8); torch(-1.9, H - 0.8); torch(1.9, H - 0.8); return g; }
+  // каменные уровни 3–5
+  const H = lvl >= 4 ? 6.2 : 5.8, wh = lvl === 3 ? 2.8 : lvl === 4 ? 3.4 : 3.8, th = 0.7, tr = lvl === 3 ? 1.2 : 1.45, th2 = wh + (lvl === 3 ? 1.8 : 2.6);
+  for (const [x1, z1, x2, z2] of [[-H, -H, H, -H], [-H, -H, -H, H], [H, -H, H, H], [-H, H, -1.6, H], [1.6, H, H, H]]) { wall(x1, z1, x2, z2, wh, th, stone); merlons(x1, z1, x2, z2, wh, stone); M(new THREE.BoxGeometry(Math.hypot(x2 - x1, z2 - z1) + 0.2, 0.18, th + 0.12), trim, [(x1 + x2) / 2, wh * 0.55, (z1 + z2) / 2], [0, -Math.atan2(z2 - z1, x2 - x1), 0]); }
+  for (const [x, z] of [[-H, -H], [H, -H], [-H, H], [H, H]]) rtower(x, z, tr, th2, roofC, lvl >= 4);
+  // надвратная башня с аркой и решёткой
+  for (const x of [-1.6, 1.6]) M(new THREE.BoxGeometry(1.0, wh + 1.2, 1.4), stone, [x, (wh + 1.2) / 2, H]);
+  M(new THREE.BoxGeometry(4.2, 1.2, 1.4), stone, [0, wh + 0.6, H]); merlons(-2.0, H, 2.0, H, wh + 1.2, stone);
+  for (let i = -2; i <= 2; i++) M(new THREE.BoxGeometry(0.08, wh - 0.4, 0.08), 0x3A3A40, [i * 0.42, (wh - 0.4) / 2, H + 0.5]); M(new THREE.BoxGeometry(2.2, 0.1, 0.08), 0x3A3A40, [0, wh * 0.5, H + 0.5]);
+  M(new THREE.BoxGeometry(1.4, 0.9, 0.06), col, [0, wh + 0.6, H + 0.73]); M(new THREE.CircleGeometry(0.28, 12), gold, [0, wh + 0.6, H + 0.77]);
+  torch(-2.5, H + 0.9, 1.8); torch(2.5, H + 0.9, 1.8);
+  // донжон
+  const kh = lvl === 3 ? 4.6 : lvl === 4 ? 6.0 : 7.2, kz = -1.6;
+  M(new THREE.BoxGeometry(4.6, kh, 4.0), stone, [0, kh / 2, kz]); merlons(-2.3, kz + 2.0, 2.3, kz + 2.0, kh, stone); merlons(-2.3, kz - 2.0, 2.3, kz - 2.0, kh, stone);
+  for (const y of lvl >= 4 ? [kh * 0.35, kh * 0.7] : [kh * 0.55]) for (const x of [-1.3, 0, 1.3]) { M(new THREE.BoxGeometry(0.5, 0.8, 0.06), 0x2A2420, [x, y, kz + 2.03]); M(new THREE.ConeGeometry(0.3, 0.3, 4), trim, [x, y + 0.5, kz + 2.04], [0, 0.785, 0]); }
+  if (lvl === 3) { M(new THREE.ConeGeometry(3.3, 2.0, 4), roofC, [0, kh + 1.0, kz], [0, 0.785, 0]); banner(0, kz, kh + 3.4, true); }
+  else { rtower(0, kz, 1.25, kh + 2.2, roofC, true); for (const [x, z] of [[-2.1, kz - 1.8], [2.1, kz - 1.8], [-2.1, kz + 1.8], [2.1, kz + 1.8]]) { M(new THREE.CylinderGeometry(0.42, 0.42, 1.4, 10), stone, [x, kh + 0.7, z]); M(new THREE.ConeGeometry(0.55, 1.1, 10), roofC, [x, kh + 1.95, z]); }
+    banner(0, kz, kh + 6.0, true); }
+  for (const [x, z] of [[-H, -H], [H, -H]]) banner(x, z, th2 + tr * 2.6 + 1.0);
+  // двор: колодец/фонтан, бочки, клумбы
+  if (lvl >= 5) { M(new THREE.CylinderGeometry(1.0, 1.1, 0.5, 16), stone, [3.0, 0.25, 2.6]); glow(new THREE.CylinderGeometry(0.85, 0.85, 0.05, 16), 0x6AC8F0, [3.0, 0.5, 2.6]); M(new THREE.CylinderGeometry(0.15, 0.2, 1.4, 8), gold, [3.0, 0.9, 2.6]);
+    for (let a = 0; a < 6.283; a += 0.26) M(new THREE.BoxGeometry(0.5, 0.9, 0.3), stone, [Math.sin(a) * 8.4, 0.45, Math.cos(a) * 8.4], [0, a, 0]);
+    for (const x of [-3.4, -2.6]) M(new THREE.SphereGeometry(0.4, 8, 6), 0x4E8A34, [x, 0.4, 3.4]); }
+  else { M(new THREE.CylinderGeometry(0.7, 0.75, 0.7, 12), stone, [3.0, 0.35, 2.6]); M(new THREE.BoxGeometry(1.6, 0.12, 0.12), dark, [3.0, 1.5, 2.6]); for (const x of [2.4, 3.6]) M(new THREE.BoxGeometry(0.1, 1.5, 0.1), dark, [x, 0.75, 2.6]); }
+  barrel(-3.6, 2.4); barrel(-3.0, 3.0); crate(-3.9, 3.2);
+  if (lvl >= 4) for (const x of [-4.6, 4.6]) { M(new THREE.SphereGeometry(0.5, 8, 6), 0x4E8A34, [x, 0.5, -4.6]); M(new THREE.SphereGeometry(0.18, 6, 5), 0xE04A6A, [x + 0.2, 0.85, -4.4]); }
   return g;
 }
 export function castlesTick(show) {
