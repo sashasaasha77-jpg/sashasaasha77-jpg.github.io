@@ -6,7 +6,7 @@ import { censor } from './censor.mjs';
 import { ORDER, COLORS, GOALS, orderLevel, levelBonus, nextLevelPts, validName } from './orders.mjs';
 import { questsFor, applySpec, nodesFor, NPC, POI, ITEMS, SPEC, ACH, SQUAD, SQUADQ, SHOP, RES, RECIPES, BUFFS, WEAPON, BUILDS, FORT, DECOR, dailyOrder, slotOf, ROLE_PRICE, CHOP, ARENA, MARKET, MARKET_STALLS, marketPrices, RESPAWN_MS as NODE_RESPAWN } from './quests.mjs';
 import { activeGear, heroStats, ABIL, MOVES, MIN_GAP, KINDS, LOOT, ENEMIES, RESPAWN_MS, enemyById, enemyPos, enemyReward, newFight, resolveRound, cooldownLeft, isNight, GEAR, gearSlot, gearScore, duelStats, duelReward, elo, ARENA_RULES, CLASSES, SKILLS, classSkills, applyClass, CLASS_LVL, CLASS_CHANGE } from './combat.mjs';
-import { TUT, TUT_STEP_COINS, TUT_DONE, loginReward, prevDay, REF, nySeason, TREE, pickGift, SNOW, nextSaturday, PETS, PET_BONUS, MINE, DUNGEON, LOOKS, ENCH, OWAR, owarWindow, owarLast, OCASTLE, HUNT, huntSpot, huntHeat, DRAGON, dragonStage } from './extras.mjs';
+import { TUT, TUT_STEP_COINS, TUT_DONE, loginReward, prevDay, REF, nySeason, TREE, pickGift, SNOW, nextSaturday, PETS, PET_BONUS, MINE, DUNGEON, LOOKS, ENCH, OWAR, owarWindow, owarLast, OCASTLE, HUNT, huntSpot, huntHeat, DRAGON, dragonStage, BIZ, bizCash, JOBS, JOB } from './extras.mjs';
 import { mergeConfig, TERR, CAPTURE_ORDER, SIEGE, TASKS, invasionGoal, invasionEnemies, occupiers, WORLD_EVENTS, RAIDERS, TITLES, isBossEvent, bossGoal, bossEnemies } from './world.mjs';
 
 export class Bad extends Error { constructor(status, code, msg) { super(msg); this.status = status; this.code = code; } }
@@ -289,10 +289,10 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
   }
   // ---------- обучение, вход каждый день, друзья, праздник, подземелье ----------
   async function extraView() {
-    const [tut, lg, rf, rfs, gift, look, ench, war, castles, hunt, drg, cls] = await Promise.all([store.get('tut/' + nick), store.get('login/' + nick), store.get('ref/' + nick), store.get('refs/' + nick), store.get('gift/' + nick), store.get('look/' + nick), store.get('ench/' + nick), owarView(), store.get('ocastles'), store.get('hunt/' + date), store.get('drg/' + nick), store.get('cls/' + nick)]);
+    const [tut, lg, rf, rfs, gift, look, ench, war, castles, hunt, drg, cls, biz, job, jobcd] = await Promise.all([store.get('tut/' + nick), store.get('login/' + nick), store.get('ref/' + nick), store.get('refs/' + nick), store.get('gift/' + nick), store.get('look/' + nick), store.get('ench/' + nick), owarView(), store.get('ocastles'), store.get('hunt/' + date), store.get('drg/' + nick), store.get('cls/' + nick), store.get('bizlots'), store.get('job/' + nick), store.get('jobcd/' + nick)]);
     const l = lg || {}, streak = l.last === date ? l.streak : l.last === prevDay(date) ? l.streak : 0;
     return { tut: tut || { step: 0, done: false }, login: { claimed: l.last === date, streak, next: loginReward(streak + 1), nextDay: streak % 7 + 1 },
-      ref: { by: rf?.by || null, n: rfs?.n || 0 }, ny: nySeason(now), gift: gift === date, look: look || { cur: {}, owned: [] }, ench: ench || {}, drg: drg || 0, cls: cls || null, war, castles: castles || {},
+      ref: { by: rf?.by || null, n: rfs?.n || 0 }, ny: nySeason(now), gift: gift === date, look: look || { cur: {}, owned: [] }, ench: ench || {}, drg: drg || 0, cls: cls || null, biz: biz || {}, job: job || null, jobcd: jobcd || 0, war, castles: castles || {},
       hunt: { hint: huntSpot(date).hint, found: (hunt?.finders || []).length, mine: (hunt?.finders || []).includes(nick), first: hunt?.finders?.[0] || null } };
   }
   async function spend(n) { const p = await store.get('p/' + nick); if (!p || (p.coins || 0) < n) throw new Bad(409, 'money', `Не хватает монет: нужно ${n}.`); p.coins -= n; await store.set('p/' + nick, p); }
@@ -1047,6 +1047,53 @@ export async function rpgAction({ action, b, nick, resident, sb, store, now: now
         return json(200, { ...(await state(h)), note: `✨ ${it.name} — теперь твоё!` }); }
       if (id && !L.owned.includes(key)) throw new Bad(409, 'not_owned', 'Сначала купи это.');
       L.cur[kind] = id; await store.set(k, L); return json(200, { ...(await state(h)), note: id ? `Надето: ${it.name}.` : 'Снято.' });
+    }
+    if (action === 'biz') { // бизнесы у Рыночной площади: купить, забрать кассу, улучшить, продать
+      const h = await hero(), i = +b.lot, L = BIZ.lots[i]; if (!L) throw new Bad(400, 'bad', 'Нет такого участка.');
+      await at(h, +b.x, +b.z); if (Math.hypot(h.x - L[0], h.z - L[1]) > BIZ.near + 1) throw new Bad(409, 'far', 'Подойди к участку поближе.');
+      const all = (await store.get('bizlots')) || {}, lot = all[i];
+      if (b.op === 'buy') { const T = BIZ.types[b.type]; if (!T) throw new Bad(400, 'bad', 'Нет такого бизнеса.'); if (lot) throw new Bad(409, 'taken', 'Этот участок уже занят.');
+        if (Object.values(all).some(x => x && x.owner === nick)) throw new Bad(409, 'has', 'У тебя уже есть бизнес. Один герой — один бизнес.');
+        await spend(T.price); all[i] = { owner: nick, type: b.type, lvl: 1, last: now, since: now, bonus: 0, gemAcc: 0 }; await store.set('bizlots', all);
+        await chron('biz', `${T.icon} @${nick} открыл свой бизнес: ${T.name}!`, nick);
+        return json(200, { ...(await state(h)), note: `${T.icon} Поздравляем! Теперь ты владелец: ${T.name}. Касса копится каждый час — заходи забирать.` }); }
+      if (!lot) throw new Bad(409, 'free', 'Участок свободен — его можно купить.');
+      if (lot.owner !== nick) throw new Bad(403, 'not_owner', 'Это чужой бизнес.');
+      const T = BIZ.types[lot.type];
+      if (b.op === 'collect') { const c = bizCash(lot, now); if (c.coins + c.ore + c.gem <= 0) throw new Bad(409, 'empty', 'Касса пока пуста.');
+        if (c.coins) await addCoins(c.coins); if (c.ore) await setItem('ore', c.ore); if (c.gem) await setItem('gem', c.gem);
+        lot.last = now; lot.bonus = 0; lot.gemAcc = c.gemAcc; await store.set('bizlots', all);
+        return json(200, { ...(await state(h)), note: `${T.icon} Касса: ` + [c.coins && `+${c.coins} 🪙`, c.ore && `+${c.ore} руды`, c.gem && `+${c.gem} 💎`].filter(Boolean).join(', ') }); }
+      if (b.op === 'up') { if (lot.lvl >= BIZ.maxLvl) throw new Bad(409, 'max', 'Бизнес уже на максимальном уровне.');
+        const c = bizCash(lot, now); await spend(BIZ.upCost(lot.type, lot.lvl)); // сначала забираем кассу по старой ставке
+        if (c.coins) await addCoins(c.coins); if (c.ore) await setItem('ore', c.ore); if (c.gem) await setItem('gem', c.gem);
+        lot.lvl++; lot.last = now; lot.bonus = 0; lot.gemAcc = c.gemAcc; await store.set('bizlots', all);
+        return json(200, { ...(await state(h)), note: `${T.icon} ${T.name} выросла до ${lot.lvl} уровня! Доход ×${BIZ.mult(lot.lvl)}.` }); }
+      if (b.op === 'sell') { let back = Math.round(T.price * BIZ.sellBack); for (let l = 1; l < lot.lvl; l++) back += Math.round(BIZ.upCost(lot.type, l) * BIZ.sellBack);
+        const c = bizCash(lot, now); await addCoins(back + c.coins); if (c.ore) await setItem('ore', c.ore); if (c.gem) await setItem('gem', c.gem); delete all[i]; await store.set('bizlots', all);
+        return json(200, { ...(await state(h)), note: `Бизнес продан. Тебе ${back + c.coins} монет.` }); }
+      throw new Bad(400, 'bad', 'Неизвестное действие.');
+    }
+    if (action === 'job') { // работа: смены по 3 точки
+      const h = await hero(), cur = await store.get('job/' + nick);
+      if (b.op === 'start') { const J = JOBS[b.job]; if (!J) throw new Bad(400, 'bad', 'Нет такой работы.'); if (cur) throw new Bad(409, 'busy', 'Сначала закончи текущую смену.');
+        if (await activeFight()) throw new Bad(409, 'fight', 'Сначала закончи бой.');
+        const cd = (await store.get('jobcd/' + nick)) || 0; if (now < cd) throw new Bad(409, 'cd', `Отдохни ещё ${Math.ceil((cd - now) / 60e3)} мин. перед новой сменой.`);
+        let lot = null; if (b.job === 'hire') { const all = (await store.get('bizlots')) || {}; lot = +b.lot; const L = all[lot]; if (!L) throw new Bad(409, 'no', 'Здесь нет бизнеса.'); if (L.owner === nick) throw new Bad(409, 'own', 'В своём бизнесе работать не нужно — забирай кассу.');
+          await at(h, +b.x, +b.z); if (Math.hypot(h.x - BIZ.lots[lot][0], h.z - BIZ.lots[lot][1]) > BIZ.near + 1) throw new Bad(409, 'far', 'Подойди к бизнесу поближе.'); }
+        const pool = [...JOB.points], pts = []; let r = now % 9973; while (pts.length < JOB.steps) { r = (r * 7919 + 13) % 9973; const k = pool.splice(r % pool.length, 1)[0]; pts.push(k); }
+        const job = { job: b.job, lot, pts, i: 0, started: now }; await store.set('job/' + nick, job);
+        return json(200, { ...(await state(h)), note: `${J.icon} Смена началась! Первая точка: ${POI[pts[0]].name}.` }); }
+      if (!cur) throw new Bad(409, 'no_job', 'У тебя нет смены.');
+      if (b.op === 'quit') { await store.set('job/' + nick, null); return json(200, { ...(await state(h)), note: 'Смена отменена.' }); }
+      if (b.op === 'step') { const P = POI[cur.pts[cur.i]]; await at(h, +b.x, +b.z); if (!near(h.x, h.z, P, JOB.near)) throw new Bad(409, 'far', 'Нужно подойти к точке.');
+        cur.i++; if (cur.i < cur.pts.length) { await store.set('job/' + nick, cur); return json(200, { ...(await state(h)), note: `✅ Готово! Дальше: ${POI[cur.pts[cur.i]].name}.` }); }
+        await store.set('job/' + nick, null); await store.set('jobcd/' + nick, now + JOB.cd);
+        let pay = JOB.pay, extra = '';
+        if (cur.job === 'hire') { pay = JOB.hirePay; const all = (await store.get('bizlots')) || {}, L = all[cur.lot]; if (L) { L.bonus = (L.bonus || 0) + JOB.ownerCut; await store.set('bizlots', all); extra = ` Хозяину @${L.owner} +${JOB.ownerCut} в кассу.`; await inboxAdd(L.owner, { t: 'biz', text: `💼 @${nick} отработал смену в твоём бизнесе: +${JOB.ownerCut} монет в кассу.` }); } }
+        await addCoins(pay); await addXp(JOB.xp);
+        return json(200, { ...(await state(h)), note: `💰 Смена закончена! +${pay} монет и +${JOB.xp} опыта.${extra}` }); }
+      throw new Bad(400, 'bad', 'Неизвестное действие.');
     }
     if (action === 'cls') { // выбор класса героя с 20 уровня: первый раз бесплатно, смена — за монеты
       const h = await hero(), lv = levelOf(h.xp).level, id = String(b.id || ''); if (!CLASSES[id]) throw new Bad(400, 'bad', 'Нет такого класса.');

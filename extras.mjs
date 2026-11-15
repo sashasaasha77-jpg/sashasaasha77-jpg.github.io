@@ -147,3 +147,28 @@ export const HUNT = { cd: 15e3, digR: 3, firstItems: ['frost_staff', 'dragon_bla
   ] };
 export const huntSpot = date => { let h = 0; for (const c of date) h = (h * 31 + c.charCodeAt(0)) >>> 0; return HUNT.spots[h % HUNT.spots.length]; };
 export const huntHeat = d => d <= HUNT.digR ? 'found' : d < 10 ? 'Очень горячо! 🔥 Сокровище совсем рядом.' : d < 25 ? 'Тепло… ты на верном пути.' : d < 60 ? 'Прохладно. Сокровище не здесь.' : 'Холодно! ❄️ Совсем не там.';
+
+// ---------- бизнесы и работа (идея подданного Gor, 14.11.2026) ----------
+export const BIZ = {
+  types: {
+    shop: { name: 'Лавка', icon: '🛒', price: 20000, coins: 100, color: 0x3A7AC0, text: 'Торгует мелочами: монеты каждый час' },
+    forge: { name: 'Кузница', icon: '⚒️', price: 24000, ore: 6, gem: 0.12, color: 0x6A6A72, text: 'Плавит руду, иногда находит самоцвет' },
+    tavern: { name: 'Таверна', icon: '🍺', price: 30000, coins: 150, color: 0xC0703A, text: 'Поит героев: хорошие монеты каждый час' },
+    bank: { name: 'Меняльная контора', icon: '🏦', price: 80000, coins: 420, color: 0xE8B931, text: 'Самый дорогой бизнес — и самый большой доход' },
+  },
+  // Торговый квартал к западу от замка, за жилыми кварталами: улица вдоль z = -6.6, по пять участков с каждой стороны (х, z, поворот фасадом к улице)
+  street: { x: -102.3, z: -6.6, len: 33 },
+  lots: [-2, -1, 0, 1, 2].flatMap(k => [[-102.3 + k * 6.6, -9.9, 0], [-102.3 + k * 6.6, -3.3, Math.PI]]),
+  maxLvl: 5, mult: l => 1 + 0.5 * (l - 1), upCost: (t, l) => Math.round(BIZ.types[t].price * 0.6 * l), capH: 8, sellBack: 0.5, near: 5.5,
+};
+export const bizCash = (lot, now) => { // сколько накопилось в кассе к моменту now (не больше capH часов)
+  const T = BIZ.types[lot.type], m = BIZ.mult(lot.lvl), h = Math.min(BIZ.capH, Math.max(0, (now - lot.last) / 3600e3)) ;
+  return { coins: Math.floor((T.coins || 0) * m * h) + (lot.bonus || 0), ore: Math.floor((T.ore || 0) * m * h), gem: Math.floor((T.gem || 0) * m * h + (lot.gemAcc || 0)), gemAcc: ((T.gem || 0) * m * h + (lot.gemAcc || 0)) % 1, h };
+};
+export const JOBS = {
+  smith: { name: 'Подмастерье кузнеца', icon: '⚒️', giver: 'kuznets', text: 'Разнеси заказы кузнеца Гордея по городу' },
+  tavern: { name: 'Разносчик таверны', icon: '🍺', giver: 'traktirshchik', text: 'Доставь кружки и пироги из таверны Мартына' },
+  guard: { name: 'Патруль стражи', icon: '🛡️', giver: 'rasporyaditel', text: 'Обойди три поста стражи по поручению Бертрама' },
+  hire: { name: 'Смена в чужом бизнесе', icon: '💼', text: 'Поработай у другого игрока: ему процент в кассу, тебе зарплата' },
+};
+export const JOB = { pay: 180, xp: 40, cd: 8 * 60e3, steps: 3, near: 3.5, ownerCut: 60, hirePay: 220, points: ['gate', 'fountain', 'bridge', 'north', 'east', 'west', 'market'] };

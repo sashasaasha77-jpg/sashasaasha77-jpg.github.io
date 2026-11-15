@@ -1,6 +1,7 @@
 // Интерфейс новинок (14.11.2026): обучение новичка, награда за вход, «позови друга», подарок под ёлкой, питомцы, звуки.
 import { G, act, openSheet } from './rpg-ui.js';
-import { DRAGON, dragonStage, petShow, TUT, LOGIN, REF, PETS, TREE, DUNGEON, LOOKS, ENCH, enchColor, OWAR, lookKey, OCASTLE, HUNT } from './extras.mjs';
+import { DRAGON, dragonStage, petShow, TUT, LOGIN, REF, PETS, TREE, DUNGEON, LOOKS, ENCH, enchColor, OWAR, lookKey, OCASTLE, HUNT, BIZ, bizCash, JOBS, JOB } from './extras.mjs';
+import { POI } from './quests.mjs';
 import { ITEMS } from './quests.mjs';
 import { ENEMIES, enemyPos, GEAR, gearSlot, activeGear, CLASSES, SKILLS, CLASS_LVL, CLASS_CHANGE } from './combat.mjs';
 import { buildPet } from './monsters.js';
@@ -76,6 +77,7 @@ export function rewardsSheet() {
     <div class="xL"><input id="xLink" readonly value="${esc(link)}"><button class="btn btn-paper" id="xCopy" type="button">Копировать</button>${navigator.share ? '<button class="btn btn-paper" id="xShare" type="button">Поделиться</button>' : ''}</div>
     <div class="xbar"><i style="width:${Math.min(100, 100 * x.ref.n / REF.horseAt)}%"></i></div><small class="rw">Пришло по твоей ссылке: <b>${x.ref.n}</b>${x.ref.n < REF.horseAt ? ` · до коня осталось ${REF.horseAt - x.ref.n}` : ' · конь уже твой!'}${x.ref.by ? ` · тебя позвал @${esc(x.ref.by)}` : ''}</small>
     ${x.ny ? `<h3 class="xH">🎄 Новогодний праздник</h3><p class="rw">Каждый день под ёлкой на площади у ворот ждёт подарок${x.gift ? ' — сегодняшний уже у тебя' : ''}. По субботам в 20:00 приходит <b>Снежный король</b> — бейте его всем королевством!</p>` : ''}
+    <h3 class="xH">💼 Работа и бизнес</h3>${jobsHtml()}<p class="rw"><small>🏪 Свой бизнес — таверну, кузницу, лавку или меняльную контору — можно купить в <b>Торговом квартале</b> к западу от замка.</small></p><button class=\"btn btn-paper\" type=\"button\" id=\"jbGo\">✨ Показать дорогу в Торговый квартал</button>
     <h3 class="xH">🗺 Клад дня</h3><p class="rw">Загадка: <b>«${esc(x.hunt.hint)}»</b></p><p class="rw">Иди туда и жми ⛏ (или G) — копать можно раз в 15 секунд, игра подскажет «тепло» или «холодно». Первый нашедший получает редкую вещь и ${HUNT.firstCoins} монет, следующие ${HUNT.maxFinders - 1} — по ${HUNT.nextCoins} монет и самоцвету.${x.hunt.mine ? ' <b>Сегодняшний клад ты уже нашёл!</b>' : x.hunt.first ? ` Первым сегодня был @${esc(x.hunt.first)}.` : ' Сегодня клад ещё никто не нашёл!'}</p>
     <h3 class="xH">⚔️ Война орденов</h3><p class="rw">Каждое воскресенье с 19:00 до 20:00 ордены бьются за пять флагов: у рынка, болота, шахты, моста и арены. Подойди к флагу и укрепляй его раз в 20 секунд — чем выше уровень, тем больше влияния. Флаг достаётся ордену с наибольшим влиянием. Орден с большинством флагов побеждает: всем участникам монеты и опыт, победителям — +${OWAR.winBonus} монет сверху, а флаги неделю горят цветом победителей.${x.war?.last?.winners?.length ? ` Прошлая война: победил «${esc(x.war.last.winners[0].name)}».` : ''}</p>
     <h3 class="xH">🐾 Питомцы</h3><div class="pL">${pets}${drgBox}</div><p class="rw">Питомец ходит за тобой по пятам. Надень его в «🎒 Герой».</p>
@@ -84,6 +86,7 @@ export function rewardsSheet() {
     b.querySelector('#xClaim').onclick = async e => { e.target.disabled = true; const r = await act('daily', {}, true); if (r && r.status === 200) { sfx('gift'); W.toast(r.data.note); rewardsSheet(); } else { e.target.disabled = false; if (r) W.toast(r.data.message || 'Не получилось'); } };
     b.querySelector('#xCopy').onclick = async () => { try { await navigator.clipboard.writeText(link); W.toast('Ссылка скопирована. Отправь её другу!'); } catch { b.querySelector('#xLink').select(); document.execCommand('copy'); W.toast('Ссылка скопирована'); } };
     const sh = b.querySelector('#xShare'); if (sh) sh.onclick = () => navigator.share({ title: 'Королевство подписчиков', text: 'Заходи в «Мир героев» — получишь 150 монет на старте!', url: link }).catch(() => { });
+    jobsBind(b, rewardsSheet); { const g = b.querySelector('#jbGo'); if (g) g.onclick = () => { G.castleGo = { x: BIZ.street.x, z: BIZ.street.z, msg: '🏪 Ты в Торговом квартале! Подойди к любому участку.' }; W.$('sheet').classList.remove('show'); W.toast('Иди за золотым лучом в Торговый квартал'); }; }
     b.querySelector('#xSfx').onchange = e => { ls.set('kp-sfx', e.target.checked ? null : '0'); if (e.target.checked) sfx('coin'); };
   });
 }
@@ -221,6 +224,90 @@ export async function castleSheet() {
     b.querySelector('#cGo').onclick = () => { G.castleGo = { x: sx, z: sz }; W.$('sheet').classList.remove('show'); W.toast('Иди за золотым лучом к участку замка'); }; });
 }
 
+// ---------------- бизнесы у Рыночной площади и работа ----------------
+const BM = new Map(); let bizArch = null, bizBtn = null, bizNear = -1, jobBusy = 0;
+function signTex(lines, bg) { const c = document.createElement('canvas'); c.width = 512; c.height = 160; const x = c.getContext('2d');
+  x.fillStyle = bg; x.beginPath(); x.roundRect(6, 6, 500, 148, 26); x.fill(); x.lineWidth = 8; x.strokeStyle = '#0E1424'; x.stroke();
+  x.textAlign = 'center'; const fit = (t, px, wt) => { let f = px; do { x.font = `${wt} ${f}px Montserrat, Arial`; f -= 2; } while (x.measureText(t).width > 470 && f > 18); };
+  x.fillStyle = '#F5EBDC'; fit(lines[0], 58, 800); x.fillText(lines[0], 256, 74); x.fillStyle = '#FFE7A0'; fit(lines[1] || '', 40, 700); x.fillText(lines[1] || '', 256, 128);
+  const t = new W.THREE.CanvasTexture(c); t.colorSpace = W.THREE.SRGBColorSpace; return t; }
+function bizModel(lot) {
+  const THREE = W.THREE, g = new THREE.Group(), M = (geo, c, pos, rot) => W.mesh(g, geo, c, { pos, rot, ol: 1.2 }), wood = 0x7A4E2C, dark = 0x4E3020;
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 5.2), W.toon(lot ? 0xB8A27A : 0x9C8A62)); ground.rotation.x = -Math.PI / 2; ground.position.y = 0.04; g.add(ground);
+  const sign = (text, bg, y, w = 2.4) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 0.3125), new THREE.MeshBasicMaterial({ map: signTex(text, bg), transparent: true, side: THREE.DoubleSide })); m.position.set(0, y, 2.66); g.add(m); return m; };
+  if (!lot) { for (let a = -2.4; a <= 2.4; a += 1.2) for (const [x, z] of [[a, -2.5], [a, 2.5], [-2.5, a], [2.5, a]]) M(new THREE.CylinderGeometry(0.07, 0.08, 0.7, 6), wood, [x, 0.35, z]);
+    M(new THREE.BoxGeometry(0.12, 1.8, 0.12), dark, [0, 0.9, 2.5]); sign(['Продаётся', 'участок под бизнес'], '#A4161A', 1.85); return g; }
+  const T = BIZ.types[lot.type], L = lot.lvl, h = 2.2 + L * 0.45, w = 3.6 + L * 0.2, col = T.color;
+  M(new THREE.BoxGeometry(w, h, 3.4), lot.type === 'bank' ? 0xE8DCC0 : lot.type === 'forge' ? 0x8C857B : 0xE4D2B0, [0, h / 2, -0.3]);
+  for (const x of [-w / 2, w / 2]) M(new THREE.BoxGeometry(0.22, h, 0.22), wood, [x, h / 2, 1.42]);
+  M(new THREE.ConeGeometry(w * 0.66, 1.4 + L * 0.15, 4), col, [0, h + 0.75 + L * 0.07, -0.3], [0, Math.PI / 4, 0]);
+  M(new THREE.BoxGeometry(1.0, 1.7, 0.08), dark, [0, 0.85, 1.42]); for (const x of [-1.2, 1.2]) M(new THREE.BoxGeometry(0.7, 0.6, 0.06), 0x9CD0F0, [x, h * 0.6, 1.43]);
+  if (lot.type === 'forge') { M(new THREE.BoxGeometry(0.7, 1.8, 0.7), 0x55524E, [w / 2 - 0.5, h + 0.9, -1.2]); M(new THREE.BoxGeometry(0.8, 0.5, 0.5), 0x3A3A40, [1.6, 0.25, 2.0]); }
+  if (lot.type === 'tavern') for (const x of [-1.6, 1.6]) M(new THREE.CylinderGeometry(0.35, 0.35, 0.7, 10), 0x8A5A30, [x, 0.35, 2.1]);
+  if (lot.type === 'bank') for (const x of [-1.3, -0.45, 0.45, 1.3]) M(new THREE.CylinderGeometry(0.16, 0.18, h, 10), 0xF2ECDC, [x, h / 2, 1.75]);
+  if (lot.type === 'shop') M(new THREE.BoxGeometry(w + 0.4, 0.08, 1.2), 0xC0303A, [0, h * 0.72, 1.9], [0.35, 0, 0]);
+  if (L >= 5) M(new THREE.ConeGeometry(0.3, 0.6, 4), 0xE8B931, [0, h + 2.0 + L * 0.15, -0.3]);
+  sign([T.icon + ' ' + T.name, '@' + lot.owner + ' · ур. ' + L], '#0E1424', h + 0.45, 2.6);
+  g.scale.setScalar(0.88); return g;
+}
+function bizTick(show) {
+  const all = G.state?.extra?.biz || {};
+  BIZ.lots.forEach(([x, z], i) => { const lot = all[i], key = lot ? lot.owner + lot.type + lot.lvl : 'free'; let o = BM.get(i);
+    if (!o || o.key !== key || !o.g.parent) { if (o) o.g.parent?.remove(o.g); const g = bizModel(lot); g.position.set(x, 0, z); g.rotation.y = Math.atan2(BIZ.lots[i][0] < 42.9 - 3 ? 1 : BIZ.lots[i][0] > 42.9 + 3 ? -1 : 0, z < 3.3 ? 1 : -1); (W.RPGW || W.scene).add(g); o = { g, key }; BM.set(i, o); }
+    o.g.rotation.y = BIZ.lots[i][2]; o.g.visible = show; });
+  if (!bizArch) { const THREE = W.THREE, g = new THREE.Group(), M = (geo, c, pos) => W.mesh(g, geo, c, { pos, ol: 1.2 }), S = BIZ.street, x0 = S.x + S.len / 2 + 1.2;
+    for (const z of [-2.4, 2.4]) { M(new THREE.BoxGeometry(0.5, 4.2, 0.5), 0x8C857B, [0, 2.1, z]); M(new THREE.ConeGeometry(0.45, 0.6, 4), 0xA4161A, [0, 4.5, z]); }
+    M(new THREE.BoxGeometry(0.4, 0.5, 5.4), 0x5A3A22, [0, 3.7, 0]);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 1.44), new THREE.MeshBasicMaterial({ map: signTex(['🏪 Торговый квартал', 'бизнесы подданных'], '#0E1424'), transparent: true, side: THREE.DoubleSide })); m.position.set(0.25, 3.0, 0); m.rotation.y = Math.PI / 2; g.add(m);
+    const m2 = m.clone(); m2.position.x = -0.25; m2.rotation.y = -Math.PI / 2; g.add(m2);
+    for (let k = 0; k <= 6; k++) for (const z of [-1.2, 1.2]) { const lx = S.x - S.len / 2 + k * (S.len / 6); M(new THREE.CylinderGeometry(0.06, 0.07, 2.2, 6), 0x3A2A1E, [lx - x0, 1.1, z]); M(new THREE.BoxGeometry(0.3, 0.35, 0.3), 0xFFD060, [lx - x0, 2.3, z]); }
+    g.position.set(x0, 0, S.z); (W.RPGW || W.scene).add(g); bizArch = g; }
+  bizArch.visible = show;
+}
+export async function bizSheet(i) {
+  const lot = (G.state.extra.biz || {})[i], me = G.state.hero.nick, now = Date.now(), coins = G.state.coins || 0;
+  const mine = Object.values(G.state.extra.biz || {}).some(x => x && x.owner === me), fmt = n => n.toLocaleString('ru-RU');
+  let html;
+  if (!lot) html = `<h2>🏪 Участок под бизнес</h2><p class="rw">Купи бизнес — он будет приносить доход каждый час, даже пока тебя нет в игре. Касса копится до ${BIZ.capH} часов: заходи забирать. Один герой — один бизнес.</p><div class="enL">` +
+    Object.entries(BIZ.types).map(([id, T]) => `<div class="enR"><span class="enI">${T.icon}</span><span style="flex:1"><b>${T.name}</b><br><small>${T.text}: ${T.coins ? `${T.coins} 🪙` : `${T.ore} руды и иногда 💎`} в час на 1 уровне</small></span><button class="btn btn-gold" type="button" data-bb="${id}" ${!mine && coins >= T.price ? '' : 'disabled'}>${fmt(T.price)} 🪙</button></div>`).join('') + `</div>${mine ? '<p class="rw" style="color:var(--gold)">У тебя уже есть бизнес.</p>' : ''}`;
+  else { const T = BIZ.types[lot.type], c = bizCash(lot, now), cash = [c.coins && `${fmt(c.coins)} 🪙`, c.ore && `${c.ore} руды`, c.gem && `${c.gem} 💎`].filter(Boolean).join(', ') || 'пусто';
+    if (lot.owner === me) { const up = lot.lvl < BIZ.maxLvl ? BIZ.upCost(lot.type, lot.lvl) : 0;
+      html = `<h2>${T.icon} ${T.name} · ур. ${lot.lvl}</h2><p class="rw">Твой бизнес. Доход ×${BIZ.mult(lot.lvl)}. Касса копится до ${BIZ.capH} часов${c.h >= BIZ.capH ? ' — <b style="color:var(--gold)">касса полна, забери!</b>' : ''}.</p>
+        <p class="rw" style="font-size:20px">💰 В кассе: <b>${cash}</b></p><button class="btn btn-gold" type="button" id="bzC" style="width:100%">Забрать кассу</button>
+        ${up ? `<button class="btn btn-paper" type="button" id="bzU" style="width:100%;margin-top:8px" ${coins >= up ? '' : 'disabled'}>⬆ Улучшить до ${lot.lvl + 1} ур. (доход ×${BIZ.mult(lot.lvl + 1)}) — ${fmt(up)} 🪙</button>` : '<p class="rw">🏆 Максимальный уровень!</p>'}
+        <p class="rw"><small>Другие игроки могут работать у тебя сменами — за каждую смену тебе +${JOB.ownerCut} монет в кассу.</small></p>
+        <button class="btn btn-paper" type="button" id="bzS" style="width:100%;margin-top:8px;opacity:.75">Продать бизнес (вернётся половина цены)</button>`; }
+    else { const j = G.state.extra.job, cd = (G.state.extra.jobcd || 0) - now;
+      html = `<h2>${T.icon} ${T.name} · ур. ${lot.lvl}</h2><p class="rw">Владелец: <b>@${esc(lot.owner)}</b>.</p><p class="rw">Наймись на смену: обойди 3 точки города — получишь <b>${JOB.hirePay} 🪙</b> и опыт, а хозяину пойдёт +${JOB.ownerCut} в кассу.</p>
+        <button class="btn btn-gold" type="button" id="bzH" style="width:100%" ${j || cd > 0 ? 'disabled' : ''}>💼 Наняться на смену</button>${j ? '<p class="rw">Ты уже на смене.</p>' : cd > 0 ? `<p class="rw">Отдых ещё ${Math.ceil(cd / 60e3)} мин.</p>` : ''}`; } }
+  openSheet(html, b => {
+    const go = async (body, el) => { if (el) el.disabled = true; const r = await act(body.a, { ...body, a: undefined, lot: i }, true); if (r && r.status === 200) { sfx(/вырос|владелец/.test(r.data.note) ? 'level' : 'coin'); W.toast(r.data.note); bizSheet(i); } else if (r) { W.toast(r.data.message || 'Не получилось'); if (el) el.disabled = false; } };
+    b.querySelectorAll('[data-bb]').forEach(x => x.onclick = () => go({ a: 'biz', op: 'buy', type: x.dataset.bb }, x));
+    const q = id => b.querySelector(id);
+    if (q('#bzC')) q('#bzC').onclick = () => go({ a: 'biz', op: 'collect' }, q('#bzC'));
+    if (q('#bzU')) q('#bzU').onclick = () => go({ a: 'biz', op: 'up' }, q('#bzU'));
+    if (q('#bzS')) q('#bzS').onclick = () => { if (q('#bzS').dataset.ok) go({ a: 'biz', op: 'sell' }, q('#bzS')); else { q('#bzS').dataset.ok = 1; q('#bzS').textContent = 'Точно продать? Нажми ещё раз'; } };
+    if (q('#bzH')) q('#bzH').onclick = async () => { q('#bzH').disabled = true; const r = await act('job', { op: 'start', job: 'hire', lot: i }, true); if (r && r.status === 200) { W.toast(r.data.note); W.$('sheet').classList.remove('show'); } else if (r) W.toast(r.data.message || 'Не получилось'); };
+  });
+}
+export function jobsHtml() { const j = G.state.extra.job, cd = (G.state.extra.jobcd || 0) - Date.now();
+  if (j) { const P = POI[j.pts[j.i]]; return `<p class="rw">Ты на смене: <b>${JOBS[j.job].icon} ${JOBS[j.job].name}</b>. Точка ${j.i + 1} из ${j.pts.length}: <b>${P.name}</b> — иди за золотым лучом.</p><button class="btn btn-paper" type="button" id="jbQ">Бросить смену</button>`; }
+  return `<p class="rw">Смена — 3 точки по городу. Плата: <b>${JOB.pay} 🪙</b> и ${JOB.xp} опыта. Отдых между сменами ${JOB.cd / 60e3} мин.${cd > 0 ? ` <b style="color:var(--gold)">Отдых ещё ${Math.ceil(cd / 60e3)} мин.</b>` : ''}</p><div class="enL">` +
+    Object.entries(JOBS).filter(([id]) => id !== 'hire').map(([id, J]) => `<div class="enR"><span class="enI">${J.icon}</span><span style="flex:1"><b>${J.name}</b><br><small>${J.text}</small></span><button class="btn btn-gold" type="button" data-jb="${id}" ${cd > 0 ? 'disabled' : ''}>Начать</button></div>`).join('') +
+    `</div><p class="rw"><small>💼 А ещё можно наняться в бизнес другого игрока — подойди к его зданию в Торговом квартале.</small></p>`; }
+export function jobsBind(b, reopen) { b.querySelectorAll('[data-jb]').forEach(x => x.onclick = async () => { x.disabled = true; const r = await act('job', { op: 'start', job: x.dataset.jb }, true); if (r && r.status === 200) { W.toast(r.data.note); W.$('sheet').classList.remove('show'); } else if (r) { W.toast(r.data.message || 'Не получилось'); x.disabled = false; } });
+  const q = b.querySelector('#jbQ'); if (q) q.onclick = async () => { await act('job', { op: 'quit' }, true); reopen && reopen(); }; }
+function bizJobTick(p) {
+  bizTick(true);
+  // кнопка у участка
+  let ni = -1; if (p) BIZ.lots.forEach(([x, z], i) => { if (Math.hypot(p.x - x, p.z - z) <= BIZ.near) ni = i; });
+  if (!bizBtn) { bizBtn = document.createElement('button'); bizBtn.id = 'bizBtn'; bizBtn.className = 'btn btn-gold'; bizBtn.type = 'button'; bizBtn.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:150px;z-index:30'; document.body.appendChild(bizBtn); bizBtn.onclick = () => bizNear >= 0 && bizSheet(bizNear); }
+  bizNear = ni; bizBtn.hidden = ni < 0; if (ni >= 0) { const lot = (G.state.extra.biz || {})[ni]; bizBtn.textContent = lot ? `${BIZ.types[lot.type].icon} ${BIZ.types[lot.type].name} @${lot.owner}` : '🏪 Участок продаётся'; }
+  // смена: маяк к точке и отметка при подходе
+  const j = G.state.extra.job; if (j && p) { const P = POI[j.pts[j.i]]; if (P) { if (!G.tutTarget) G.tutTarget = { x: P.x, z: P.z };
+    if (Math.hypot(p.x - P.x, p.z - P.z) <= JOB.near - 0.6 && Date.now() - jobBusy > 2500) { jobBusy = Date.now(); act('job', { op: 'step' }, true).then(r => { if (r && r.status === 200) { sfx(/закончена/.test(r.data.note) ? 'coin' : 'gather'); W.toast(r.data.note); } }); } } }
+}
+
 // ---------------- охота за сокровищами ----------------
 let digBtn = null;
 async function dig() { if (!R.state().on || !G.state) return; const r = await act('hunt', {}, true); if (!r) return;
@@ -263,7 +350,7 @@ function follow(key, owner, id, now, dt) {
 // ---------------- кадр ----------------
 let giftBtn = null, slow = 0, slowW = 0;
 export function extrasTick(now, dt) {
-  const st = R.state(); if (!st.on || !G.state?.extra) { for (const [k, o] of PETM) { W.scene.remove(o.g); PETM.delete(k); } if (giftBtn) giftBtn.hidden = true; if (W.$('tutP')) W.$('tutP').hidden = true; if (warPanel) warPanel.hidden = true; if (warBtn) warBtn.hidden = true; for (const o of FLAGM.values()) o.visible = false; for (const k of [...FX.keys()]) fxFor(k, null); castlesTick(false); if (digBtn) digBtn.hidden = true; return; }
+  const st = R.state(); if (!st.on || !G.state?.extra) { for (const [k, o] of PETM) { W.scene.remove(o.g); PETM.delete(k); } if (giftBtn) giftBtn.hidden = true; if (W.$('tutP')) W.$('tutP').hidden = true; if (warPanel) warPanel.hidden = true; if (warBtn) warBtn.hidden = true; for (const o of FLAGM.values()) o.visible = false; for (const k of [...FX.keys()]) fxFor(k, null); castlesTick(false); for (const o of BM.values()) o.g.visible = false; if (bizArch) bizArch.visible = false; if (bizBtn) bizBtn.hidden = true; if (digBtn) digBtn.hidden = true; return; }
   follow("me", st.hero && !(W.FPV && W.FPV.on) ? st.hero : null, myPet, now, dt);
   for (const [nick, o] of NET.others) follow(nick, o.g, o.pet, now, dt);
   for (const k of PETM.keys()) if (k !== 'me' && !NET.others.has(k)) { W.scene.remove(PETM.get(k).g); PETM.delete(k); }
@@ -276,9 +363,10 @@ export function extrasTick(now, dt) {
   if (!digBtn) { digBtn = document.createElement('button'); digBtn.id = 'bDig'; digBtn.type = 'button'; digBtn.className = 'pose'; digBtn.textContent = '⛏'; digBtn.title = 'Копать клад (G)'; digBtn.onclick = e => { e.preventDefault(); dig(); }; document.body.appendChild(digBtn);
     addEventListener('keydown', e => { if (e.code === 'KeyG' && !e.repeat && R.state().on && !e.target.closest?.('input,textarea')) dig(); }); }
   digBtn.hidden = false;
-  if (G.castleGo && p && Math.hypot(p.x - G.castleGo.x, p.z - G.castleGo.z) < OCASTLE.r) { G.castleGo = null; W.toast('🏰 Ты на участке замка ордена! Открой «🏰 Орден» → «Замок ордена», чтобы сдать ресурсы.'); }
+  if (G.castleGo && p && Math.hypot(p.x - G.castleGo.x, p.z - G.castleGo.z) < OCASTLE.r) { W.toast(G.castleGo.msg || '🏰 Ты на участке замка ордена! Открой «🏰 Орден» → «Замок ордена», чтобы сдать ресурсы.'); G.castleGo = null; }
   tutPanel(); if (tutOn() && p) { const step = TUT[G.state.extra.tut.step]; G.tutTarget = step ? tutTarget(step) : null;
     if (step && step.x != null && Math.hypot(p.x - step.x, p.z - step.z) <= step.r - 0.5) tutCheck(); } else G.tutTarget = G.castleGo || null;
+  bizJobTick(p);
   // подарок под ёлкой
   const showGift = window.NYG?.visible && p && Math.hypot(p.x - TREE.x, p.z - TREE.z) <= TREE.r && !G.state.extra.gift;
   if (showGift && !giftBtn) { giftBtn = document.createElement('button'); giftBtn.id = 'giftBtn'; giftBtn.className = 'btn btn-gold'; giftBtn.type = 'button'; giftBtn.textContent = '🎁 Взять подарок из-под ёлки'; document.body.appendChild(giftBtn);
