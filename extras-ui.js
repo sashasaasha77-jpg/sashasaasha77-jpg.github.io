@@ -301,8 +301,8 @@ function bizJobTick(p) {
   bizTick(true);
   // кнопка у участка
   let ni = -1; if (p) BIZ.lots.forEach(([x, z], i) => { if (Math.hypot(p.x - x, p.z - z) <= BIZ.near) ni = i; });
-  if (!bizBtn) { bizBtn = document.createElement('button'); bizBtn.id = 'bizBtn'; bizBtn.className = 'btn btn-gold'; bizBtn.type = 'button'; bizBtn.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:150px;z-index:30'; document.body.appendChild(bizBtn); bizBtn.onclick = () => bizNear >= 0 && bizSheet(bizNear); }
-  bizNear = ni; bizBtn.hidden = ni < 0; if (ni >= 0) { const lot = (G.state.extra.biz || {})[ni]; bizBtn.textContent = lot ? `${BIZ.types[lot.type].icon} ${BIZ.types[lot.type].name} @${lot.owner}` : '🏪 Участок продаётся'; }
+  if (!bizBtn) { bizBtn = document.createElement('button'); bizBtn.id = 'bizBtn'; bizBtn.className = 'btn btn-gold'; bizBtn.type = 'button'; bizBtn.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:150px;z-index:30;display:none'; document.body.appendChild(bizBtn); bizBtn.onclick = () => bizNear >= 0 && bizSheet(bizNear); }
+  bizNear = ni; bizBtn.style.display = ni < 0 ? 'none' : ''; if (ni >= 0) { const lot = (G.state.extra.biz || {})[ni]; bizBtn.textContent = lot ? `${BIZ.types[lot.type].icon} ${BIZ.types[lot.type].name} @${lot.owner}` : '🏪 Участок продаётся'; }
   // смена: маяк к точке и отметка при подходе
   const j = G.state.extra.job; if (j && p) { const P = POI[j.pts[j.i]]; if (P) { if (!G.tutTarget) G.tutTarget = { x: P.x, z: P.z };
     if (Math.hypot(p.x - P.x, p.z - P.z) <= JOB.near - 0.6 && Date.now() - jobBusy > 2500) { jobBusy = Date.now(); act('job', { op: 'step' }, true).then(r => { if (r && r.status === 200) { sfx(/закончена/.test(r.data.note) ? 'coin' : 'gather'); W.toast(r.data.note); } }); } } }
@@ -350,7 +350,7 @@ function follow(key, owner, id, now, dt) {
 // ---------------- кадр ----------------
 let giftBtn = null, slow = 0, slowW = 0;
 export function extrasTick(now, dt) {
-  const st = R.state(); if (!st.on || !G.state?.extra) { for (const [k, o] of PETM) { W.scene.remove(o.g); PETM.delete(k); } if (giftBtn) giftBtn.hidden = true; if (W.$('tutP')) W.$('tutP').hidden = true; if (warPanel) warPanel.hidden = true; if (warBtn) warBtn.hidden = true; for (const o of FLAGM.values()) o.visible = false; for (const k of [...FX.keys()]) fxFor(k, null); castlesTick(false); for (const o of BM.values()) o.g.visible = false; if (bizArch) bizArch.visible = false; if (bizBtn) bizBtn.hidden = true; if (digBtn) digBtn.hidden = true; return; }
+  const st = R.state(); if (!st.on || !G.state?.extra) { for (const [k, o] of PETM) { W.scene.remove(o.g); PETM.delete(k); } if (giftBtn) giftBtn.hidden = true; if (W.$('tutP')) W.$('tutP').hidden = true; if (warPanel) warPanel.hidden = true; if (warBtn) warBtn.hidden = true; for (const o of FLAGM.values()) o.visible = false; for (const k of [...FX.keys()]) fxFor(k, null); castlesTick(false); for (const o of BM.values()) o.g.visible = false; if (bizArch) bizArch.visible = false; if (bizBtn) bizBtn.style.display = 'none'; if (digBtn) digBtn.hidden = true; return; }
   follow("me", st.hero && !(W.FPV && W.FPV.on) ? st.hero : null, myPet, now, dt);
   for (const [nick, o] of NET.others) follow(nick, o.g, o.pet, now, dt);
   for (const k of PETM.keys()) if (k !== 'me' && !NET.others.has(k)) { W.scene.remove(PETM.get(k).g); PETM.delete(k); }
