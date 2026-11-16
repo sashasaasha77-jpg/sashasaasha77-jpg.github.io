@@ -101,7 +101,7 @@ const F = { lions: ['Львы', '🦁', '#e8b33a', '#5a3c10'], wolves: ['Вол�
 const RL = { warrior: ['Воин', '⚔️'], guard: ['Страж', '🛡'], mage: ['Маг', '🔮'], archer: ['Лучник', '🏹'] };
 const UP = { power: ['💪', 'Сила удара', l => `+${l + 1} → +${l + 2} за удар`], energy: ['🔋', 'Запас выносливости', l => `${500 + 250 * l} → ${500 + 250 * (l + 1)}`], regen: ['⏱', 'Восстановление', l => `${(1 + .5 * l).toFixed(1)} → ${(1 + .5 * (l + 1)).toFixed(1)} в сек`] };
 const SHOP_IC = { energy: '⚡', squire: '🛡', x2: '⚔️', banner: '🚩' };
-let S = null, pending = 0, eLocal = 0, eT = 0, syncing = false, shop = null;
+var S = null; let pending = 0, eLocal = 0, eT = 0, syncing = false, shop = null;
 function toast(t, ms = 2400) { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', ms); }
 const hap = k => { try { TG && TG.HapticFeedback && (k === 'ok' ? TG.HapticFeedback.notificationOccurred('success') : TG.HapticFeedback.impactOccurred(k || 'light')); } catch (e) { } };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -192,7 +192,8 @@ function apply(d) {
   if (S.auto > now) bd.push(`<span class="bdg">🛡 ${Math.ceil((S.auto - now) / 36e5)} ч</span>`);
   if (h && h.banner) bd.push('<span class="bdg">🚩</span>');
   $('bdg').innerHTML = bd.join('');
-  const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
+  const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); apply.k = key; }
+  else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('herobox').innerHTML = h ? `<div class="ln"><span>${fc ? fc[1] + ' ' + fc[0] : ''} · ${RL[h.r] ? RL[h.r][1] + ' ' + RL[h.r][0] : ''}</span><span>Ур. ${h.lv}</span></div>
     <div class="xp"><i style="width:${Math.min(100, 100 * (h.xp - h.cur) / Math.max(1, h.next - h.cur))}%"></i></div><small style="color:var(--mut)">до ур. ${h.lv + 1}: ${fmt(Math.max(0, h.next - h.xp))} опыта</small>`
     : `<b>Герой не привязан</b><br><small style="color:var(--mut)">Тренировки пока копят только золото. Привяжи героя во вкладке 🚩</small>`;
@@ -236,7 +237,7 @@ async function renderTop() {
 // ---------- удары ----------
 function tap(ev) {
   if (!S) return; const e = draw(); if (e < 1) { hap('rigid'); toast('⚡ Выносливость кончилась — отдохни или купи в Лавке'); return; }
-  pending++; hap('light'); attackFx();
+  pending++; hap('light'); if (window.ZN3D_ON) window.ZN3D.attack(); else attackFx();
   const z = $('tapzone').getBoundingClientRect(), kb = $('king').getBoundingClientRect(), x = kb.left - z.left + kb.width * (0.68 + Math.random() * 0.16), y = kb.top - z.top + kb.height * (0.3 + Math.random() * 0.2);
   const f = document.createElement('div'); f.className = 'fx'; f.textContent = '+' + S.power * mult(); f.style.left = (x - 14) + 'px'; f.style.top = (y - 30) + 'px';
   $('tapzone').appendChild(f); setTimeout(() => f.remove(), 900); draw();
@@ -275,6 +276,14 @@ if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://
     if (d.won) toast(`🏆 Твоё знамя победило! +${fmt(d.won)} золота`, 4000); else if (d.autoGain) toast(`🛡 Оруженосец натренировал: +${fmt(d.autoGain)}`, 3500); }
   catch (e) { toast(e.message, 5000); }
 })();
+</script>
+<script type="module">
+// 3D-сцена (если телефон не тянет WebGL — остаётся плоская картинка)
+import * as Z from './zn3d.js';
+try { const c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) throw 0;
+  window.ZN3D = Z; window.ZN3D_ON = true; Z.init(document.getElementById('king')).catch(e => console.warn('3D', e));
+  if (window.S && S.hero) Z.setHero(S.hero.f, S.hero.r, S.hero.banner); else Z.setHero('lions', 'warrior', false);
+} catch (e) { window.ZN3D_ON = false; }
 </script>
 </body>
 </html>
