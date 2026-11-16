@@ -19,9 +19,18 @@ html,body{margin:0;height:100%;background:radial-gradient(120% 80% at 50% 30%,va
 .sub{color:var(--mut);font-size:13px;text-align:center}
 .page{flex:1;display:none;flex-direction:column;min-height:0}.page.on{display:flex}
 #tapzone{flex:1;display:grid;place-items:center;position:relative;min-height:240px}
-#king{overflow:hidden;width:min(78vw,330px);aspect-ratio:1;border-radius:50%;border:0;padding:0;background:radial-gradient(circle at 50% 40%,var(--fc,#8a6a3a),#1a120c 72%);box-shadow:0 0 0 6px #ffffff10,0 0 60px #ffc83a55,inset 0 -10px 30px #0006;cursor:pointer;transition:transform .07s;touch-action:manipulation}
-#king.hit{transform:scale(.94)}#king svg{width:100%;height:100%;display:block}
-#king.crown{box-shadow:0 0 0 6px #ffc83a55,0 0 90px #ffc83aaa,inset 0 -10px 30px #0006}
+#king{overflow:hidden;width:min(94vw,440px);aspect-ratio:6/5;border-radius:22px;border:0;padding:0;background:linear-gradient(180deg,#3a5a7a 0%,#7a9ab0 46%,#6a8a4a 47%,#4a6a30 100%);box-shadow:0 0 0 3px #ffffff14,0 10px 30px #0008;cursor:pointer;touch-action:manipulation}
+#king svg{width:100%;height:100%;display:block}
+#king .tb{transform-box:view-box;transition:transform .07s ease-out}
+#king .dm{transform-box:view-box;transform-origin:272px 268px}
+#king.hitd .dm{animation:wob .4s ease-out}
+@keyframes wob{0%{transform:rotate(0)}20%{transform:rotate(11deg)}50%{transform:rotate(-7deg)}75%{transform:rotate(3deg)}100%{transform:rotate(0)}}
+#king.atk.r-warrior .arm{transform:rotate(110deg)}
+#king.atk.r-guard .herog{transform:translateX(38px)}
+#king.atk.r-mage .arm{transform:rotate(-30deg)}
+#king.atk.r-archer .str{transform:translateX(-12px)}
+.chip{position:absolute;pointer-events:none;width:7px;height:7px;border-radius:2px;background:#d9b35a;animation:chip .5s ease-out forwards}
+@keyframes chip{to{transform:translate(var(--dx),var(--dy)) rotate(200deg);opacity:0}}
 .fx{position:absolute;pointer-events:none;font-weight:900;font-size:28px;color:var(--gold);text-shadow:0 2px 6px #000a;animation:up .9s ease-out forwards}
 @keyframes up{to{transform:translateY(-120px);opacity:0}}
 .en{display:flex;align-items:center;gap:10px;margin:6px 0}.en b{min-width:92px}
@@ -97,19 +106,55 @@ function toast(t, ms = 2400) { const e = $('toast'); e.textContent = t; e.style.
 const hap = k => { try { TG && TG.HapticFeedback && (k === 'ok' ? TG.HapticFeedback.notificationOccurred('success') : TG.HapticFeedback.impactOccurred(k || 'light')); } catch (e) { } };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-// ---------- герой (SVG): цвет знамени + оружие роли ----------
+// ---------- сцена: герой и тренировочное чучело ----------
 function heroSVG(f, r, gold) {
-  const c = (F[f] || ['', '', '#b89a6a', '#3a2a1a'])[2], d = (F[f] || ['', '', '#b89a6a', '#3a2a1a'])[3], au = gold ? '<circle cx="100" cy="105" r="88" fill="none" stroke="#ffd75a" stroke-width="6" stroke-dasharray="8 6" opacity=".9"/>' : '';
-  const wpn = { warrior: '<path d="M150 150 L182 52" stroke="#e8e8ee" stroke-width="9" stroke-linecap="round"/><rect x="136" y="140" width="34" height="10" rx="4" fill="#c9a24a" transform="rotate(-20 153 145)"/>',
-    guard: '<path d="M138 112 h46 v34 q0 30 -23 42 q-23 -12 -23 -42z" fill="#cfd3dc" stroke="' + d + '" stroke-width="5"/><path d="M161 120 v60" stroke="' + c + '" stroke-width="7"/>',
-    mage: '<path d="M160 190 L172 70" stroke="#8a5a2a" stroke-width="8" stroke-linecap="round"/><circle cx="173" cy="62" r="13" fill="#9fc8ff"/><circle cx="173" cy="62" r="22" fill="#9fc8ff44"/>',
-    archer: '<path d="M150 50 Q200 115 150 180" stroke="#8a5a2a" stroke-width="8" fill="none"/><path d="M150 50 L150 180" stroke="#eee" stroke-width="2"/>' }[r] || '';
-  const hat = r === 'mage' ? '<path d="M100 18 L64 70 H136Z" fill="#3a2366"/>' : '<path d="M60 74 Q60 30 100 28 Q140 30 140 74 Z" fill="#9aa0aa" stroke="#6a707a" stroke-width="4"/><rect x="96" y="22" width="8" height="18" rx="3" fill="' + c + '"/>';
-  return `<svg viewBox="0 0 200 200">${au}<path d="M38 200 Q100 120 162 200Z" fill="${c}"/><path d="M70 200 Q100 150 130 200Z" fill="${d}"/>
-  <ellipse cx="100" cy="100" rx="40" ry="44" fill="#f2c9a0"/><ellipse cx="85" cy="98" rx="6" ry="7" fill="#fff"/><ellipse cx="115" cy="98" rx="6" ry="7" fill="#fff"/><circle cx="86" cy="100" r="4" fill="#2a1a10"/><circle cx="116" cy="100" r="4" fill="#2a1a10"/>
-  <path d="M74 84 Q86 76 94 84" stroke="#5a3a1a" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M106 84 Q114 76 126 84" stroke="#5a3a1a" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <path d="M88 124 Q100 130 112 124" stroke="#8a3a2a" stroke-width="4" fill="none" stroke-linecap="round"/>${hat}${wpn}
-  <text x="40" y="186" font-size="34" text-anchor="middle">${(F[f] || ['', '🚩'])[1]}</text></svg>`;
+  const c = (F[f] || ['', '', '#b89a6a', '#3a2a1a'])[2], d = (F[f] || ['', '', '#b89a6a', '#3a2a1a'])[3], em = (F[f] || ['', '🚩'])[1];
+  r = r || 'warrior';
+  const yard = `<rect x="0" y="0" width="360" height="300" fill="none"/>
+    <g opacity=".55"><rect x="0" y="118" width="360" height="8" fill="#6a4a2a"/><rect x="0" y="146" width="360" height="8" fill="#6a4a2a"/>${[20, 80, 140, 200, 260, 320].map(x => `<rect x="${x}" y="108" width="10" height="58" fill="#5a3a20"/>`).join('')}</g>
+    <ellipse cx="180" cy="272" rx="170" ry="26" fill="#8a6a3a" opacity=".7"/><ellipse cx="180" cy="272" rx="120" ry="16" fill="#9a7a4a" opacity=".6"/>
+    <g opacity=".9"><path d="M330 40 l0 70" stroke="#4a3420" stroke-width="5"/><path d="M330 42 l34 6 l0 26 l-34 -6z" fill="${c}"/><text x="347" y="66" font-size="16" text-anchor="middle">${em}</text></g>`;
+  const dummy = `<g class="dm"><ellipse cx="272" cy="270" rx="34" ry="8" fill="#0004"/>
+    <rect x="266" y="150" width="12" height="122" rx="3" fill="#7a5230"/><rect x="226" y="168" width="92" height="11" rx="5" fill="#7a5230"/>
+    <ellipse cx="272" cy="198" rx="34" ry="44" fill="#d9b35a"/><path d="M244 186 q28 -10 56 0 M242 206 q30 -10 60 0 M246 224 q26 -8 52 0" stroke="#b8923a" stroke-width="3" fill="none"/>
+    <circle cx="272" cy="200" r="20" fill="#f4eee0"/><circle cx="272" cy="200" r="13" fill="#d0302a"/><circle cx="272" cy="200" r="6" fill="#f4eee0"/>
+    <circle cx="272" cy="132" r="24" fill="#d8c49a"/><path d="M262 124 l8 8 m0 -8 l-8 8 M276 124 l8 8 m0 -8 l-8 8" stroke="#5a3a20" stroke-width="3"/><path d="M262 144 q10 5 20 0" stroke="#5a3a20" stroke-width="3" fill="none"/>
+    <path d="M250 118 q22 -14 44 0" stroke="#b8923a" stroke-width="5" fill="none"/></g>`;
+  const aura = gold ? `<ellipse cx="96" cy="180" rx="62" ry="98" fill="#ffd75a" opacity=".22"/><ellipse cx="96" cy="180" rx="48" ry="84" fill="none" stroke="#ffd75a" stroke-width="3" stroke-dasharray="6 6"/>` : '';
+  const weapon = {
+    warrior: `<g class="arm tb" style="transform-origin:112px 168px"><rect x="106" y="160" width="14" height="44" rx="7" fill="#f2c9a0"/><rect x="104" y="196" width="18" height="10" rx="4" fill="#c9a24a"/><path d="M113 196 L113 112" stroke="#e8e8ee" stroke-width="10" stroke-linecap="round"/><path d="M113 116 L113 106" stroke="#fff" stroke-width="6" stroke-linecap="round"/></g>`,
+    guard: `<g><rect x="106" y="160" width="14" height="40" rx="7" fill="#f2c9a0"/><path d="M118 150 h40 v38 q0 30 -20 42 q-20 -12 -20 -42z" fill="#cfd3dc" stroke="${d}" stroke-width="5"/><path d="M138 158 v64" stroke="${c}" stroke-width="7"/><path d="M122 178 h32" stroke="${c}" stroke-width="7"/></g>`,
+    mage: `<g class="arm tb" style="transform-origin:112px 168px"><rect x="106" y="160" width="14" height="36" rx="7" fill="#f2c9a0"/><path d="M114 250 L130 100" stroke="#8a5a2a" stroke-width="7" stroke-linecap="round"/><circle cx="131" cy="94" r="11" fill="#9fc8ff"/><circle cx="131" cy="94" r="20" fill="#9fc8ff44"/></g>`,
+    archer: `<g><rect x="106" y="164" width="40" height="13" rx="6" fill="#f2c9a0"/><path d="M150 112 Q186 172 150 232" stroke="#8a5a2a" stroke-width="7" fill="none"/><path class="str tb" d="M150 112 L136 172 L150 232" stroke="#eee" stroke-width="2" fill="none"/><path class="str tb" d="M138 172 L190 172" stroke="#c9a24a" stroke-width="4"/></g>`,
+  }[r];
+  const helm = r === 'mage' ? `<path d="M96 40 L64 96 H130Z" fill="#3a2366"/><circle cx="96" cy="44" r="6" fill="#ffd75a"/>` : `<path d="M66 98 Q66 58 98 56 Q130 58 130 98 Z" fill="#9aa0aa" stroke="#6a707a" stroke-width="4"/><rect x="93" y="50" width="8" height="16" rx="3" fill="${c}"/>`;
+  const hero = `<g class="herog tb">${aura}<ellipse cx="98" cy="270" rx="40" ry="8" fill="#0004"/>
+    <rect x="78" y="216" width="16" height="54" rx="6" fill="#4a3a2a"/><rect x="100" y="216" width="16" height="54" rx="6" fill="#3a2a1a"/>
+    <rect x="72" y="262" width="26" height="10" rx="4" fill="#2a1a10"/><rect x="96" y="262" width="26" height="10" rx="4" fill="#2a1a10"/>
+    <rect x="66" y="142" width="64" height="86" rx="20" fill="${c}"/><rect x="66" y="196" width="64" height="9" fill="${d}"/><text x="98" y="186" font-size="22" text-anchor="middle">${em}</text>
+    <rect x="62" y="150" width="14" height="44" rx="7" fill="${d}"/>
+    <circle cx="98" cy="112" r="30" fill="#f2c9a0"/><circle cx="110" cy="108" r="4.5" fill="#2a1a10"/><path d="M104 98 Q110 94 117 98" stroke="#5a3a1a" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M110 126 Q116 128 120 124" stroke="#8a3a2a" stroke-width="3.5" fill="none" stroke-linecap="round"/>${helm}${weapon}</g>`;
+  return `<svg viewBox="0 0 360 300">${yard}${dummy}${hero}<g id="proj"></g></svg>`;
+}
+function attackFx() {
+  const k = $('king'), r = (S.hero && S.hero.r) || 'warrior';
+  k.classList.remove('hitd'); void k.offsetWidth; k.classList.add('atk');
+  const hitNow = () => { k.classList.add('hitd'); chips(); };
+  setTimeout(() => k.classList.remove('atk'), 110);
+  if (r === 'mage' || r === 'archer') {
+    const g = k.querySelector('#proj'), ns = 'http://www.w3.org/2000/svg', el = document.createElementNS(ns, r === 'mage' ? 'circle' : 'path');
+    if (r === 'mage') { el.setAttribute('cx', 131); el.setAttribute('cy', 94); el.setAttribute('r', 10); el.setAttribute('fill', '#bfe0ff'); }
+    else { el.setAttribute('d', 'M150 172 L186 172'); el.setAttribute('stroke', '#c9a24a'); el.setAttribute('stroke-width', 4); }
+    g.appendChild(el);
+    const to = r === 'mage' ? 'translate(141px,106px)' : 'translate(100px,28px)';
+    el.animate([{ transform: 'translate(0,0)' }, { transform: to }], { duration: 170, easing: 'ease-in', fill: 'forwards' }).onfinish = () => { hitNow(); setTimeout(() => el.remove(), r === 'archer' ? 250 : 0); };
+  } else setTimeout(hitNow, 60);
+}
+function chips() {
+  const z = $('tapzone').getBoundingClientRect(), k = $('king').getBoundingClientRect(), x = k.left - z.left + k.width * 0.755, y = k.top - z.top + k.height * 0.66;
+  for (let i = 0; i < 5; i++) { const c = document.createElement('div'); c.className = 'chip'; c.style.left = x + 'px'; c.style.top = y + 'px';
+    c.style.setProperty('--dx', (Math.random() * 90 - 20) + 'px'); c.style.setProperty('--dy', (Math.random() * -70 - 10) + 'px'); $('tapzone').appendChild(c); setTimeout(() => c.remove(), 520); }
 }
 
 // ---------- сеть ----------
@@ -130,7 +175,7 @@ function demoApi(action, b) {
   try { localStorage.setItem(k, JSON.stringify(s)); } catch (e) { }
   const lv = Math.floor(Math.sqrt(s.xp / 100)), nb = new Date(); nb.setHours(20, 0, 0, 0); if (nb < new Date()) nb.setDate(nb.getDate() + 1);
   return { name: 'Гость', coins: s.coins, total: s.total, lv: s.lv, ...st(), energy: Math.floor(eN()), x2: 0, auto: 0, nick: 'demo_voin', code: '',
-    hero: { f: 'wolves', r: 'archer', lv, xp: s.xp, cur: lv * lv * 100, next: (lv + 1) * (lv + 1) * 100, banner: false },
+    hero: { f: new URLSearchParams(location.search).get('f') || 'wolves', r: new URLSearchParams(location.search).get('r') || 'archer', lv, xp: s.xp, cur: lv * lv * 100, next: (lv + 1) * (lv + 1) * 100, banner: false },
     costs: { power: cost('power', s.lv.power), energy: cost('energy', s.lv.energy), regen: cost('regen', s.lv.regen) }, adsLeft: 0, nextBattle: +nb, now,
     shop: { energy: { title: 'Полная энергия', desc: 'Энергия сразу до максимума', stars: 10 }, squire: { title: 'Оруженосец на 24 часа', desc: 'Тренирует героя, даже когда ты не в игре', stars: 50 }, x2: { title: 'Двойная тренировка на 7 дней', desc: 'Каждый удар приносит в 2 раза больше', stars: 100 }, banner: { title: 'Золотое знамя', desc: 'Золотая аура героя в битве навсегда + 👑 в рейтинге', stars: 250 } } };
 }
@@ -147,7 +192,7 @@ function apply(d) {
   if (S.auto > now) bd.push(`<span class="bdg">🛡 ${Math.ceil((S.auto - now) / 36e5)} ч</span>`);
   if (h && h.banner) bd.push('<span class="bdg">🚩</span>');
   $('bdg').innerHTML = bd.join('');
-  const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; }
+  const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('herobox').innerHTML = h ? `<div class="ln"><span>${fc ? fc[1] + ' ' + fc[0] : ''} · ${RL[h.r] ? RL[h.r][1] + ' ' + RL[h.r][0] : ''}</span><span>Ур. ${h.lv}</span></div>
     <div class="xp"><i style="width:${Math.min(100, 100 * (h.xp - h.cur) / Math.max(1, h.next - h.cur))}%"></i></div><small style="color:var(--mut)">до ур. ${h.lv + 1}: ${fmt(Math.max(0, h.next - h.xp))} опыта</small>`
     : `<b>Герой не привязан</b><br><small style="color:var(--mut)">Тренировки пока копят только золото. Привяжи героя во вкладке 🚩</small>`;
@@ -191,8 +236,8 @@ async function renderTop() {
 // ---------- удары ----------
 function tap(ev) {
   if (!S) return; const e = draw(); if (e < 1) { hap('rigid'); toast('⚡ Выносливость кончилась — отдохни или купи в Лавке'); return; }
-  pending++; hap('light'); const k = $('king'); k.classList.add('hit'); setTimeout(() => k.classList.remove('hit'), 70);
-  const z = $('tapzone').getBoundingClientRect(), x = (ev.clientX || z.left + z.width / 2) - z.left, y = (ev.clientY || z.top + z.height / 2) - z.top;
+  pending++; hap('light'); attackFx();
+  const z = $('tapzone').getBoundingClientRect(), kb = $('king').getBoundingClientRect(), x = kb.left - z.left + kb.width * (0.68 + Math.random() * 0.16), y = kb.top - z.top + kb.height * (0.3 + Math.random() * 0.2);
   const f = document.createElement('div'); f.className = 'fx'; f.textContent = '+' + S.power * mult(); f.style.left = (x - 14) + 'px'; f.style.top = (y - 30) + 'px';
   $('tapzone').appendChild(f); setTimeout(() => f.remove(), 900); draw();
 }
