@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Четыре знамени — тренировочный лагерь</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#140e0a;--bg2:#2a1d14;--card:#2e2219;--gold:#ffc83a;--gold2:#f2a81e;--txt:#f6eedc;--mut:#b6a8d0;--red:#ff4d6a;--grn:#3be07a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;background:radial-gradient(120% 80% at 50% 30%,var(--fc2,#4a3420) 0%,var(--bg) 72%);color:var(--txt);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto;padding:10px 14px calc(8px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;gap:10px}
+.ava{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#e07020);display:grid;place-items:center;font-weight:800;color:#3a1d00;font-size:18px;flex:none}
+.who{flex:1;min-width:0}.who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.who small{color:var(--mut)}
+.badges{display:flex;gap:6px}.bdg{background:var(--card);border-radius:999px;padding:4px 9px;font-size:12px;font-weight:700}
+.bal{text-align:center;margin:14px 0 2px}.bal .c{font-size:40px;font-weight:900;letter-spacing:.5px;display:inline-flex;align-items:center;gap:10px}
+.coin{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a0,var(--gold) 45%,var(--gold2));box-shadow:inset 0 -3px 0 #b97a10,0 2px 8px #0006;display:inline-grid;place-items:center;color:#8a5a00;font-weight:900;font-size:18px}
+.sub{color:var(--mut);font-size:13px;text-align:center}
+.page{flex:1;display:none;flex-direction:column;min-height:0}.page.on{display:flex}
+#tapzone{flex:1;display:grid;place-items:center;position:relative;min-height:240px}
+#king{overflow:hidden;width:min(78vw,330px);aspect-ratio:1;border-radius:50%;border:0;padding:0;background:radial-gradient(circle at 50% 40%,var(--fc,#8a6a3a),#1a120c 72%);box-shadow:0 0 0 6px #ffffff10,0 0 60px #ffc83a55,inset 0 -10px 30px #0006;cursor:pointer;transition:transform .07s;touch-action:manipulation}
+#king.hit{transform:scale(.94)}#king svg{width:100%;height:100%;display:block}
+#king.crown{box-shadow:0 0 0 6px #ffc83a55,0 0 90px #ffc83aaa,inset 0 -10px 30px #0006}
+.fx{position:absolute;pointer-events:none;font-weight:900;font-size:28px;color:var(--gold);text-shadow:0 2px 6px #000a;animation:up .9s ease-out forwards}
+@keyframes up{to{transform:translateY(-120px);opacity:0}}
+.en{display:flex;align-items:center;gap:10px;margin:6px 0}.en b{min-width:92px}
+.bar{flex:1;height:14px;border-radius:999px;background:#ffffff14;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd75a,#ff9a2e);width:0;transition:width .25s}
+.btn{border:0;border-radius:14px;padding:12px 14px;font-weight:800;font-size:15px;color:#2a1600;background:linear-gradient(180deg,#ffd75a,#f2a81e);box-shadow:0 3px 0 #b97a10;cursor:pointer}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #b97a10}.btn[disabled]{filter:grayscale(1);opacity:.5}
+.btn.ghost{background:var(--card);color:var(--txt);box-shadow:0 3px 0 #1a1030}
+.list{overflow:auto;flex:1;display:flex;flex-direction:column;gap:10px;padding:4px 0 10px}
+.card{background:var(--card);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+.card .ic{font-size:30px;width:44px;text-align:center}.card .t{flex:1;min-width:0}.card .t b{display:block}.card .t small{color:var(--mut)}
+.row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:#ffffff08}
+.row .n{width:28px;text-align:center;font-weight:900;color:var(--mut)}.row .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row.me{outline:2px solid var(--gold)}
+.row.g1 .n{color:#ffd75a}.row.g2 .n{color:#d8dde6}.row.g3 .n{color:#e09a5a}
+input{width:100%;padding:12px;border-radius:12px;border:2px solid #ffffff1a;background:#ffffff0d;color:var(--txt);font-size:16px}
+.tabs{display:flex;gap:6px;margin-top:8px}.tab{flex:1;border:0;background:var(--card);color:var(--mut);border-radius:14px;padding:8px 0 6px;font-size:11px;font-weight:700;cursor:pointer}
+.tab span{display:block;font-size:20px;margin-bottom:1px}.tab.on{background:linear-gradient(180deg,#5a4028,#3e2c1c);color:var(--txt)}
+h3{margin:10px 0 4px;font-size:18px}.toast{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;z-index:9;max-width:90%;text-align:center;display:none}
+.demo{background:#ff4d6a22;border:1px solid #ff4d6a66;border-radius:12px;padding:8px 10px;font-size:12.5px;margin-top:8px;text-align:center}
+.demo a{color:var(--gold)}
+.hero{margin:8px auto 0;max-width:340px;background:var(--card);border-radius:14px;padding:8px 12px;font-size:13px}
+.hero .ln{display:flex;justify-content:space-between;gap:10px;font-weight:800}.hero .xp{height:7px;background:#ffffff14;border-radius:9px;margin-top:5px;overflow:hidden}.hero .xp i{display:block;height:100%;background:var(--fc,#ffc83a)}
+.code{font-size:28px;font-weight:900;letter-spacing:3px;color:var(--gold);text-align:center;margin:6px 0}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top"><div class="ava" id="ava">?</div><div class="who"><b id="nm">Гость</b><small id="nk">Не привязан к королевству</small></div><div class="badges" id="bdg"></div></div>
+  <div id="demo" class="demo" style="display:none">Это демо в браузере. Настоящая игра — в Telegram: <a href="https://t.me/znameni4_bot">@znameni4_bot</a></div>
+
+  <div class="page on" id="p-tap">
+    <div class="bal"><span class="c"><span class="coin">З</span><span id="coins">0</span></span></div>
+    <div class="sub" id="pw">+1 за удар</div><div class="hero" id="herobox"></div>
+    <div id="tapzone"><button id="king" aria-label="Тренировать героя"></button></div>
+    <div class="en"><b>⚡ <span id="en">0</span>/<span id="enm">0</span></b><div class="bar"><i id="enb"></i></div></div>
+    <button class="btn ghost" id="adbtn" style="display:none">📺 Полная энергия за рекламу (<span id="adn">5</span>)</button>
+  </div>
+
+  <div class="page" id="p-up"><h3>Улучшения</h3><div class="list" id="ups"></div></div>
+  <div class="page" id="p-top"><h3>🏆 Рейтинг тренировок</h3><div id="facsum" class="sub" style="text-align:left;margin-bottom:6px"></div><div class="list" id="tops"></div></div>
+  <div class="page" id="p-shop"><h3>⭐ Лавка за Stars</h3><div class="sub" style="text-align:left">Покупки поддерживают игру и новые битвы.</div><div class="list" id="shop"></div></div>
+  <div class="page" id="p-me"><h3>🚩 Твоё знамя</h3>
+    <div class="list">
+      <div id="mebox"></div>
+      <div class="card"><div class="t"><b>⚔️ Битва каждый день в 20:00</b><small id="nb">…</small></div></div>
+      <a class="btn" style="text-align:center;text-decoration:none" id="fieldlink" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank">🗺 Смотреть поле битвы</a>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-p="tap"><span>⚔️</span>Лагерь</button>
+    <button class="tab" data-p="up"><span>⬆️</span>Улучшения</button>
+    <button class="tab" data-p="top"><span>🏆</span>Топ</button>
+    <button class="tab" data-p="shop"><span>⭐</span>Лавка</button>
+    <button class="tab" data-p="me"><span>🚩</span>Знамя</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- настройки ----------
+const API = 'https://otgwiroxifqtktbipbsu.supabase.co/functions/v1/znameni/tap/';
+const INSTA = '4znameni'; // ник игры в Instagram (поменяем, когда займёте)
+const ADS_BLOCK = ''; // id блока AdsGram (после регистрации на adsgram.ai)
+const TG = window.Telegram && Telegram.WebApp, INIT = TG && TG.initData || '';
+const DEMO = !INIT;
+const $ = id => document.getElementById(id), fmt = n => Math.floor(n).toLocaleString('ru-RU');
+const F = { lions: ['Львы', '🦁', '#e8b33a', '#5a3c10'], wolves: ['Волки', '🐺', '#7f9fc4', '#26384f'], dragons: ['Драконы', '🐉', '#e0503a', '#4a1410'], ravens: ['Вороны', '🪶', '#9a6ad8', '#2a1648'] };
+const RL = { warrior: ['Воин', '⚔️'], guard: ['Страж', '🛡'], mage: ['Маг', '🔮'], archer: ['Лучник', '🏹'] };
+const UP = { power: ['💪', 'Сила удара', l => `+${l + 1} → +${l + 2} за удар`], energy: ['🔋', 'Запас выносливости', l => `${500 + 250 * l} → ${500 + 250 * (l + 1)}`], regen: ['⏱', 'Восстановление', l => `${(1 + .5 * l).toFixed(1)} → ${(1 + .5 * (l + 1)).toFixed(1)} в сек`] };
+const SHOP_IC = { energy: '⚡', squire: '🛡', x2: '⚔️', banner: '🚩' };
+let S = null, pending = 0, eLocal = 0, eT = 0, syncing = false, shop = null;
+function toast(t, ms = 2400) { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', ms); }
+const hap = k => { try { TG && TG.HapticFeedback && (k === 'ok' ? TG.HapticFeedback.notificationOccurred('success') : TG.HapticFeedback.impactOccurred(k || 'light')); } catch (e) { } };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- герой (SVG): цвет знамени + оружие роли ----------
+function heroSVG(f, r, gold) {
+  const c = (F[f] || ['', '', '#b89a6a', '#3a2a1a'])[2], d = (F[f] || ['', '', '#b89a6a', '#3a2a1a'])[3], au = gold ? '<circle cx="100" cy="105" r="88" fill="none" stroke="#ffd75a" stroke-width="6" stroke-dasharray="8 6" opacity=".9"/>' : '';
+  const wpn = { warrior: '<path d="M150 150 L182 52" stroke="#e8e8ee" stroke-width="9" stroke-linecap="round"/><rect x="136" y="140" width="34" height="10" rx="4" fill="#c9a24a" transform="rotate(-20 153 145)"/>',
+    guard: '<path d="M138 112 h46 v34 q0 30 -23 42 q-23 -12 -23 -42z" fill="#cfd3dc" stroke="' + d + '" stroke-width="5"/><path d="M161 120 v60" stroke="' + c + '" stroke-width="7"/>',
+    mage: '<path d="M160 190 L172 70" stroke="#8a5a2a" stroke-width="8" stroke-linecap="round"/><circle cx="173" cy="62" r="13" fill="#9fc8ff"/><circle cx="173" cy="62" r="22" fill="#9fc8ff44"/>',
+    archer: '<path d="M150 50 Q200 115 150 180" stroke="#8a5a2a" stroke-width="8" fill="none"/><path d="M150 50 L150 180" stroke="#eee" stroke-width="2"/>' }[r] || '';
+  const hat = r === 'mage' ? '<path d="M100 18 L64 70 H136Z" fill="#3a2366"/>' : '<path d="M60 74 Q60 30 100 28 Q140 30 140 74 Z" fill="#9aa0aa" stroke="#6a707a" stroke-width="4"/><rect x="96" y="22" width="8" height="18" rx="3" fill="' + c + '"/>';
+  return `<svg viewBox="0 0 200 200">${au}<path d="M38 200 Q100 120 162 200Z" fill="${c}"/><path d="M70 200 Q100 150 130 200Z" fill="${d}"/>
+  <ellipse cx="100" cy="100" rx="40" ry="44" fill="#f2c9a0"/><ellipse cx="85" cy="98" rx="6" ry="7" fill="#fff"/><ellipse cx="115" cy="98" rx="6" ry="7" fill="#fff"/><circle cx="86" cy="100" r="4" fill="#2a1a10"/><circle cx="116" cy="100" r="4" fill="#2a1a10"/>
+  <path d="M74 84 Q86 76 94 84" stroke="#5a3a1a" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M106 84 Q114 76 126 84" stroke="#5a3a1a" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M88 124 Q100 130 112 124" stroke="#8a3a2a" stroke-width="4" fill="none" stroke-linecap="round"/>${hat}${wpn}
+  <text x="40" y="186" font-size="34" text-anchor="middle">${(F[f] || ['', '🚩'])[1]}</text></svg>`;
+}
+
+// ---------- сеть ----------
+async function api(action, body = {}) {
+  if (DEMO) return demoApi(action, body);
+  const r = await fetch(API + action, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: INIT, ...body }) });
+  const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.message || 'Ошибка ' + r.status); return d;
+}
+function demoApi(action, b) {
+  const k = 'zn-tap-demo', now = Date.now(); let s; try { s = JSON.parse(localStorage.getItem(k)); } catch (e) { }
+  s = s || { coins: 0, total: 0, xp: 0, lv: { power: 0, energy: 0, regen: 0 }, e: 500, eAt: now };
+  const st = () => ({ power: 1 + s.lv.power, maxE: 500 + 250 * s.lv.energy, regen: 1 + .5 * s.lv.regen }), eN = () => Math.min(st().maxE, s.e + st().regen * (now - s.eAt) / 1000);
+  const C = { power: [100, 1.8], energy: [150, 1.9], regen: [200, 2] }, cost = (kk, l) => Math.round(C[kk][0] * Math.pow(C[kk][1], l));
+  if (action === 'sync') { const n = Math.min(b.taps | 0, Math.floor(eN())); s.e = eN() - n; s.eAt = now; s.coins += n * st().power; s.total += n * st().power; s.xp += n * st().power; }
+  if (action === 'upgrade') { const c = cost(b.kind, s.lv[b.kind]); if (s.coins < c) throw new Error(`Нужно ${c} золота.`); s.e = eN(); s.eAt = now; s.coins -= c; s.lv[b.kind]++; }
+  if (action === 'invoice') throw new Error('Покупки за ⭐ работают только в Telegram.');
+  if (action === 'top') return { list: [{ n: '@kirill_77', v: 18400, f: 'dragons' }, { n: '@masha.k', v: 9100, f: 'lions' }, { n: 'Ты', v: Math.floor(s.total), f: 'wolves' }].sort((a, b) => b.v - a.v), me: null, factions: { lions: 9100, wolves: Math.floor(s.total), dragons: 18400, ravens: 3000 } };
+  try { localStorage.setItem(k, JSON.stringify(s)); } catch (e) { }
+  const lv = Math.floor(Math.sqrt(s.xp / 100)), nb = new Date(); nb.setHours(20, 0, 0, 0); if (nb < new Date()) nb.setDate(nb.getDate() + 1);
+  return { name: 'Гость', coins: s.coins, total: s.total, lv: s.lv, ...st(), energy: Math.floor(eN()), x2: 0, auto: 0, nick: 'demo_voin', code: '',
+    hero: { f: 'wolves', r: 'archer', lv, xp: s.xp, cur: lv * lv * 100, next: (lv + 1) * (lv + 1) * 100, banner: false },
+    costs: { power: cost('power', s.lv.power), energy: cost('energy', s.lv.energy), regen: cost('regen', s.lv.regen) }, adsLeft: 0, nextBattle: +nb, now,
+    shop: { energy: { title: 'Полная энергия', desc: 'Энергия сразу до максимума', stars: 10 }, squire: { title: 'Оруженосец на 24 часа', desc: 'Тренирует героя, даже когда ты не в игре', stars: 50 }, x2: { title: 'Двойная тренировка на 7 дней', desc: 'Каждый удар приносит в 2 раза больше', stars: 100 }, banner: { title: 'Золотое знамя', desc: 'Золотая аура героя в битве навсегда + 👑 в рейтинге', stars: 250 } } };
+}
+
+// ---------- отрисовка ----------
+function apply(d) {
+  S = { ...S, ...d }; if (d.shop) shop = d.shop; eLocal = d.energy; eT = performance.now();
+  const h = S.hero, fc = h && F[h.f] ? F[h.f] : null;
+  document.documentElement.style.setProperty('--fc', fc ? fc[2] : '#8a6a3a'); document.documentElement.style.setProperty('--fc2', fc ? fc[3] : '#4a3420');
+  $('nm').textContent = S.name || 'Игрок'; $('ava').textContent = fc ? fc[1] : ((S.name || '?').trim()[0] || '?');
+  $('nk').textContent = S.nick ? '@' + S.nick + (fc ? ' · ' + fc[0] : '') : 'Герой не привязан';
+  const now = Date.now(), bd = [];
+  if (S.x2 > now) bd.push(`<span class="bdg">×2 ${Math.ceil((S.x2 - now) / 864e5)} дн</span>`);
+  if (S.auto > now) bd.push(`<span class="bdg">🛡 ${Math.ceil((S.auto - now) / 36e5)} ч</span>`);
+  if (h && h.banner) bd.push('<span class="bdg">🚩</span>');
+  $('bdg').innerHTML = bd.join('');
+  const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; }
+  $('herobox').innerHTML = h ? `<div class="ln"><span>${fc ? fc[1] + ' ' + fc[0] : ''} · ${RL[h.r] ? RL[h.r][1] + ' ' + RL[h.r][0] : ''}</span><span>Ур. ${h.lv}</span></div>
+    <div class="xp"><i style="width:${Math.min(100, 100 * (h.xp - h.cur) / Math.max(1, h.next - h.cur))}%"></i></div><small style="color:var(--mut)">до ур. ${h.lv + 1}: ${fmt(Math.max(0, h.next - h.xp))} опыта</small>`
+    : `<b>Герой не привязан</b><br><small style="color:var(--mut)">Тренировки пока копят только золото. Привяжи героя во вкладке 🚩</small>`;
+  $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
+  draw(); renderUps(); renderShop(); renderMe();
+}
+const mult = () => S.x2 > Date.now() ? 2 : 1;
+function draw() {
+  if (!S) return 0; const e = Math.max(0, Math.min(S.maxE, eLocal + S.regen * (performance.now() - eT) / 1000) - pending);
+  $('coins').textContent = fmt(S.coins + pending * S.power * mult()); $('en').textContent = Math.floor(e); $('enm').textContent = S.maxE;
+  $('enb').style.width = (100 * e / S.maxE) + '%'; $('pw').textContent = `+${S.power * mult()} за удар` + (mult() > 1 ? ' (×2)' : '');
+  return e;
+}
+setInterval(draw, 250);
+function renderUps() {
+  $('ups').innerHTML = Object.entries(UP).map(([k, [ic, nm, ds]]) => { const c = S.costs[k], l = S.lv[k];
+    return `<div class="card"><div class="ic">${ic}</div><div class="t"><b>${nm} · ур. ${l}</b><small>${c == null ? 'Максимум' : ds(l)}</small></div>
+    <button class="btn" data-up="${k}" ${c == null || c > S.coins + pending * S.power * mult() ? 'disabled' : ''}>${c == null ? 'MAX' : fmt(c)}</button></div>`; }).join('');
+}
+function renderShop() {
+  if (!shop) return;
+  $('shop').innerHTML = Object.entries(shop).map(([k, it]) => `<div class="card"><div class="ic">${SHOP_IC[k] || '⭐'}</div><div class="t"><b>${it.title}</b><small>${it.desc}</small></div>
+    <button class="btn" data-buy="${k}" ${k === 'banner' && S.hero && S.hero.banner ? 'disabled' : ''}>⭐ ${it.stars}</button></div>`).join('');
+}
+function renderMe() {
+  const h = S.hero, ms = Math.max(0, S.nextBattle - Date.now()), hh = Math.floor(ms / 36e5), mm = Math.floor(ms / 6e4) % 60;
+  $('nb').textContent = `Следующая битва через ${hh} ч ${mm} мин. Победившее знамя получает +100 золота.`;
+  $('mebox').innerHTML = h ? `<div class="card"><div class="ic">${F[h.f] ? F[h.f][1] : '🚩'}</div><div class="t"><b>@${esc(S.nick)} — ${F[h.f] ? F[h.f][0] : '?'}, ${RL[h.r] ? RL[h.r][0] : '?'}</b><small>Уровень ${h.lv}. Сменить знамя или роль — новым комментарием в Instagram @${INSTA}.</small></div></div>`
+    : `<div class="card" style="flex-direction:column;align-items:stretch"><b>Как вступить и привязать героя</b>
+      <small style="color:var(--mut)">1. Подпишись на Instagram <b>@${INSTA}</b><br>2. Под любым постом напиши знамя, роль и этот код:</small>
+      <div class="code">${esc(S.code || '…')}</div><small style="color:var(--mut)">Например: «Драконы маг ${esc(S.code || '')}». После обработки комментариев бот пришлёт подтверждение.</small></div>`;
+}
+async function renderTop() {
+  $('tops').innerHTML = '<div class="sub">Загружаю…</div>';
+  try { const d = await api('top');
+    $('facsum').innerHTML = Object.entries(d.factions || {}).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${F[k][1]} ${fmt(v)}`).join(' · ');
+    $('tops').innerHTML = (d.list || []).map((r, i) => `<div class="row g${i + 1} ${d.me && d.me.rank === i + 1 ? 'me' : ''}"><span class="n">${i + 1}</span><span class="nm">${r.f && F[r.f] ? F[r.f][1] + ' ' : ''}${esc(r.n)}</span><b>${fmt(r.v)}</b></div>`).join('') || '<div class="sub">Пока пусто — стань первым!</div>'; }
+  catch (e) { $('tops').innerHTML = `<div class="sub">${esc(e.message)}</div>`; }
+}
+
+// ---------- удары ----------
+function tap(ev) {
+  if (!S) return; const e = draw(); if (e < 1) { hap('rigid'); toast('⚡ Выносливость кончилась — отдохни или купи в Лавке'); return; }
+  pending++; hap('light'); const k = $('king'); k.classList.add('hit'); setTimeout(() => k.classList.remove('hit'), 70);
+  const z = $('tapzone').getBoundingClientRect(), x = (ev.clientX || z.left + z.width / 2) - z.left, y = (ev.clientY || z.top + z.height / 2) - z.top;
+  const f = document.createElement('div'); f.className = 'fx'; f.textContent = '+' + S.power * mult(); f.style.left = (x - 14) + 'px'; f.style.top = (y - 30) + 'px';
+  $('tapzone').appendChild(f); setTimeout(() => f.remove(), 900); draw();
+}
+$('king').addEventListener('pointerdown', e => { e.preventDefault(); tap(e); });
+async function sync() {
+  if (syncing || !pending || !S) return; syncing = true; const n = pending, lv0 = S.hero ? S.hero.lv : 0;
+  try { const d = await api('sync', { taps: n }); pending -= n; apply(d); if (d.hero && d.hero.lv > lv0) { hap('ok'); toast(`⬆️ Герой достиг ${d.hero.lv} уровня!`); } }
+  catch (e) { pending = 0; toast(e.message); } finally { syncing = false; }
+}
+setInterval(sync, 1500); document.addEventListener('visibilitychange', () => document.hidden && sync());
+
+// ---------- кнопки ----------
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.p) { document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b === t)); document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + t.dataset.p)); if (t.dataset.p === 'top') renderTop(); hap('light'); return; }
+  if (t.dataset.up) { await sync(); try { apply(await api('upgrade', { kind: t.dataset.up })); hap('ok'); toast('⬆️ Улучшено!'); } catch (er) { toast(er.message); } return; }
+  if (t.dataset.buy) {
+    try { const { link } = await api('invoice', { item: t.dataset.buy });
+      TG.openInvoice(link, async st => { if (st === 'paid') { hap('ok'); toast('✅ Оплачено! Награда уже в игре'); setTimeout(async () => apply(await api('login')), 1500); } else if (st === 'failed') toast('Оплата не прошла'); });
+    } catch (er) { toast(er.message); } return;
+  }
+  if (t.id === 'adbtn') { showAd(); return; }
+});
+async function showAd() {
+  if (!ADS_BLOCK || !window.Adsgram) return;
+  try { await window.Adsgram.init({ blockId: ADS_BLOCK }).show(); apply(await api('ad')); hap('ok'); toast('⚡ Выносливость восстановлена!'); } catch (e) { toast('Реклама недоступна, попробуй позже'); }
+}
+if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://sad.adsgram.ai/js/sad.min.js'; document.head.appendChild(sc); }
+
+// ---------- старт ----------
+(async () => {
+  if (TG) { try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor('#140e0a'); TG.setBackgroundColor && TG.setBackgroundColor('#140e0a'); TG.disableVerticalSwipes && TG.disableVerticalSwipes(); } catch (e) { } }
+  if (DEMO) $('demo').style.display = 'block';
+  try { const d = await api('login'); apply(d);
+    if (d.won) toast(`🏆 Твоё знамя победило! +${fmt(d.won)} золота`, 4000); else if (d.autoGain) toast(`🛡 Оруженосец натренировал: +${fmt(d.autoGain)}`, 3500); }
+  catch (e) { toast(e.message, 5000); }
+})();
+</script>
+</body>
+</html>
