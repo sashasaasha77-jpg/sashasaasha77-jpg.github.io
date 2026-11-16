@@ -6,82 +6,127 @@
 <title>Четыре знамени — тренировочный лагерь</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--bg:#140e0a;--bg2:#2a1d14;--card:#2e2219;--gold:#ffc83a;--gold2:#f2a81e;--txt:#f6eedc;--mut:#b6a8d0;--red:#ff4d6a;--grn:#3be07a}
+:root{--pn:#13204a;--pn2:#1d3170;--gold:#ffc83a;--gold2:#e8a21e;--gl:#ffe7a0;--txt:#fff6e0;--mut:#b9c6ec;--fc:#e8b33a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-html,body{margin:0;height:100%;background:radial-gradient(120% 80% at 50% 30%,var(--fc2,#4a3420) 0%,var(--bg) 72%);color:var(--txt);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
-#app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto;padding:10px 14px calc(8px + env(safe-area-inset-bottom))}
-.top{display:flex;align-items:center;gap:10px}
-.ava{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#e07020);display:grid;place-items:center;font-weight:800;color:#3a1d00;font-size:18px;flex:none}
-.who{flex:1;min-width:0}.who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.who small{color:var(--mut)}
-.badges{display:flex;gap:6px}.bdg{background:var(--card);border-radius:999px;padding:4px 9px;font-size:12px;font-weight:700}
-.bal{text-align:center;margin:14px 0 2px}.bal .c{font-size:40px;font-weight:900;letter-spacing:.5px;display:inline-flex;align-items:center;gap:10px}
-.coin{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a0,var(--gold) 45%,var(--gold2));box-shadow:inset 0 -3px 0 #b97a10,0 2px 8px #0006;display:inline-grid;place-items:center;color:#8a5a00;font-weight:900;font-size:18px}
-.sub{color:var(--mut);font-size:13px;text-align:center}
-.page{flex:1;display:none;flex-direction:column;min-height:0}.page.on{display:flex}
-#tapzone{flex:1;display:grid;place-items:center;position:relative;min-height:240px}
-#king{overflow:hidden;width:min(94vw,440px);aspect-ratio:6/5;border-radius:22px;border:0;padding:0;background:linear-gradient(180deg,#3a5a7a 0%,#7a9ab0 46%,#6a8a4a 47%,#4a6a30 100%);box-shadow:0 0 0 3px #ffffff14,0 10px 30px #0008;cursor:pointer;touch-action:manipulation}
+html,body{margin:0;height:100%;background:#0c1430;color:var(--txt);font:15px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+#scene{position:fixed;inset:0;z-index:0}
+#king{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;background:linear-gradient(180deg,#1c2c5c 0%,#6a86c0 55%,#e2eaf6 56%,#c8d4e8 100%);cursor:pointer;touch-action:manipulation}
 #king svg{width:100%;height:100%;display:block}
-#king .tb{transform-box:view-box;transition:transform .07s ease-out}
-#king .dm{transform-box:view-box;transform-origin:272px 268px}
+#king .tb{transform-box:view-box;transition:transform .07s ease-out}#king .dm{transform-box:view-box;transform-origin:272px 268px}
 #king.hitd .dm{animation:wob .4s ease-out}
 @keyframes wob{0%{transform:rotate(0)}20%{transform:rotate(11deg)}50%{transform:rotate(-7deg)}75%{transform:rotate(3deg)}100%{transform:rotate(0)}}
-#king.atk.r-warrior .arm{transform:rotate(110deg)}
-#king.atk.r-guard .herog{transform:translateX(38px)}
-#king.atk.r-mage .arm{transform:rotate(-30deg)}
-#king.atk.r-archer .str{transform:translateX(-12px)}
-.chip{position:absolute;pointer-events:none;width:7px;height:7px;border-radius:2px;background:#d9b35a;animation:chip .5s ease-out forwards}
+#king.atk.r-warrior .arm{transform:rotate(110deg)}#king.atk.r-guard .herog{transform:translateX(38px)}#king.atk.r-mage .arm{transform:rotate(-30deg)}#king.atk.r-archer .str{transform:translateX(-12px)}
+#vig{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#0a1230cc 0%,#0a123000 22%,#0a123000 62%,#0a1230d9 100%)}
+#app{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;max-width:520px;margin:0 auto;padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));pointer-events:none}
+#app>*{pointer-events:auto}
+/* золотая рамка */
+.gp{background:linear-gradient(180deg,var(--pn2),var(--pn));border:2px solid var(--gold2);border-radius:16px;box-shadow:inset 0 0 0 2px #0a1230,inset 0 2px 0 3px #ffffff14,0 4px 12px #0009}
+.top{display:flex;align-items:center;gap:10px;padding:7px 10px 7px 7px}
+.ava{width:52px;height:52px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:27px;background:radial-gradient(circle at 40% 35%,#ffffff40,var(--fc) 60%);border:3px solid var(--gold);box-shadow:0 0 0 2px #0a1230}
+.who{flex:1;min-width:0}
+.who .r1{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.who b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}
+.who .lv{color:var(--gold);font-weight:900;flex:none}
+.rank{color:var(--gl);font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xpb{height:9px;border-radius:9px;background:#0a1230;border:1px solid #ffffff22;margin-top:4px;overflow:hidden}.xpb i{display:block;height:100%;background:linear-gradient(90deg,#7ad0ff,#3a8cff);transition:width .3s}
+.nx{font-size:11px;color:var(--mut);margin-top:2px;display:flex;justify-content:space-between}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;justify-content:center}.bdg{background:#0a1230cc;border:1px solid var(--gold2);border-radius:999px;padding:3px 9px;font-size:12px;font-weight:800}
+.side{position:fixed;right:max(10px,calc(50% - 250px));top:calc(140px + env(safe-area-inset-top));z-index:3;display:flex;flex-direction:column;gap:10px}
+.rb{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:21px;text-decoration:none;color:#fff;background:radial-gradient(circle at 40% 30%,#3a5ab0,var(--pn));border:2px solid var(--gold2);box-shadow:0 3px 8px #0009;cursor:pointer}
+.bal{text-align:center;margin:10px 0 0;pointer-events:none!important}
+.bal .c{display:inline-flex;align-items:center;gap:8px;font-size:40px;font-weight:900;color:#fff;text-shadow:0 0 0 #000,0 3px 0 #8a5a10,0 4px 10px #000c;-webkit-text-stroke:1.5px #6a3a00}
+.laur{width:30px;height:46px}.laur.r{transform:scaleX(-1)}
+.coin{width:36px;height:36px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2b0,var(--gold) 45%,var(--gold2));box-shadow:inset 0 -3px 0 #a86a00,0 2px 8px #0008;display:inline-grid;place-items:center;color:#8a5a00;font-weight:900;font-size:18px;-webkit-text-stroke:0;text-shadow:none}
+.pills{display:flex;justify-content:center;margin-top:6px;pointer-events:none!important}
+.pills .gp{display:flex;border-radius:999px;padding:4px 4px;font-weight:800;font-size:13.5px}
+.pills span{padding:2px 12px}.pills span+span{border-left:1px solid #ffffff30}
+.pills em{font-style:normal;color:var(--gold)}
+.page{flex:1;display:none;flex-direction:column;min-height:0;margin-top:8px}.page.on{display:flex}
+#p-tap{pointer-events:none}
+.fx{position:fixed;z-index:4;pointer-events:none;font-weight:900;font-size:30px;color:#fff;-webkit-text-stroke:1.5px #8a5a00;text-shadow:0 3px 0 #b07800,0 4px 10px #000a;animation:up .9s ease-out forwards}
+@keyframes up{to{transform:translateY(-110px) scale(1.15);opacity:0}}
+.chip{position:fixed;z-index:4;pointer-events:none;width:7px;height:7px;border-radius:2px;background:#d9b35a;animation:chip .5s ease-out forwards}
 @keyframes chip{to{transform:translate(var(--dx),var(--dy)) rotate(200deg);opacity:0}}
-.fx{position:absolute;pointer-events:none;font-weight:900;font-size:28px;color:var(--gold);text-shadow:0 2px 6px #000a;animation:up .9s ease-out forwards}
-@keyframes up{to{transform:translateY(-120px);opacity:0}}
-.en{display:flex;align-items:center;gap:10px;margin:6px 0}.en b{min-width:92px}
-.bar{flex:1;height:14px;border-radius:999px;background:#ffffff14;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd75a,#ff9a2e);width:0;transition:width .25s}
-.btn{border:0;border-radius:14px;padding:12px 14px;font-weight:800;font-size:15px;color:#2a1600;background:linear-gradient(180deg,#ffd75a,#f2a81e);box-shadow:0 3px 0 #b97a10;cursor:pointer}
-.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #b97a10}.btn[disabled]{filter:grayscale(1);opacity:.5}
-.btn.ghost{background:var(--card);color:var(--txt);box-shadow:0 3px 0 #1a1030}
-.list{overflow:auto;flex:1;display:flex;flex-direction:column;gap:10px;padding:4px 0 10px}
-.card{background:var(--card);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px}
-.card .ic{font-size:30px;width:44px;text-align:center}.card .t{flex:1;min-width:0}.card .t b{display:block}.card .t small{color:var(--mut)}
-.row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:#ffffff08}
+.enp{margin-top:8px;padding:8px 10px}
+.enp .l1{display:flex;align-items:center;gap:8px;font-weight:900}
+.enp .l1 .bolt{font-size:20px}.enp .l1 small{margin-left:auto;color:var(--mut);font-weight:700}
+.bar{height:14px;border-radius:999px;background:#0a1230;border:1px solid #ffffff22;overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#ffe066,#ff9a2e);width:0;transition:width .25s}
+.btn{border:0;border-radius:12px;padding:11px 14px;font-weight:900;font-size:15px;color:#3a1d00;background:linear-gradient(180deg,#ffe27a,#f2a81e);box-shadow:0 3px 0 #a86a00,inset 0 1px 0 #fff8;cursor:pointer}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #a86a00}.btn[disabled]{filter:grayscale(1);opacity:.5}
+.btn.ad{width:100%;margin-top:7px;background:linear-gradient(180deg,#5ad06a,#2a9a3a);color:#fff;box-shadow:0 3px 0 #1a6a24,inset 0 1px 0 #fff6;text-shadow:0 1px 1px #0008}
+.sheet{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px}
+.list{overflow:auto;flex:1;display:flex;flex-direction:column;gap:9px;padding:4px 0 6px}
+.card{background:#0a1230aa;border:1px solid #ffffff1c;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:12px}
+.card .ic{font-size:30px;width:42px;text-align:center}.card .t{flex:1;min-width:0}.card .t b{display:block}.card .t small{color:var(--mut)}
+.row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:#0a1230aa}
 .row .n{width:28px;text-align:center;font-weight:900;color:var(--mut)}.row .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row.me{outline:2px solid var(--gold)}
 .row.g1 .n{color:#ffd75a}.row.g2 .n{color:#d8dde6}.row.g3 .n{color:#e09a5a}
-input{width:100%;padding:12px;border-radius:12px;border:2px solid #ffffff1a;background:#ffffff0d;color:var(--txt);font-size:16px}
-.tabs{display:flex;gap:6px;margin-top:8px}.tab{flex:1;border:0;background:var(--card);color:var(--mut);border-radius:14px;padding:8px 0 6px;font-size:11px;font-weight:700;cursor:pointer}
-.tab span{display:block;font-size:20px;margin-bottom:1px}.tab.on{background:linear-gradient(180deg,#5a4028,#3e2c1c);color:var(--txt)}
-h3{margin:10px 0 4px;font-size:18px}.toast{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;z-index:9;max-width:90%;text-align:center;display:none}
-.demo{background:#ff4d6a22;border:1px solid #ff4d6a66;border-radius:12px;padding:8px 10px;font-size:12.5px;margin-top:8px;text-align:center}
-.demo a{color:var(--gold)}
-.hero{margin:8px auto 0;max-width:340px;background:var(--card);border-radius:14px;padding:8px 12px;font-size:13px}
-.hero .ln{display:flex;justify-content:space-between;gap:10px;font-weight:800}.hero .xp{height:7px;background:#ffffff14;border-radius:9px;margin-top:5px;overflow:hidden}.hero .xp i{display:block;height:100%;background:var(--fc,#ffc83a)}
+h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
+.sub{color:var(--mut);font-size:13px}
+.tabs{display:flex;gap:2px;margin-top:8px;padding:5px;border-radius:18px}
+.tab{flex:1;border:0;background:transparent;color:var(--mut);border-radius:12px;padding:5px 0 4px;font-size:11px;font-weight:800;cursor:pointer}
+.tab span{display:block;font-size:22px;margin-bottom:1px;filter:saturate(.7)}
+.tab.on{background:linear-gradient(180deg,#ffe27a,#e8a21e);color:#3a1d00;box-shadow:inset 0 -2px 0 #a86a00}.tab.on span{filter:none}
+.toast{position:fixed;left:50%;top:calc(90px + env(safe-area-inset-top));transform:translateX(-50%);background:#0a1230ee;border:2px solid var(--gold2);color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;z-index:9;max-width:90%;text-align:center;display:none}
+.demo{background:#0a1230cc;border:1px solid #ff4d6a88;border-radius:10px;padding:5px 10px;font-size:12px;margin-top:6px;text-align:center}.demo a{color:var(--gold)}
 .code{font-size:28px;font-weight:900;letter-spacing:3px;color:var(--gold);text-align:center;margin:6px 0}
+#loading{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;color:#fff;font-weight:800;text-shadow:0 2px 6px #000;pointer-events:none}
 </style>
 </head>
 <body>
+<div id="scene"><button id="king" aria-label="Тренировать героя"></button></div>
+<div id="vig"></div>
+<div class="side">
+  <a class="rb" id="fieldlink" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank" title="Поле битвы">🗺</a>
+  <a class="rb" id="instalink" href="#" target="_blank" title="Instagram">📷</a>
+  <a class="rb" href="https://t.me/znameni4_bot" target="_blank" title="Бот">💬</a>
+</div>
 <div id="app">
-  <div class="top"><div class="ava" id="ava">?</div><div class="who"><b id="nm">Гость</b><small id="nk">Не привязан к королевству</small></div><div class="badges" id="bdg"></div></div>
-  <div id="demo" class="demo" style="display:none">Это демо в браузере. Настоящая игра — в Telegram: <a href="https://t.me/znameni4_bot">@znameni4_bot</a></div>
+  <div class="top gp">
+    <div class="ava" id="ava">?</div>
+    <div class="who">
+      <div class="r1"><b id="nm">Гость</b><span class="lv" id="lvl">Ур. 0</span></div>
+      <div class="rank" id="rank">Новобранец</div>
+      <div class="xpb"><i id="xpb"></i></div>
+      <div class="nx"><span id="nk">Герой не привязан</span><span id="nxr"></span></div>
+    </div>
+  </div>
+  <div class="badges" id="bdg"></div>
+  <div id="demo" class="demo" style="display:none">Демо в браузере. Настоящая игра — в Telegram: <a href="https://t.me/znameni4_bot">@znameni4_bot</a></div>
 
   <div class="page on" id="p-tap">
-    <div class="bal"><span class="c"><span class="coin">З</span><span id="coins">0</span></span></div>
-    <div class="sub" id="pw">+1 за удар</div><div class="hero" id="herobox"></div>
-    <div id="tapzone"><button id="king" aria-label="Тренировать героя"></button></div>
-    <div class="en"><b>⚡ <span id="en">0</span>/<span id="enm">0</span></b><div class="bar"><i id="enb"></i></div></div>
-    <button class="btn ghost" id="adbtn" style="display:none">📺 Полная энергия за рекламу (<span id="adn">5</span>)</button>
-  </div>
-
-  <div class="page" id="p-up"><h3>Улучшения</h3><div class="list" id="ups"></div></div>
-  <div class="page" id="p-top"><h3>🏆 Рейтинг тренировок</h3><div id="facsum" class="sub" style="text-align:left;margin-bottom:6px"></div><div class="list" id="tops"></div></div>
-  <div class="page" id="p-shop"><h3>⭐ Лавка за Stars</h3><div class="sub" style="text-align:left">Покупки поддерживают игру и новые битвы.</div><div class="list" id="shop"></div></div>
-  <div class="page" id="p-me"><h3>🚩 Твоё знамя</h3>
-    <div class="list">
-      <div id="mebox"></div>
-      <div class="card"><div class="t"><b>⚔️ Битва каждый день в 20:00</b><small id="nb">…</small></div></div>
-      <a class="btn" style="text-align:center;text-decoration:none" id="fieldlink" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank">🗺 Смотреть поле битвы</a>
+    <div class="bal"><span class="c">
+      <svg class="laur" viewBox="0 0 30 46"><path d="M24 44 Q6 34 8 6" stroke="#e8a21e" stroke-width="2.5" fill="none"/><g fill="#ffc83a" stroke="#a86a00" stroke-width="1">
+        <ellipse cx="6" cy="10" rx="3.5" ry="6" transform="rotate(-20 6 10)"/><ellipse cx="4" cy="20" rx="3.5" ry="6" transform="rotate(-45 4 20)"/><ellipse cx="6" cy="30" rx="3.5" ry="6" transform="rotate(-65 6 30)"/><ellipse cx="13" cy="38" rx="3.5" ry="6" transform="rotate(-85 13 38)"/>
+        <ellipse cx="13" cy="14" rx="3" ry="5.5" transform="rotate(25 13 14)"/><ellipse cx="13" cy="25" rx="3" ry="5.5" transform="rotate(10 13 25)"/></g></svg>
+      <span class="coin">З</span><span id="coins">0</span>
+      <svg class="laur r" viewBox="0 0 30 46"><path d="M24 44 Q6 34 8 6" stroke="#e8a21e" stroke-width="2.5" fill="none"/><g fill="#ffc83a" stroke="#a86a00" stroke-width="1">
+        <ellipse cx="6" cy="10" rx="3.5" ry="6" transform="rotate(-20 6 10)"/><ellipse cx="4" cy="20" rx="3.5" ry="6" transform="rotate(-45 4 20)"/><ellipse cx="6" cy="30" rx="3.5" ry="6" transform="rotate(-65 6 30)"/><ellipse cx="13" cy="38" rx="3.5" ry="6" transform="rotate(-85 13 38)"/>
+        <ellipse cx="13" cy="14" rx="3" ry="5.5" transform="rotate(25 13 14)"/><ellipse cx="13" cy="25" rx="3" ry="5.5" transform="rotate(10 13 25)"/></g></svg>
+    </span></div>
+    <div class="pills"><div class="gp" id="pills"></div></div>
+    <div style="flex:1"></div>
+    <div class="enp gp" style="pointer-events:auto">
+      <div class="l1"><span class="bolt">⚡</span><span><span id="en">0</span> / <span id="enm">0</span></span><small id="enr">+60 в минуту</small></div>
+      <div class="bar"><i id="enb"></i></div>
+      <button class="btn ad" id="adbtn" style="display:none">📺 Смотреть рекламу: полная сила (<span id="adn">5</span>)</button>
     </div>
   </div>
 
-  <div class="tabs">
-    <button class="tab on" data-p="tap"><span>⚔️</span>Лагерь</button>
-    <button class="tab" data-p="up"><span>⬆️</span>Улучшения</button>
+  <div class="page" id="p-up"><div class="sheet gp"><h3>⬆️ Прокачка</h3><div class="list" id="ups"></div></div></div>
+  <div class="page" id="p-top"><div class="sheet gp"><h3>🏆 Рейтинг тренировок</h3><div id="facsum" class="sub" style="margin-bottom:6px"></div><div class="list" id="tops"></div></div></div>
+  <div class="page" id="p-shop"><div class="sheet gp"><h3>⭐ Лавка за Stars</h3><div class="sub">Покупки поддерживают игру и новые битвы.</div><div class="list" id="shop"></div></div></div>
+  <div class="page" id="p-me"><div class="sheet gp"><h3>🚩 Твоё знамя</h3>
+    <div class="list">
+      <div id="mebox"></div>
+      <div class="card"><div class="t"><b>⚔️ Битва каждый день в 20:00</b><small id="nb">…</small></div></div>
+      <a class="btn" style="text-align:center;text-decoration:none" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank">🗺 Смотреть поле битвы</a>
+    </div></div>
+  </div>
+
+  <div class="tabs gp">
+    <button class="tab on" data-p="tap"><span>🏕</span>Лагерь</button>
+    <button class="tab" data-p="up"><span>⬆️</span>Прокачка</button>
     <button class="tab" data-p="top"><span>🏆</span>Топ</button>
     <button class="tab" data-p="shop"><span>⭐</span>Лавка</button>
     <button class="tab" data-p="me"><span>🚩</span>Знамя</button>
@@ -93,13 +138,16 @@ h3{margin:10px 0 4px;font-size:18px}.toast{position:fixed;left:50%;top:14px;tran
 // ---------- настройки ----------
 const API = 'https://otgwiroxifqtktbipbsu.supabase.co/functions/v1/znameni/tap/';
 const INSTA = '4znameni'; // ник игры в Instagram (поменяем, когда займёте)
-const ADS_BLOCK = ''; // id блока AdsGram (после регистрации на adsgram.ai)
+const ADS_BLOCK = '60165'; // id блока AdsGram (после регистрации на adsgram.ai)
 const TG = window.Telegram && Telegram.WebApp, INIT = TG && TG.initData || '';
 const DEMO = !INIT;
 const $ = id => document.getElementById(id), fmt = n => Math.floor(n).toLocaleString('ru-RU');
 const F = { lions: ['Львы', '🦁', '#e8b33a', '#5a3c10'], wolves: ['Волки', '🐺', '#7f9fc4', '#26384f'], dragons: ['Драконы', '🐉', '#e0503a', '#4a1410'], ravens: ['Вороны', '🪶', '#9a6ad8', '#2a1648'] };
 const RL = { warrior: ['Воин', '⚔️'], guard: ['Страж', '🛡'], mage: ['Маг', '🔮'], archer: ['Лучник', '🏹'] };
 const UP = { power: ['💪', 'Сила удара', l => `+${l + 1} → +${l + 2} за удар`], energy: ['🔋', 'Запас выносливости', l => `${500 + 250 * l} → ${500 + 250 * (l + 1)}`], regen: ['⏱', 'Восстановление', l => `${(1 + .5 * l).toFixed(1)} → ${(1 + .5 * (l + 1)).toFixed(1)} в сек`] };
+const RANKS = [[0, 'Новобранец'], [3, 'Ополченец'], [6, 'Солдат'], [10, 'Ветеран'], [15, 'Рыцарь'], [20, 'Капитан'], [30, 'Командор'], [50, 'Легенда']];
+const rankOf = lv => RANKS.filter(r => lv >= r[0]).pop()[1];
+const nextRank = lv => { const n = RANKS.find(r => r[0] > lv); return n ? n[1] + ' (ур. ' + n[0] + ')' : 'максимум'; };
 const SHOP_IC = { energy: '⚡', squire: '🛡', x2: '⚔️', banner: '🚩' };
 var S = null; let pending = 0, eLocal = 0, eT = 0, syncing = false, shop = null;
 function toast(t, ms = 2400) { const e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.display = 'none', ms); }
@@ -152,9 +200,9 @@ function attackFx() {
   } else setTimeout(hitNow, 60);
 }
 function chips() {
-  const z = $('tapzone').getBoundingClientRect(), k = $('king').getBoundingClientRect(), x = k.left - z.left + k.width * 0.755, y = k.top - z.top + k.height * 0.66;
+  const k = $('king').getBoundingClientRect(), x = k.left + k.width * 0.755, y = k.top + k.height * 0.66;
   for (let i = 0; i < 5; i++) { const c = document.createElement('div'); c.className = 'chip'; c.style.left = x + 'px'; c.style.top = y + 'px';
-    c.style.setProperty('--dx', (Math.random() * 90 - 20) + 'px'); c.style.setProperty('--dy', (Math.random() * -70 - 10) + 'px'); $('tapzone').appendChild(c); setTimeout(() => c.remove(), 520); }
+    c.style.setProperty('--dx', (Math.random() * 90 - 20) + 'px'); c.style.setProperty('--dy', (Math.random() * -70 - 10) + 'px'); document.body.appendChild(c); setTimeout(() => c.remove(), 520); }
 }
 
 // ---------- сеть ----------
@@ -184,9 +232,12 @@ function demoApi(action, b) {
 function apply(d) {
   S = { ...S, ...d }; if (d.shop) shop = d.shop; eLocal = d.energy; eT = performance.now();
   const h = S.hero, fc = h && F[h.f] ? F[h.f] : null;
-  document.documentElement.style.setProperty('--fc', fc ? fc[2] : '#8a6a3a'); document.documentElement.style.setProperty('--fc2', fc ? fc[3] : '#4a3420');
+  document.documentElement.style.setProperty('--fc', fc ? fc[2] : '#8a6a3a');
   $('nm').textContent = S.name || 'Игрок'; $('ava').textContent = fc ? fc[1] : ((S.name || '?').trim()[0] || '?');
-  $('nk').textContent = S.nick ? '@' + S.nick + (fc ? ' · ' + fc[0] : '') : 'Герой не привязан';
+  $('nk').textContent = h ? (fc ? fc[0] : '') + (RL[h.r] ? ' · ' + RL[h.r][0] : '') : 'Герой не привязан';
+  const lv = h ? h.lv : 0; $('lvl').textContent = 'Ур. ' + lv; $('rank').textContent = rankOf(lv) + (S.nick ? ' · @' + S.nick : '');
+  $('xpb').style.width = h ? Math.min(100, 100 * (h.xp - h.cur) / Math.max(1, h.next - h.cur)) + '%' : '0%';
+  $('nxr').textContent = h ? 'след.: ' + nextRank(lv) : 'привяжи во вкладке 🚩';
   const now = Date.now(), bd = [];
   if (S.x2 > now) bd.push(`<span class="bdg">×2 ${Math.ceil((S.x2 - now) / 864e5)} дн</span>`);
   if (S.auto > now) bd.push(`<span class="bdg">🛡 ${Math.ceil((S.auto - now) / 36e5)} ч</span>`);
@@ -194,9 +245,6 @@ function apply(d) {
   $('bdg').innerHTML = bd.join('');
   const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
-  $('herobox').innerHTML = h ? `<div class="ln"><span>${fc ? fc[1] + ' ' + fc[0] : ''} · ${RL[h.r] ? RL[h.r][1] + ' ' + RL[h.r][0] : ''}</span><span>Ур. ${h.lv}</span></div>
-    <div class="xp"><i style="width:${Math.min(100, 100 * (h.xp - h.cur) / Math.max(1, h.next - h.cur))}%"></i></div><small style="color:var(--mut)">до ур. ${h.lv + 1}: ${fmt(Math.max(0, h.next - h.xp))} опыта</small>`
-    : `<b>Герой не привязан</b><br><small style="color:var(--mut)">Тренировки пока копят только золото. Привяжи героя во вкладке 🚩</small>`;
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
   draw(); renderUps(); renderShop(); renderMe();
 }
@@ -204,7 +252,10 @@ const mult = () => S.x2 > Date.now() ? 2 : 1;
 function draw() {
   if (!S) return 0; const e = Math.max(0, Math.min(S.maxE, eLocal + S.regen * (performance.now() - eT) / 1000) - pending);
   $('coins').textContent = fmt(S.coins + pending * S.power * mult()); $('en').textContent = Math.floor(e); $('enm').textContent = S.maxE;
-  $('enb').style.width = (100 * e / S.maxE) + '%'; $('pw').textContent = `+${S.power * mult()} за удар` + (mult() > 1 ? ' (×2)' : '');
+  $('enb').style.width = (100 * e / S.maxE) + '%'; $('enr').textContent = `+${fmt(S.regen * 60)} в минуту`;
+  const now = Date.now(), pl = [`<span><em>+${S.power * mult()}</em> удар${mult() > 1 ? ' ×2' : ''}</span>`];
+  pl.push(S.auto > now ? `<span>🛡 <em>${Math.ceil((S.auto - now) / 36e5)} ч</em> оруженосец</span>` : `<span>⚔️ <em>${fmt(S.total || 0)}</em> всего</span>`);
+  const ph = pl.join(''); if (draw.ph !== ph) { $('pills').innerHTML = ph; draw.ph = ph; }
   return e;
 }
 setInterval(draw, 250);
@@ -238,9 +289,9 @@ async function renderTop() {
 function tap(ev) {
   if (!S) return; const e = draw(); if (e < 1) { hap('rigid'); toast('⚡ Выносливость кончилась — отдохни или купи в Лавке'); return; }
   pending++; hap('light'); if (window.ZN3D_ON) window.ZN3D.attack(); else attackFx();
-  const z = $('tapzone').getBoundingClientRect(), kb = $('king').getBoundingClientRect(), x = kb.left - z.left + kb.width * (0.68 + Math.random() * 0.16), y = kb.top - z.top + kb.height * (0.3 + Math.random() * 0.2);
-  const f = document.createElement('div'); f.className = 'fx'; f.textContent = '+' + S.power * mult(); f.style.left = (x - 14) + 'px'; f.style.top = (y - 30) + 'px';
-  $('tapzone').appendChild(f); setTimeout(() => f.remove(), 900); draw();
+  const x = (ev && ev.clientX || innerWidth * .6) + (Math.random() * 30 - 15), y = (ev && ev.clientY || innerHeight * .5);
+  const f = document.createElement('div'); f.className = 'fx'; f.textContent = '+' + S.power * mult(); f.style.left = (x - 14) + 'px'; f.style.top = (y - 40) + 'px';
+  document.body.appendChild(f); setTimeout(() => f.remove(), 900); draw();
 }
 $('king').addEventListener('pointerdown', e => { e.preventDefault(); tap(e); });
 async function sync() {
@@ -270,15 +321,15 @@ if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://
 
 // ---------- старт ----------
 (async () => {
-  if (TG) { try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor('#140e0a'); TG.setBackgroundColor && TG.setBackgroundColor('#140e0a'); TG.disableVerticalSwipes && TG.disableVerticalSwipes(); } catch (e) { } }
-  if (DEMO) $('demo').style.display = 'block';
+  if (TG) { try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor('#0c1430'); TG.setBackgroundColor && TG.setBackgroundColor('#0c1430'); TG.disableVerticalSwipes && TG.disableVerticalSwipes(); } catch (e) { } }
+  if (DEMO) $('demo').style.display = 'block'; $('instalink').href = 'https://instagram.com/' + INSTA;
   try { const d = await api('login'); apply(d);
     if (d.won) toast(`🏆 Твоё знамя победило! +${fmt(d.won)} золота`, 4000); else if (d.autoGain) toast(`🛡 Оруженосец натренировал: +${fmt(d.autoGain)}`, 3500); }
   catch (e) { toast(e.message, 5000); }
 })();
 </script>
 <script type="module">
-// 3D-сцена (если телефон не тянет WebGL — остаётся плоская картинка)
+// 3D-лагерь на весь экран (если телефон не тянет WebGL — остаётся плоская картинка)
 import * as Z from './zn3d.js';
 try { const c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) throw 0;
   window.ZN3D = Z; window.ZN3D_ON = true; Z.init(document.getElementById('king')).catch(e => console.warn('3D', e));
