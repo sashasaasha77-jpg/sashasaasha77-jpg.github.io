@@ -9,14 +9,15 @@
 :root{--pn:#13204a;--pn2:#1d3170;--gold:#ffc83a;--gold2:#e8a21e;--gl:#ffe7a0;--txt:#fff6e0;--mut:#b9c6ec;--fc:#e8b33a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;background:#0c1430;color:var(--txt);font:15px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
-#scene{position:fixed;inset:0;z-index:0}
-#king{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;background:linear-gradient(180deg,#1c2c5c 0%,#6a86c0 55%,#e2eaf6 56%,#c8d4e8 100%);cursor:pointer;touch-action:manipulation}
+#scene{position:fixed;inset:0;z-index:0;background:#3a4a8a url(bg/dragons.jpg) center/cover no-repeat}
+#scene.shk{animation:shk .16s linear}@keyframes shk{25%{transform:translate(3px,-2px)}50%{transform:translate(-3px,2px)}75%{transform:translate(2px,1px)}}
+#king{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;background:transparent;cursor:pointer;touch-action:manipulation}
 #king svg{width:100%;height:100%;display:block}
 #king .tb{transform-box:view-box;transition:transform .07s ease-out}#king .dm{transform-box:view-box;transform-origin:272px 268px}
 #king.hitd .dm{animation:wob .4s ease-out}
 @keyframes wob{0%{transform:rotate(0)}20%{transform:rotate(11deg)}50%{transform:rotate(-7deg)}75%{transform:rotate(3deg)}100%{transform:rotate(0)}}
 #king.atk.r-warrior .arm{transform:rotate(110deg)}#king.atk.r-guard .herog{transform:translateX(38px)}#king.atk.r-mage .arm{transform:rotate(-30deg)}#king.atk.r-archer .str{transform:translateX(-12px)}
-#vig{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#0a1230cc 0%,#0a123000 22%,#0a123000 62%,#0a1230d9 100%)}
+#vig{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#0a123088 0%,#0a123000 18%,#0a123000 78%,#0a123099 100%)}
 #app{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;max-width:520px;margin:0 auto;padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));pointer-events:none}
 #app>*{pointer-events:auto}
 /* золотая рамка */
@@ -243,6 +244,7 @@ function apply(d) {
   if (S.auto > now) bd.push(`<span class="bdg">🛡 ${Math.ceil((S.auto - now) / 36e5)} ч</span>`);
   if (h && h.banner) bd.push('<span class="bdg">🚩</span>');
   $('bdg').innerHTML = bd.join('');
+  const BGS = { dragons: 'bg/dragons.jpg' }; $('scene').style.backgroundImage = `url(${BGS[h && h.f] || BGS.dragons})`;
   const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
@@ -285,6 +287,7 @@ async function renderTop() {
   catch (e) { $('tops').innerHTML = `<div class="sub">${esc(e.message)}</div>`; }
 }
 
+document.addEventListener('zn-hit', () => { const sc = $('scene'); sc.classList.remove('shk'); void sc.offsetWidth; sc.classList.add('shk'); });
 // ---------- удары ----------
 function tap(ev) {
   if (!S) return; const e = draw(); if (e < 1) { hap('rigid'); toast('⚡ Выносливость кончилась — отдохни или купи в Лавке'); return; }
