@@ -91,6 +91,11 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .binfo{text-align:center;font-weight:800;font-size:13px;margin-top:6px;text-shadow:0 1px 3px #000}
 #bgo{position:fixed;left:0;right:0;top:38%;text-align:center;font-size:76px;font-weight:900;color:#fff5e0;-webkit-text-stroke:3px #6a3a00;text-shadow:0 6px 0 #a86a00;z-index:7;pointer-events:none;display:none}
 #app.hide,.side.hide{display:none!important}
+.ctabs{display:flex;gap:6px;margin:8px 0}.ctabs button{flex:1;border:0;border-radius:10px;padding:8px;font-weight:900;background:#0a1230;color:var(--mut);cursor:pointer}.ctabs button.on{background:linear-gradient(180deg,#ff6a4a,#c8301a);color:#fff}
+#clist{height:52vh;overflow:auto;display:flex;flex-direction:column;gap:7px;padding:2px}.msg{background:#0a1230cc;border-radius:12px;padding:7px 10px;max-width:88%;align-self:flex-start}.msg.my{align-self:flex-end;background:#1d3a70}
+.msg .h{font-size:12px;font-weight:800;color:#c8a0ff}.msg .h em{font-style:normal;color:var(--gold);font-weight:700;margin-left:4px}.msg .x{font-size:15px;word-break:break-word}.msg .tm{font-size:10px;color:var(--mut);text-align:right}
+.crow{display:flex;gap:6px;margin-top:8px}.crow input,.gin{flex:1;min-width:0;border-radius:12px;border:1px solid #ffffff30;background:#0a1230;color:#fff;padding:10px;font-size:15px;user-select:text;-webkit-user-select:text}
+.fpick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.fpick button{border:2px solid #ffffff22;border-radius:12px;padding:10px;font-weight:900;color:#fff;background:#0a1230;cursor:pointer;font-size:15px}.fpick button.on{border-color:var(--gold)}
 .toast{position:fixed;left:50%;top:calc(90px + env(safe-area-inset-top));transform:translateX(-50%);background:#0a1230ee;border:2px solid var(--gold2);color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;z-index:9;max-width:90%;text-align:center;display:none}
 .demo{background:#0a1230cc;border:1px solid #ff4d6a88;border-radius:10px;padding:5px 10px;font-size:12px;margin-top:6px;text-align:center}.demo a{color:var(--gold)}
 .code{font-size:28px;font-weight:900;letter-spacing:3px;color:var(--gold);text-align:center;margin:6px 0}
@@ -103,7 +108,7 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 <div class="side">
   <a class="rb" id="fieldlink" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank" title="Поле битвы">🗺</a>
   <a class="rb" id="instalink" href="#" target="_blank" title="Instagram">📷</a>
-  <a class="rb" href="https://t.me/znameni4_bot" target="_blank" title="Бот">💬</a>
+  <button class="rb" id="chatbtn" title="Чат">💬</button>
 </div>
 <div id="app">
   <div class="top gp">
@@ -146,7 +151,8 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
   <div class="page" id="p-shop"><div class="sheet gp"><h3>⭐ Лавка за Stars</h3><div class="sub">Покупки поддерживают игру и новые битвы.</div><div class="list" id="shop"></div></div></div>
   <div class="page" id="p-me"><div class="sheet gp"><h3>🚩 Твоё знамя</h3>
     <div class="list">
-      <div id="mebox"></div>
+      <div id="mebox"></div><div id="facbox"></div>
+      <div class="sec">🏰 Гильдия<small>Гильдии живут внутри знамён. Золото участников идёт в недельный рейтинг.</small></div><div id="gbox" style="display:flex;flex-direction:column;gap:8px"></div>
       <div class="card"><div class="t"><b>⚔️ Битва каждый день в 20:00</b><small id="nb">…</small></div></div>
       <a class="btn" style="text-align:center;text-decoration:none" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank">🗺 Смотреть поле битвы</a>
     </div></div>
@@ -168,6 +174,10 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
   <div class="side2" style="text-align:right"><b id="ename">Враг</b><div class="hp en"><i id="hpen"></i><span id="hpent"></span></div></div></div>
   <div class="binfo" id="binfo"></div><div style="flex:1;pointer-events:none"></div><button class="btn" style="align-self:center;background:#2a3a6a;color:#fff;box-shadow:0 3px 0 #0a1230" id="bquit">Сдаться</button></div>
 <div id="bgo">Бей!</div>
+<div class="modal" id="chm"><div class="gp"><div style="display:flex;align-items:center"><h3 style="flex:1;margin:0">💬 Чат</h3><button class="btn" style="padding:6px 12px" data-close="chm">✕</button></div>
+  <div class="ctabs"><button data-ch="world" class="on">Мир</button><button data-ch="army">Знамя</button><button data-ch="guild">Гильдия</button></div>
+  <div id="clist"></div><div class="crow"><input id="cin" maxlength="200" placeholder="Сообщение…"><button class="btn" id="csend">➤</button></div>
+  <div class="sub" style="text-align:center;margin-top:6px;font-size:11px">Без оскорблений, ссылок и рекламы — за нарушения бан.</div></div></div>
 <div class="modal" id="lgm"><div class="gp"><h3 style="text-align:center">🏅 Лиги</h3><div class="sub" style="text-align:center">Лига растёт от всего золота, заработанного за игру. Каждая новая лига даёт награду и открывает постройки.</div><div id="lgl"></div><button class="btn" style="width:100%;margin-top:12px" data-close="lgm">Закрыть</button></div></div>
 
 <script>
@@ -247,8 +257,24 @@ async function api(action, body = {}) {
   const r = await fetch(API + action, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: INIT, ...body }) });
   const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.message || 'Ошибка ' + r.status); return d;
 }
+let SOm = null;
 async function demoApi(action, b) {
   const PG = await getPG();
+  if (/^(chat_|guild_|pick_)/.test(action)) {
+    const { createSocial } = await import('./social.mjs'), kv = () => { try { return JSON.parse(localStorage.getItem('zn-demo-kv')) || {}; } catch (e) { return {}; } };
+    SOm = SOm || createSocial({ get: async k => kv()[k] ?? null, set: async (k, v) => { const o = kv(); o[k] = v; try { localStorage.setItem('zn-demo-kv', JSON.stringify(o)); } catch (e) { } } });
+    let st; try { st = JSON.parse(localStorage.getItem('zn-tap-demo')); } catch (e) { } st = st || { coins: 0, total: 0, xp: 0, lv: { power: 0, energy: 0, regen: 0 }, e: 500, eAt: Date.now() };
+    st.id = 'demo'; st.fac = st.pickFac || new URLSearchParams(location.search).get('f') || '';
+    const save = () => { try { localStorage.setItem('zn-tap-demo', JSON.stringify(st)); } catch (e) { } }, chk = r => { if (r && r.err) throw new Error(r.err); return r; };
+    if (action === 'chat_list') return SOm.chatList(st, b.ch, b.since);
+    if (action === 'chat_send') { const r = chk(await SOm.chatSend(st, b.ch, b.text, '@demo_voin')); save(); return r; }
+    if (action === 'guild_view') return SOm.guildView(st);
+    if (action === 'pick_faction') { st.pickFac = b.f; save(); }
+    if (action === 'guild_create') { chk(await SOm.guildCreate(st, b.name)); save(); }
+    if (action === 'guild_join') { chk(await SOm.guildJoin(st, b.id)); save(); }
+    if (action === 'guild_leave') { await SOm.guildLeave(st); save(); }
+    const d = await demoApi('login', {}); return { ...d, guilds: await SOm.guildView(st) };
+  }
   const k = 'zn-tap-demo', now = Date.now(), day = new Date(now + 4 * 36e5).toISOString().slice(0, 10); let s; try { s = JSON.parse(localStorage.getItem(k)); } catch (e) { }
   s = s || { coins: 0, total: 0, xp: 0, lv: { power: 0, energy: 0, regen: 0 }, e: 500, eAt: now };
   PG.ensure(s, now, day); const bldGain = PG.accrue(s, now); let newL = PG.leagueUp(s), claimed = 0;
@@ -266,7 +292,8 @@ async function demoApi(action, b) {
   if (action === 'top') return { list: [{ n: '@kirill_77', v: 18400, f: 'dragons' }, { n: '@masha.k', v: 9100, f: 'lions' }, { n: 'Ты', v: Math.floor(s.total), f: 'wolves' }].sort((a, b) => b.v - a.v), me: null, factions: { lions: 9100, wolves: Math.floor(s.total), dragons: 18400, ravens: 3000 } };
   try { localStorage.setItem(k, JSON.stringify(s)); } catch (e) { }
   const lv = Math.floor(Math.sqrt(s.xp / 100)), nb = new Date(); nb.setHours(20, 0, 0, 0); if (nb < new Date()) nb.setDate(nb.getDate() + 1);
-  return { name: 'Гость', coins: s.coins, total: s.total, lv: s.lv, ...st(), energy: Math.floor(eN()), x2: 0, auto: 0, nick: 'demo_voin', code: '',
+  s.fac = s.pickFac || new URLSearchParams(location.search).get('f') || '';
+  return { id: 'demo', fac: s.fac, linked: false, guild: s.guild || '', name: 'Гость', coins: s.coins, total: s.total, lv: s.lv, ...st(), energy: Math.floor(eN()), x2: 0, auto: 0, nick: 'demo_voin', code: '',
     hero: { f: new URLSearchParams(location.search).get('f') || 'wolves', r: new URLSearchParams(location.search).get('r') || 'archer', lv, xp: s.xp, cur: lv * lv * 100, next: (lv + 1) * (lv + 1) * 100, banner: false },
     costs: { power: cost('power', s.lv.power), energy: cost('energy', s.lv.energy), regen: cost('regen', s.lv.regen) }, adsLeft: 0, nextBattle: +nb, now,
     ...PG.progressView(s, day), newLeagues: newL, bldGain: Math.floor(bldGain), claimed, ...extra,
@@ -292,7 +319,7 @@ function apply(d) {
   const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
-  draw(); renderUps(); renderShop(); renderMe(); renderTasks(); renderLeagues(); renderMap();
+  draw(); renderUps(); renderShop(); renderMe(); renderTasks(); renderLeagues(); renderMap(); renderFac();
   for (const L of d.newLeagues || []) { hap('ok'); toast(`🏅 Новая лига «${L.name}»! Награда +${fmt(L.prize)} золота`, 4000); }
 }
 const mult = () => S.x2 > Date.now() ? 2 : 1;
@@ -358,6 +385,45 @@ async function renderTop() {
 }
 
 document.addEventListener('zn-hit', () => { const sc = $('scene'); sc.classList.remove('shk'); void sc.offsetWidth; sc.classList.add('shk'); });
+// ---------- чат ----------
+let CH = { ch: 'world', last: 0, timer: 0, ids: new Set() };
+function openChat() { $('chm').classList.add('on'); chatLoad(true); clearInterval(CH.timer); CH.timer = setInterval(() => $('chm').classList.contains('on') ? chatLoad() : clearInterval(CH.timer), 3500); }
+async function chatLoad(reset) {
+  if (reset) { CH.last = 0; CH.ids = new Set(); $('clist').innerHTML = '<div class="sub">Загружаю…</div>'; }
+  try { const d = await api('chat_list', { ch: CH.ch, since: CH.last }); if (reset) $('clist').innerHTML = '';
+    if (d.need) { $('clist').innerHTML = `<div class="sub" style="text-align:center;margin-top:30px">${d.need === 'faction' ? 'Выбери знамя во вкладке 🚩 — и общайся со своими.' : 'Вступи в гильдию во вкладке 🚩 — тут будет её чат.'}</div>`; return; }
+    const box = $('clist'), atEnd = box.scrollTop + box.clientHeight >= box.scrollHeight - 30;
+    for (const m of d.list) { if (CH.ids.has(m.id)) continue; CH.ids.add(m.id); CH.last = Math.max(CH.last, m.id);
+      const el = document.createElement('div'); el.className = 'msg' + (m.uid === S.id ? ' my' : '');
+      el.innerHTML = `<div class="h">${m.f && F[m.f] ? F[m.f][1] + ' ' : ''}${esc(m.n)}${m.g ? `<em>[${esc(m.g)}]</em>` : ''}</div><div class="x">${esc(m.txt)}</div><div class="tm">${new Date(m.at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>`;
+      box.appendChild(el); }
+    if (!box.children.length) box.innerHTML = '<div class="sub" style="text-align:center;margin-top:30px">Пока тихо. Напиши первым!</div>';
+    if (atEnd || reset) box.scrollTop = box.scrollHeight;
+  } catch (e) { if (reset) $('clist').innerHTML = `<div class="sub">${esc(e.message)}</div>`; }
+}
+async function chatSend() {
+  const v = $('cin').value.trim(); if (!v) return;
+  try { await api('chat_send', { ch: CH.ch, text: v }); $('cin').value = ''; const box = $('clist'); if (box.querySelector('.sub')) box.innerHTML = ''; await chatLoad(); box.scrollTop = box.scrollHeight; } catch (e) { toast(e.message); }
+}
+$('cin').addEventListener('keydown', e => { if (e.key === 'Enter') chatSend(); });
+// ---------- знамя без Instagram и гильдии ----------
+function renderFac() {
+  if (S.linked) { $('facbox').innerHTML = ''; return; }
+  $('facbox').innerHTML = `<div class="card" style="flex-direction:column;align-items:stretch"><b>${S.fac ? 'Твоё знамя: ' + F[S.fac][1] + ' ' + F[S.fac][0] : 'Нет Instagram? Выбери знамя'}</b>
+    <small style="color:var(--mut)">Знамя нужно для чата своих и гильдий. В вечерней битве герой появится, когда ты вступишь через Instagram.</small>
+    <div class="fpick">${Object.entries(F).map(([k, v]) => `<button data-fac="${k}" class="${S.fac === k ? 'on' : ''}">${v[1]} ${v[0]}</button>`).join('')}</div></div>`;
+}
+async function renderGuild(d) {
+  try { if (!d) d = await api('guild_view'); } catch (e) { $('gbox').innerHTML = `<div class="sub">${esc(e.message)}</div>`; return; }
+  const top = d.top.length ? `<div class="sec" style="font-size:14px">🏆 Гильдии этой недели</div>` + d.top.map((g, i) => `<div class="row"><span class="n">${i + 1}</span><span class="nm">${esc(g.name)} · ${F[g.f] ? F[g.f][1] : ''}</span><b>${fmt(g.week)}</b></div>`).join('') : '';
+  if (d.mine) { const g = d.mine;
+    $('gbox').innerHTML = `<div class="card"><div class="ic">🏰</div><div class="t"><b>${esc(g.name)}</b><small>${F[g.f] ? F[g.f][1] + ' ' + F[g.f][0] : ''} · бойцов ${g.n} из ${g.max} · за неделю 🪙 ${fmt(g.week)}${g.me ? ' · ты глава' : ''}</small></div><button class="btn" data-gleave="1" style="background:#2a3a6a;color:#fff;box-shadow:0 3px 0 #0a1230">Выйти</button></div>
+      <button class="btn" data-gchat="1">💬 Чат гильдии</button>` + top; return; }
+  if (!S.fac) { $('gbox').innerHTML = `<div class="sub">Сначала выбери знамя — гильдии живут внутри знамён.</div>` + top; return; }
+  $('gbox').innerHTML = (d.open.length ? d.open.map(g => `<div class="card"><div class="ic">🏰</div><div class="t"><b>${esc(g.name)}</b><small>бойцов ${g.n} из ${g.max} · за неделю 🪙 ${fmt(g.week)}</small></div><button class="btn" data-gjoin="${g.id}">Вступить</button></div>`).join('')
+      : `<div class="sub">В твоём знамени пока нет гильдий — создай первую!</div>`) +
+    `<div class="card" style="flex-direction:column;align-items:stretch"><b>Создать гильдию · 🪙 ${fmt(d.cost)}</b><div class="crow"><input class="gin" id="gname" maxlength="20" placeholder="Название (3–20 букв)"><button class="btn" data-gcreate="1">Создать</button></div></div>` + top;
+}
 // ---------- поход ----------
 let PGm = null; const getPG = async () => PGm || (PGm = await import('./progress.mjs'));
 getPG().then(() => S && renderMap());
@@ -450,7 +516,7 @@ setInterval(sync, 1500); document.addEventListener('visibilitychange', () => doc
 // ---------- кнопки ----------
 document.addEventListener('click', async e => {
   const t = e.target.closest('button'); if (!t) return;
-  if (t.dataset.p) { document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b === t)); document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + t.dataset.p)); if (t.dataset.p === 'war') { renderTop(); renderMap(); } document.querySelector('.side').style.display = t.dataset.p === 'tap' ? '' : 'none'; hap('light'); return; }
+  if (t.dataset.p) { document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b === t)); document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + t.dataset.p)); if (t.dataset.p === 'war') { renderTop(); renderMap(); } if (t.dataset.p === 'me') renderGuild(); document.querySelector('.side').style.display = t.dataset.p === 'tap' ? '' : 'none'; hap('light'); return; }
   if (t.dataset.up) { await sync(); try { apply(await api('upgrade', { kind: t.dataset.up })); hap('ok'); toast('⬆️ Улучшено!'); } catch (er) { toast(er.message); } return; }
   if (t.dataset.buy) {
     try { const { link } = await api('invoice', { item: t.dataset.buy });
@@ -460,6 +526,13 @@ document.addEventListener('click', async e => {
   if (t.id === 'adbtn') { showAd(); return; }
   if (t.dataset.bld) { await sync(); try { apply(await api('build', { kind: t.dataset.bld })); hap('ok'); toast('🏗 Постройка улучшена!'); } catch (er) { toast(er.message); } return; }
   if (t.dataset.claim) { await sync(); try { const d = await api('claim', { what: t.dataset.claim }); apply(d); hap('ok'); toast(`🪙 +${fmt(d.claimed)} золота!`); } catch (er) { toast(er.message); } return; }
+  if (t.id === 'chatbtn' || t.dataset.gchat) { if (t.dataset.gchat) { CH.ch = 'guild'; document.querySelectorAll('[data-ch]').forEach(b => b.classList.toggle('on', b.dataset.ch === 'guild')); } openChat(); return; }
+  if (t.dataset.ch) { CH.ch = t.dataset.ch; document.querySelectorAll('[data-ch]').forEach(b => b.classList.toggle('on', b === t)); chatLoad(true); return; }
+  if (t.id === 'csend') { chatSend(); return; }
+  if (t.dataset.fac) { try { apply(await api('pick_faction', { f: t.dataset.fac })); hap('ok'); renderGuild(); } catch (er) { toast(er.message); } return; }
+  if (t.dataset.gcreate || t.dataset.gjoin || t.dataset.gleave) { await sync();
+    try { const d = t.dataset.gcreate ? await api('guild_create', { name: $('gname').value }) : t.dataset.gjoin ? await api('guild_join', { id: t.dataset.gjoin }) : await api('guild_leave');
+      apply(d); renderGuild(d.guilds); hap('ok'); toast(t.dataset.gcreate ? '🏰 Гильдия создана!' : t.dataset.gjoin ? '🏰 Ты в гильдии!' : 'Ты вышел из гильдии'); } catch (er) { toast(er.message); } return; }
   if (t.dataset.stage) { const n = +t.dataset.stage; if (n > S.camp.max + 1) { toast('Сначала пройди предыдущие этапы'); return; } openStage(n); return; }
   if (t.dataset.fight) { fight(+t.dataset.fight); return; }
   if (t.dataset.next) { leaveBattle(); openStage(+t.dataset.next); return; }
