@@ -68,6 +68,15 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .tab{flex:1;border:0;background:transparent;color:var(--mut);border-radius:12px;padding:5px 0 4px;font-size:11px;font-weight:800;cursor:pointer}
 .tab span{display:block;font-size:22px;margin-bottom:1px;filter:saturate(.7)}
 .tab.on{background:linear-gradient(180deg,#ffe27a,#e8a21e);color:#3a1d00;box-shadow:inset 0 -2px 0 #a86a00}.tab.on span{filter:none}
+.sec{margin:12px 0 2px;text-align:center;color:var(--gold);font-weight:900;font-size:16px}.sec small{display:block;color:var(--mut);font-weight:600;font-size:12px;margin-top:2px}
+.card.lock{opacity:.55}.card .t small em{font-style:normal;color:#7be07b;font-weight:800}
+.prog{height:8px;border-radius:8px;background:#0a1230;border:1px solid #ffffff22;overflow:hidden;margin-top:5px}.prog i{display:block;height:100%;background:linear-gradient(90deg,#ffe066,#ff9a2e)}
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:6px 0}.day{background:#0a1230aa;border:1px solid #ffffff1c;border-radius:10px;padding:5px 2px;text-align:center;font-size:11px;color:var(--mut)}
+.day b{display:block;color:#fff;font-size:13px}.day.done{border-color:#3a8a4a;background:#1a3a24aa}.day.now{border:2px solid var(--gold);background:#3a2a0aaa}
+.tab .dot{position:absolute;margin:-4px 0 0 14px;width:9px;height:9px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 0 2px #13204a}.tab{position:relative}
+.modal{position:fixed;inset:0;z-index:20;background:#0009;display:none;align-items:center;justify-content:center;padding:16px}.modal.on{display:flex}
+.modal .gp{width:100%;max-width:420px;padding:14px;max-height:85vh;overflow:auto}.lg{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:#0a1230aa;margin-top:7px}.lg.cur{outline:2px solid var(--gold)}.lg .n{width:24px;height:24px;border-radius:7px;background:#3a5ab0;display:grid;place-items:center;font-weight:900;font-size:13px}.lg .nm{flex:1}.lg small{display:block;color:var(--mut)}
+.rank{cursor:pointer}
 .toast{position:fixed;left:50%;top:calc(90px + env(safe-area-inset-top));transform:translateX(-50%);background:#0a1230ee;border:2px solid var(--gold2);color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;z-index:9;max-width:90%;text-align:center;display:none}
 .demo{background:#0a1230cc;border:1px solid #ff4d6a88;border-radius:10px;padding:5px 10px;font-size:12px;margin-top:6px;text-align:center}.demo a{color:var(--gold)}
 .code{font-size:28px;font-weight:900;letter-spacing:3px;color:var(--gold);text-align:center;margin:6px 0}
@@ -114,7 +123,8 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
     </div>
   </div>
 
-  <div class="page" id="p-up"><div class="sheet gp"><h3>⬆️ Прокачка</h3><div class="list" id="ups"></div></div></div>
+  <div class="page" id="p-up"><div class="sheet gp"><h3>⬆️ Прокачка</h3><div class="list"><div id="ups" style="display:flex;flex-direction:column;gap:9px"></div><div class="sec">🏗 Постройки<small>Приносят золото каждый час, даже когда тебя нет. Копят не дольше 3 часов.</small></div><div id="blds" style="display:flex;flex-direction:column;gap:9px"></div></div></div></div>
+  <div class="page" id="p-tasks"><div class="sheet gp"><h3>📜 Задания</h3><div class="list" id="tasks"></div></div></div>
   <div class="page" id="p-top"><div class="sheet gp"><h3>🏆 Рейтинг тренировок</h3><div id="facsum" class="sub" style="margin-bottom:6px"></div><div class="list" id="tops"></div></div></div>
   <div class="page" id="p-shop"><div class="sheet gp"><h3>⭐ Лавка за Stars</h3><div class="sub">Покупки поддерживают игру и новые битвы.</div><div class="list" id="shop"></div></div></div>
   <div class="page" id="p-me"><div class="sheet gp"><h3>🚩 Твоё знамя</h3>
@@ -128,12 +138,14 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
   <div class="tabs gp">
     <button class="tab on" data-p="tap"><span>🏕</span>Лагерь</button>
     <button class="tab" data-p="up"><span>⬆️</span>Прокачка</button>
+    <button class="tab" data-p="tasks"><span>📜</span>Задания<i class="dot" id="tdot" style="display:none"></i></button>
     <button class="tab" data-p="top"><span>🏆</span>Топ</button>
     <button class="tab" data-p="shop"><span>⭐</span>Лавка</button>
     <button class="tab" data-p="me"><span>🚩</span>Знамя</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<div class="modal" id="lgm"><div class="gp"><h3 style="text-align:center">🏅 Лиги</h3><div class="sub" style="text-align:center">Лига растёт от всего золота, заработанного за игру. Каждая новая лига даёт награду и открывает постройки.</div><div id="lgl"></div><button class="btn" style="width:100%;margin-top:12px" data-close="lgm">Закрыть</button></div></div>
 
 <script>
 // ---------- настройки ----------
@@ -212,12 +224,18 @@ async function api(action, body = {}) {
   const r = await fetch(API + action, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: INIT, ...body }) });
   const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.message || 'Ошибка ' + r.status); return d;
 }
-function demoApi(action, b) {
-  const k = 'zn-tap-demo', now = Date.now(); let s; try { s = JSON.parse(localStorage.getItem(k)); } catch (e) { }
+let PGm = null;
+async function demoApi(action, b) {
+  const PG = PGm || (PGm = await import('./progress.mjs'));
+  const k = 'zn-tap-demo', now = Date.now(), day = new Date(now + 4 * 36e5).toISOString().slice(0, 10); let s; try { s = JSON.parse(localStorage.getItem(k)); } catch (e) { }
   s = s || { coins: 0, total: 0, xp: 0, lv: { power: 0, energy: 0, regen: 0 }, e: 500, eAt: now };
+  PG.ensure(s, now, day); const bldGain = PG.accrue(s, now); let newL = PG.leagueUp(s), claimed = 0;
+  if (action === 'build') { const r = PG.build(s, b.kind); if (r.err) throw new Error(r.err); }
+  if (action === 'claim') { const r = PG.claim(s, b.what, day); if (r.err) throw new Error(r.err); claimed = r.r; }
+  if (action === 'ad') PG.countAd(s);
   const st = () => ({ power: 1 + s.lv.power, maxE: 500 + 250 * s.lv.energy, regen: 1 + .5 * s.lv.regen }), eN = () => Math.min(st().maxE, s.e + st().regen * (now - s.eAt) / 1000);
   const C = { power: [100, 1.8], energy: [150, 1.9], regen: [200, 2] }, cost = (kk, l) => Math.round(C[kk][0] * Math.pow(C[kk][1], l));
-  if (action === 'sync') { const n = Math.min(b.taps | 0, Math.floor(eN())); s.e = eN() - n; s.eAt = now; s.coins += n * st().power; s.total += n * st().power; s.xp += n * st().power; }
+  if (action === 'sync') { const n = Math.min(b.taps | 0, Math.floor(eN())); s.e = eN() - n; s.eAt = now; s.coins += n * st().power; s.total += n * st().power; s.xp += n * st().power; PG.countTaps(s, n); newL = newL.concat(PG.leagueUp(s)); }
   if (action === 'upgrade') { const c = cost(b.kind, s.lv[b.kind]); if (s.coins < c) throw new Error(`Нужно ${c} золота.`); s.e = eN(); s.eAt = now; s.coins -= c; s.lv[b.kind]++; }
   if (action === 'invoice') throw new Error('Покупки за ⭐ работают только в Telegram.');
   if (action === 'top') return { list: [{ n: '@kirill_77', v: 18400, f: 'dragons' }, { n: '@masha.k', v: 9100, f: 'lions' }, { n: 'Ты', v: Math.floor(s.total), f: 'wolves' }].sort((a, b) => b.v - a.v), me: null, factions: { lions: 9100, wolves: Math.floor(s.total), dragons: 18400, ravens: 3000 } };
@@ -226,6 +244,7 @@ function demoApi(action, b) {
   return { name: 'Гость', coins: s.coins, total: s.total, lv: s.lv, ...st(), energy: Math.floor(eN()), x2: 0, auto: 0, nick: 'demo_voin', code: '',
     hero: { f: new URLSearchParams(location.search).get('f') || 'wolves', r: new URLSearchParams(location.search).get('r') || 'archer', lv, xp: s.xp, cur: lv * lv * 100, next: (lv + 1) * (lv + 1) * 100, banner: false },
     costs: { power: cost('power', s.lv.power), energy: cost('energy', s.lv.energy), regen: cost('regen', s.lv.regen) }, adsLeft: 0, nextBattle: +nb, now,
+    ...PG.progressView(s, day), newLeagues: newL, bldGain: Math.floor(bldGain), claimed,
     shop: { energy: { title: 'Полная энергия', desc: 'Энергия сразу до максимума', stars: 10 }, squire: { title: 'Оруженосец на 24 часа', desc: 'Тренирует героя, даже когда ты не в игре', stars: 50 }, x2: { title: 'Двойная тренировка на 7 дней', desc: 'Каждый удар приносит в 2 раза больше', stars: 100 }, banner: { title: 'Золотое знамя', desc: 'Золотая аура героя в битве навсегда + 👑 в рейтинге', stars: 250 } } };
 }
 
@@ -236,9 +255,9 @@ function apply(d) {
   document.documentElement.style.setProperty('--fc', fc ? fc[2] : '#8a6a3a');
   $('nm').textContent = S.name || 'Игрок'; $('ava').textContent = fc ? fc[1] : ((S.name || '?').trim()[0] || '?');
   $('nk').textContent = h ? (fc ? fc[0] : '') + (RL[h.r] ? ' · ' + RL[h.r][0] : '') : 'Герой не привязан';
-  const lv = h ? h.lv : 0; $('lvl').textContent = 'Ур. ' + lv; $('rank').textContent = rankOf(lv) + (S.nick ? ' · @' + S.nick : '');
+  const lv = h ? h.lv : 0; $('lvl').textContent = 'Ур. ' + lv; $('rank').textContent = '🏅 ' + (S.league ? S.league.name : rankOf(lv)) + (S.nick ? ' · @' + S.nick : '');
   $('xpb').style.width = h ? Math.min(100, 100 * (h.xp - h.cur) / Math.max(1, h.next - h.cur)) + '%' : '0%';
-  $('nxr').textContent = h ? 'след.: ' + nextRank(lv) : 'привяжи во вкладке 🚩';
+  $('nxr').textContent = S.league ? (S.league.next ? 'след.: ' + S.league.next.name + ' ›' : 'высшая лига') : '';
   const now = Date.now(), bd = [];
   if (S.x2 > now) bd.push(`<span class="bdg">×2 ${Math.ceil((S.x2 - now) / 864e5)} дн</span>`);
   if (S.auto > now) bd.push(`<span class="bdg">🛡 ${Math.ceil((S.auto - now) / 36e5)} ч</span>`);
@@ -248,7 +267,8 @@ function apply(d) {
   const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
-  draw(); renderUps(); renderShop(); renderMe();
+  draw(); renderUps(); renderShop(); renderMe(); renderTasks(); renderLeagues();
+  for (const L of d.newLeagues || []) { hap('ok'); toast(`🏅 Новая лига «${L.name}»! Награда +${fmt(L.prize)} золота`, 4000); }
 }
 const mult = () => S.x2 > Date.now() ? 2 : 1;
 function draw() {
@@ -256,15 +276,40 @@ function draw() {
   $('coins').textContent = fmt(S.coins + pending * S.power * mult()); $('en').textContent = Math.floor(e); $('enm').textContent = S.maxE;
   $('enb').style.width = (100 * e / S.maxE) + '%'; $('enr').textContent = `+${fmt(S.regen * 60)} в минуту`;
   const now = Date.now(), pl = [`<span><em>+${S.power * mult()}</em> удар${mult() > 1 ? ' ×2' : ''}</span>`];
-  pl.push(S.auto > now ? `<span>🛡 <em>${Math.ceil((S.auto - now) / 36e5)} ч</em> оруженосец</span>` : `<span>⚔️ <em>${fmt(S.total || 0)}</em> всего</span>`);
+  pl.push(`<span>⏳ <em>+${fmt(S.perHour || 0)}</em> в час</span>`);
+  if (S.auto > now) pl.push(`<span>🛡 <em>${Math.ceil((S.auto - now) / 36e5)} ч</em></span>`);
   const ph = pl.join(''); if (draw.ph !== ph) { $('pills').innerHTML = ph; draw.ph = ph; }
   return e;
 }
 setInterval(draw, 250);
-function renderUps() {
+function renderUps() { renderBlds();
   $('ups').innerHTML = Object.entries(UP).map(([k, [ic, nm, ds]]) => { const c = S.costs[k], l = S.lv[k];
     return `<div class="card"><div class="ic">${ic}</div><div class="t"><b>${nm} · ур. ${l}</b><small>${c == null ? 'Максимум' : ds(l)}</small></div>
     <button class="btn" data-up="${k}" ${c == null || c > S.coins + pending * S.power * mult() ? 'disabled' : ''}>${c == null ? 'MAX' : fmt(c)}</button></div>`; }).join('');
+}
+function renderBlds() {
+  const have = S.coins + pending * S.power * mult();
+  $('blds').innerHTML = (S.blds || []).map(b => b.locked
+    ? `<div class="card lock"><div class="ic">${b.ic}</div><div class="t"><b>${b.title}</b><small>🔒 Откроется в лиге «${b.locked}»</small></div><button class="btn" disabled>${fmt(b.cost)}</button></div>`
+    : `<div class="card"><div class="ic">${b.ic}</div><div class="t"><b>${b.title} · ур. ${b.lv}</b><small><em>+${fmt(b.inc)} в час</em>, окупится за ${b.payback} ч</small></div>
+      <button class="btn" data-bld="${b.k}" ${b.cost == null || b.cost > have ? 'disabled' : ''}>${b.cost == null ? 'MAX' : fmt(b.cost)}</button></div>`).join('');
+}
+function renderTasks() {
+  if (!S.daily) return; const L = S.login, D = S.daily;
+  const days = L.list.map((r, i) => { const n = i + 1, cls = n < L.day || (n === L.day && !L.can) ? 'done' : n === L.day && L.can ? 'now' : ''; return `<div class="day ${cls}">${n} день<b>${fmt(r)}</b></div>`; }).join('');
+  $('tasks').innerHTML = `<div class="card" style="flex-direction:column;align-items:stretch"><b>📅 Награда за вход</b><small style="color:var(--mut)">Заходи каждый день подряд — награда растёт. Пропуск сбрасывает серию.</small>
+      <div class="days">${days}</div><button class="btn" data-claim="login" ${L.can ? '' : 'disabled'}>${L.can ? 'Забрать ' + fmt(L.list[L.day - 1]) + ' золота' : 'Приходи завтра за ' + fmt(L.list[L.day % L.list.length]) }</button></div>
+    <div class="sec">⚔️ Задания дня<small>Новые задания каждый день в полночь</small></div>
+    ${D.tasks.map((t, i) => `<div class="card"><div class="t"><b>${t.t}</b><small>${fmt(t.p)} из ${fmt(t.n)} · награда ${fmt(t.r)}</small><div class="prog"><i style="width:${100 * t.p / t.n}%"></i></div></div>
+      <button class="btn" data-claim="task:${i}" ${t.got || t.p < t.n ? 'disabled' : ''}>${t.got ? '✓' : 'Забрать'}</button></div>`).join('')}
+    <div class="card"><div class="ic">🎁</div><div class="t"><b>Сундук дня</b><small>Выполни все задания дня — в сундуке ${fmt(D.chest.r)} золота</small></div>
+      <button class="btn" data-claim="chest" ${D.chest.ready && !D.chest.got ? '' : 'disabled'}>${D.chest.got ? '✓' : 'Открыть'}</button></div>`;
+  const any = L.can || D.tasks.some(t => !t.got && t.p >= t.n) || (D.chest.ready && !D.chest.got); $('tdot').style.display = any ? 'block' : 'none';
+}
+function renderLeagues() {
+  if (!S.league) return;
+  $('lgl').innerHTML = `<div class="sub" style="text-align:center;margin-top:6px">${S.league.next ? `Ты — ${S.league.name}. До «${S.league.next.name}» ещё <b>${fmt(Math.max(0, S.league.next.need - S.total))}</b> золота.` : 'Ты в высшей лиге!'} «Ур.» — это уровень героя, он не связан с лигой.</div>` +
+    S.league.list.map((L, i) => `<div class="lg ${i === S.league.i ? 'cur' : ''}"><span class="n">${i + 1}</span><div class="nm"><b>${L.name}</b><small>${i ? 'от ' + fmt(L.need) + ' золота' : 'Начало пути'}</small></div>${L.prize ? '<b>🪙 ' + fmt(L.prize) + '</b>' : ''}</div>`).join('');
 }
 function renderShop() {
   if (!shop) return;
@@ -296,6 +341,8 @@ function tap(ev) {
   const f = document.createElement('div'); f.className = 'fx'; f.textContent = '+' + S.power * mult(); f.style.left = (x - 14) + 'px'; f.style.top = (y - 40) + 'px';
   document.body.appendChild(f); setTimeout(() => f.remove(), 900); draw();
 }
+$('rank').parentElement.parentElement.addEventListener('click', () => { if (S && S.league) { renderLeagues(); $('lgm').classList.add('on'); } });
+$('lgm').addEventListener('click', e => { if (e.target.id === 'lgm') $('lgm').classList.remove('on'); });
 $('king').addEventListener('pointerdown', e => { e.preventDefault(); tap(e); });
 async function sync() {
   if (syncing || !pending || !S) return; syncing = true; const n = pending, lv0 = S.hero ? S.hero.lv : 0;
@@ -307,7 +354,7 @@ setInterval(sync, 1500); document.addEventListener('visibilitychange', () => doc
 // ---------- кнопки ----------
 document.addEventListener('click', async e => {
   const t = e.target.closest('button'); if (!t) return;
-  if (t.dataset.p) { document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b === t)); document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + t.dataset.p)); if (t.dataset.p === 'top') renderTop(); hap('light'); return; }
+  if (t.dataset.p) { document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b === t)); document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + t.dataset.p)); if (t.dataset.p === 'top') renderTop(); document.querySelector('.side').style.display = t.dataset.p === 'tap' ? '' : 'none'; hap('light'); return; }
   if (t.dataset.up) { await sync(); try { apply(await api('upgrade', { kind: t.dataset.up })); hap('ok'); toast('⬆️ Улучшено!'); } catch (er) { toast(er.message); } return; }
   if (t.dataset.buy) {
     try { const { link } = await api('invoice', { item: t.dataset.buy });
@@ -315,6 +362,9 @@ document.addEventListener('click', async e => {
     } catch (er) { toast(er.message); } return;
   }
   if (t.id === 'adbtn') { showAd(); return; }
+  if (t.dataset.bld) { await sync(); try { apply(await api('build', { kind: t.dataset.bld })); hap('ok'); toast('🏗 Постройка улучшена!'); } catch (er) { toast(er.message); } return; }
+  if (t.dataset.claim) { await sync(); try { const d = await api('claim', { what: t.dataset.claim }); apply(d); hap('ok'); toast(`🪙 +${fmt(d.claimed)} золота!`); } catch (er) { toast(er.message); } return; }
+  if (t.dataset.close) { $(t.dataset.close).classList.remove('on'); return; }
 });
 async function showAd() {
   if (!ADS_BLOCK || !window.Adsgram) return;
@@ -327,7 +377,7 @@ if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://
   if (TG) { try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor('#0c1430'); TG.setBackgroundColor && TG.setBackgroundColor('#0c1430'); TG.disableVerticalSwipes && TG.disableVerticalSwipes(); } catch (e) { } }
   if (DEMO) $('demo').style.display = 'block'; $('instalink').href = 'https://instagram.com/' + INSTA;
   try { const d = await api('login'); apply(d);
-    if (d.won) toast(`🏆 Твоё знамя победило! +${fmt(d.won)} золота`, 4000); else if (d.autoGain) toast(`🛡 Оруженосец натренировал: +${fmt(d.autoGain)}`, 3500); }
+    if (d.won) toast(`🏆 Твоё знамя победило! +${fmt(d.won)} золота`, 4000); else if (d.bldGain > 0) toast(`🏗 Постройки принесли, пока тебя не было: +${fmt(d.bldGain)}`, 3500); else if (d.autoGain) toast(`🛡 Оруженосец натренировал: +${fmt(d.autoGain)}`, 3500); }
   catch (e) { toast(e.message, 5000); }
 })();
 </script>
