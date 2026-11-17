@@ -7,9 +7,11 @@ const EMB = { lions: '🦁', wolves: '🐺', dragons: '🐉', ravens: '🪶' };
 export const BG = { w: 768, h: 1376, hero: [0.38, 0.735], dummyBase: [0.835, 0.755], dummyTop: [0.83, 0.576], target: [0.81, 0.668] };
 const HERO_H = 1.95, HERO_K = 1.2, HERO_THIN = 0.78; // герой на голову выше чучела и стройнее
 
-let R, scene, cam, clock, grad, hero = null, ready = false;
-let skinName = '', fx = [], role = 'warrior', fac = 'lions', gold = false, auraG = null, el = null, BASE = new THREE.Vector3();
-let atk = null, dummy = null, wob = { x: 0, vx: 0, z: 0, vz: 0 }; // текущий удар, чучело, его качание
+let R, scene, cam, clock, grad, el = null, ready = false;
+let heroOpt = { role: 'warrior', fac: 'lions', gold: false, skin: '' }, hero = null, enemy = null, dummy = null, auraG = null, fx = [], DH = 1.5, faceCam = false;
+const wob = { x: 0, vx: 0, z: 0, vz: 0 }, BASE = new THREE.Vector3();
+
+
 const HERO_P = new THREE.Vector3(), TARGET_P = new THREE.Vector3(), ray = new THREE.Raycaster();
 
 function toonGrad() { const d = new Uint8Array([155, 155, 155, 255, 215, 215, 215, 255, 255, 255, 255, 255]); const t = new THREE.DataTexture(d, 3, 1); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; }
@@ -18,11 +20,11 @@ const M = (c, o = {}) => { const k = c + JSON.stringify(o); if (MATS.has(k)) ret
 function box(parent, w, h, d, c, x = 0, y = 0, z = 0) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), c && c.isMaterial ? c : M(c)); m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m; }
 function cyl(parent, rt, rb, h, c, x = 0, y = 0, z = 0, seg = 8) { const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), M(c)); m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m; }
 const shade = (c, k) => new THREE.Color(c).multiplyScalar(k).getHex();
-function capeTex(f, trim) { const c = document.createElement('canvas'); c.width = 128; c.height = 192; const g = c.getContext('2d');
-  g.fillStyle = '#' + FC[f].toString(16).padStart(6, '0'); g.fillRect(0, 0, 128, 192);
+function capeTex(col, emb, trim) { const c = document.createElement('canvas'); c.width = 128; c.height = 192; const g = c.getContext('2d');
+  g.fillStyle = '#' + col.toString(16).padStart(6, '0'); g.fillRect(0, 0, 128, 192);
   g.fillStyle = '#0002'; for (let x = 0; x < 128; x += 32) g.fillRect(x + 22, 0, 6, 192);
   g.fillStyle = trim; g.fillRect(0, 176, 128, 16); g.fillRect(0, 0, 128, 8);
-  g.font = '64px system-ui,"Apple Color Emoji","Segoe UI Emoji"'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(EMB[f], 64, 84);
+  g.font = '64px system-ui,"Apple Color Emoji","Segoe UI Emoji"'; g.textAlign = 'center'; g.textBaseline = 'middle'; if (emb) g.fillText(emb, 64, 84);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
 
 // ---------- герой из блоков ----------
@@ -31,8 +33,8 @@ const SKINS = {
   base: { metal: 0xB8C0CC, metalD: 0x6E7682, trim: 0xE8B931, skin: 0xF0C49A, pants: 0x3A3048, boots: 0x5A3A22, hair: 0x5A3420 },
   gold: { metal: 0xF2C84A, metalD: 0xB0841C, trim: 0xFFF0A0, skin: 0xF0C49A, pants: 0x4A3418, boots: 0x6A4420, hair: 0x5A3420 },
 };
-function buildCapy() { // капибара на 4 лапах, без доспехов: платок знамени и мандарин
-  const fur = 0x9A6A40, furD = 0x7A5030, furL = 0xB07E50, fc = FC[fac];
+function buildCapy(o) { // капибара на 4 лапах, без доспехов: платок знамени и мандарин
+  const fur = 0x9A6A40, furD = 0x7A5030, furL = 0xB07E50, fc = o.fc;
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body); const P = { g, body, capy: true, legs: [] };
   body.position.y = .5; box(body, .64, .58, 1.04, fur, 0, 0, 0); box(body, .56, .1, .9, furL, 0, -.3, 0); box(body, .5, .14, .2, furD, 0, .2, -.48);
   for (const [x, z] of [[-.2, .32], [.2, .32], [-.2, -.32], [.2, -.32]]) { const l = new THREE.Group(); l.position.set(x, .26, z); g.add(l); box(l, .18, .26, .2, furD, 0, -.13, 0); box(l, .2, .06, .23, 0x4A3020, 0, -.23, .02); P.legs.push(l); }
@@ -44,10 +46,10 @@ function buildCapy() { // капибара на 4 лапах, без доспе�
   box(body, .66, .16, .14, fc, 0, .18, .44); const tip = box(body, .2, .3, .04, fc, -.12, .02, .52); tip.rotation.z = .3; P.scarf = tip;
   return P;
 }
-function buildHero() {
-  if (skinName === 'capybara') return buildCapy();
-  const CAPY = skinName === 'capybara';
-  const S = CAPY ? { ...(gold ? SKINS.gold : SKINS.base), skin: 0x8A5A34, pants: 0x9A6A40, boots: 0x6A4426 } : gold ? SKINS.gold : SKINS.base, fc = FC[fac], fcd = shade(fc, .7), trimHex = '#' + S.trim.toString(16).padStart(6, '0');
+function buildHero(o) {
+  if (o.skin === 'capybara') return buildCapy(o);
+  const role = o.role;
+  const S = { ...(o.gold ? SKINS.gold : SKINS.base), ...(o.pal || {}) }, fc = o.fc, fcd = shade(fc, .7), trimHex = '#' + S.trim.toString(16).padStart(6, '0');
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body); const P = { g, body };
   for (const s of [-1, 1]) { const leg = new THREE.Group(); leg.position.set(s * .13, .8, 0); body.add(leg);
     box(leg, .2, .5, .22, S.pants, 0, -.25, 0);
@@ -60,10 +62,10 @@ function buildHero() {
   else if (role === 'archer') { box(torso, .5, .6, .3, 0x4A6A3A, 0, .3, 0); box(torso, .52, .08, .32, 0x6A4424, 0, .1, 0); box(torso, .2, .6, .02, fc, 0, .3, .16); }
   else { box(torso, .52, .6, .3, S.metal, 0, .3, 0); box(torso, .36, .5, .02, fc, 0, .26, .16); box(torso, .54, .08, .32, 0x6A4424, 0, .06, 0); box(torso, .08, .08, .04, S.trim, 0, .06, .17); box(torso, .3, .18, .02, fc, 0, -.07, .16); }
   const cape = new THREE.Group(); cape.position.set(0, .58, -.17); torso.add(cape); P.cape = cape;
-  const cm = new THREE.MeshToonMaterial({ map: capeTex(fac, trimHex), gradientMap: grad, side: THREE.DoubleSide });
+  const cm = new THREE.MeshToonMaterial({ map: capeTex(fc, o.emb, trimHex), gradientMap: grad, side: THREE.DoubleSide });
   const ch = role === 'mage' ? 1.12 : .95; box(cape, .54, ch, .035, cm, 0, -ch / 2, 0);
   const head = new THREE.Group(); head.position.y = .62; torso.add(head); P.head = head;
-  if (CAPY) { // голова капибары: длинная морда, маленькие ушки, мандарин на макушке
+  if (o.capyHead) { // (старый вариант) голова капибары: длинная морда, маленькие ушки, мандарин на макушке
     const fur = 0x9A6A40, furD = 0x7A5030;
     box(head, .4, .34, .46, fur, 0, .2, .04); box(head, .36, .26, .14, furD, 0, .14, .32); box(head, .22, .06, .02, 0x2a1a10, 0, .22, .395);
     box(head, .02, .05, .02, 0x2a1a10, -.05, .12, .395); box(head, .02, .05, .02, 0x2a1a10, .05, .12, .395);
@@ -115,107 +117,142 @@ function buildDummy() {
   const tg = new THREE.Mesh(new THREE.CylinderGeometry(.17, .17, .04, 24), [M(0xd8302a), new THREE.MeshToonMaterial({ map: targetTex(), gradientMap: grad }), M(0xd8302a)]);
   tg.rotation.x = Math.PI / 2; tg.position.set(-.04, .7, .18); tg.castShadow = true; body.add(tg); root.userData.target = tg;
   return root;
-}
-function bgRay(fx_, fy_) { const W = el.clientWidth, H = el.clientHeight, s = Math.max(W / BG.w, H / BG.h), dw = BG.w * s, dh = BG.h * s, x = (W - dw) / 2 + fx_ * dw, y = (H - dh) / 2 + fy_ * dh;
+}function bgRay(fx_, fy_) { const W = el.clientWidth, H = el.clientHeight, s = Math.max(W / BG.w, H / BG.h), dw = BG.w * s, dh = BG.h * s, x = (W - dw) / 2 + fx_ * dw, y = (H - dh) / 2 + fy_ * dh;
   ray.setFromCamera(new THREE.Vector2(x / W * 2 - 1, -(y / H) * 2 + 1), cam); return ray.ray; }
 function onGround(p) { const o = new THREE.Vector3(); bgRay(...p).intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), o); return o; }
+
+// ---------- бойцы (герой и враг) ----------
+function makeActor(o) {
+  const P = buildHero(o), A = { P, o, role: o.role, atk: null, hurt: 0, dead: 0, scaleK: o.boss ? 1.25 : 1 };
+  scene.add(P.g); return A;
+}
+function actorScale(A) { const k = DH * HERO_K / HERO_H * A.scaleK; A.P.g.scale.set(k * HERO_THIN, k, k * HERO_THIN); return k; }
+const chestOf = A => A.P.g.position.clone().add(new THREE.Vector3(0, (A.P.capy ? .7 : 1.3) * A.P.g.scale.y, 0));
 function place() {
   if (!el || !el.clientWidth) return;
   HERO_P.copy(onGround(BG.hero)); BASE.copy(onGround(BG.dummyBase));
   const n = new THREE.Vector3().subVectors(cam.position, BASE).setY(0).normalize();
-  if (!bgRay(...BG.target).intersectPlane(new THREE.Plane().setFromNormalAndCoplanarPoint(n, BASE), TARGET_P)) TARGET_P.copy(BASE).setY(1.2);
-  const top = new THREE.Vector3(); bgRay(...BG.dummyTop).intersectPlane(new THREE.Plane().setFromNormalAndCoplanarPoint(n, BASE), top); const DH = Math.max(.5, top.y - BASE.y);
+  const top = new THREE.Vector3(); bgRay(...BG.dummyTop).intersectPlane(new THREE.Plane().setFromNormalAndCoplanarPoint(n, BASE), top); DH = Math.max(.5, top.y - BASE.y);
   if (!dummy) { dummy = buildDummy(); scene.add(dummy); }
   dummy.position.copy(BASE); { const k = DH / 1.18; dummy.scale.set(k * .72, k * .88, k * .72); }
   const toHero = Math.atan2(HERO_P.x - BASE.x, HERO_P.z - BASE.z), toCam = Math.atan2(cam.position.x - BASE.x, cam.position.z - BASE.z);
-  dummy.rotation.y = toCam + (toHero - toCam) * .55; dummy.updateMatrixWorld(true);
-  dummy.userData.target.getWorldPosition(TARGET_P);
-  if (hero) { hero.g.position.copy(HERO_P); const yd = Math.atan2(BASE.x - HERO_P.x, BASE.z - HERO_P.z); hero.g.rotation.y = hero.capy ? Math.PI + (yd - Math.PI) * .85 : Math.PI + (yd - Math.PI) * (role === 'archer' ? .75 : .5); if (faceCam) hero.g.rotation.y = Math.atan2(cam.position.x - HERO_P.x, cam.position.z - HERO_P.z) - .35; { const k = DH * HERO_K / HERO_H; hero.g.scale.set(k * HERO_THIN, k, k * HERO_THIN); } }
+  dummy.rotation.y = toCam + (toHero - toCam) * .55; dummy.updateMatrixWorld(true); dummy.userData.target.getWorldPosition(TARGET_P);
+  if (hero) { const g = hero.P.g; g.position.copy(HERO_P); const yd = Math.atan2(BASE.x - HERO_P.x, BASE.z - HERO_P.z);
+    g.rotation.y = hero.P.capy ? Math.PI + (yd - Math.PI) * .85 : Math.PI + (yd - Math.PI) * (hero.role === 'archer' ? .75 : .5);
+    if (faceCam) g.rotation.y = Math.atan2(cam.position.x - HERO_P.x, cam.position.z - HERO_P.z) - .35; actorScale(hero); }
+  if (enemy) { const g = enemy.P.g; g.position.copy(BASE); g.rotation.y = toHero * .75 + toCam * .25; actorScale(enemy); }
   if (auraG) auraG.position.copy(HERO_P);
 }
 function makeHero() {
-  if (hero) scene.remove(hero.g); if (auraG) scene.remove(auraG);
-  hero = buildHero(); scene.add(hero.g);
-  auraG = new THREE.Group(); const ring = new THREE.Mesh(new THREE.RingGeometry(.48, .62, 40), new THREE.MeshBasicMaterial({ color: gold ? 0xFFD75A : FC[fac], transparent: true, opacity: .9 })); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; auraG.add(ring);
-  if (gold) { const glow = new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, 2.4, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFD75A, transparent: true, opacity: .18, side: THREE.DoubleSide, depthWrite: false })); glow.position.y = 1.2; auraG.add(glow); }
+  if (hero) scene.remove(hero.P.g); if (auraG) scene.remove(auraG);
+  const o = heroOpt; hero = makeActor({ role: o.role, fc: FC[o.fac], emb: EMB[o.fac], gold: o.gold, skin: o.skin });
+  hero.onStrike = k => strikeTarget(k); hero.shotTo = () => enemy && !enemy.dead ? chestOf(enemy) : TARGET_P.clone();
+  auraG = new THREE.Group(); const ring = new THREE.Mesh(new THREE.RingGeometry(.48, .62, 40), new THREE.MeshBasicMaterial({ color: o.gold ? 0xFFD75A : FC[o.fac], transparent: true, opacity: .9 })); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; auraG.add(ring);
+  if (o.gold) { const glow = new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, 2.4, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFD75A, transparent: true, opacity: .18, side: THREE.DoubleSide, depthWrite: false })); glow.position.y = 1.2; auraG.add(glow); }
   scene.add(auraG); place();
 }
+// удар героя: в бою — по врагу, иначе — по чучелу
+function strikeTarget(k = 1) {
+  if (enemy && !enemy.dead) { enemy.hurt = 1; burst(chestOf(enemy), [0xFFFFFF, 0xFFD27A], 8); }
+  else { wob.vx -= 7 * k; wob.vz += (Math.random() - .5) * 4 * k; burst(TARGET_P, [0xF2D06A, 0xD9AA4A], hero.role === 'mage' ? 14 : 10); }
+  el.dispatchEvent(new CustomEvent('zn-hit', { detail: k, bubbles: true }));
+}
+function strikeHero() { if (!hero) return; hero.hurt = 1; burst(chestOf(hero), [0xFF4040, 0xFFFFFF], 7); el.dispatchEvent(new CustomEvent('zn-hurt', { bubbles: true })); }
 
 const ease = x => x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x);
-function animateCapy(P, t, dt) {
-  const br = Math.sin(t * 2.2); let lunge = 0, dip = 0;
-  if (atk) { if (!atk.freeze) atk.t += dt; const p = atk.t / atk.dur;
+function animCapy(A, t, dt) {
+  const P = A.P, role = A.role, br = Math.sin(t * 2.2 + (A === enemy ? 1 : 0)); let lunge = 0, dip = 0;
+  if (A.atk) { const at = A.atk; if (!at.freeze) at.t += dt; const p = at.t / at.dur;
     if (role === 'warrior' || role === 'guard') { const back = ease(p / .35), go = ease((p - .35) / .2), ret = ease((p - .65) / .35); lunge = -.15 * back + .55 * go - .4 * ret; dip = .25 * go - .25 * ret;
-      if (!atk.hit && p > .52) { atk.hit = true; hit(role === 'warrior' ? 1.2 : 1); } }
+      if (!at.hit && p > .52) { at.hit = true; A.onStrike(role === 'warrior' ? 1.2 : 1); } }
     else { const up = ease(p / .4), dn = ease((p - .4) / .2), ret = ease((p - .7) / .3); dip = -.3 * up + .5 * dn - .2 * ret; lunge = .08 * dn - .08 * ret;
-      if (!atk.shot && p > .5) { atk.shot = true; projectile(); } }
-    if (p >= 1) atk = null; }
-  P.body.position.z = lunge; P.body.position.y = .5 + br * .015; P.body.scale.y = 1 + br * .02;
-  P.head.rotation.x = dip + Math.sin(t * 1.3) * .04; P.legs.forEach((l, i) => { l.position.z = [.32, .32, -.32, -.32][i] + lunge * (i < 2 ? 1 : .6); });
+      if (!at.shot && p > .5) { at.shot = true; projectile(A); } }
+    if (p >= 1) A.atk = null; }
+  P.body.position.z = lunge - .2 * A.hurt; P.body.position.y = .5 + br * .015; P.body.scale.y = 1 + br * .02;
+  P.head.rotation.x = dip + Math.sin(t * 1.3) * .04 - .3 * A.hurt; P.legs.forEach((l, i) => { l.position.z = [.32, .32, -.32, -.32][i] + lunge * (i < 2 ? 1 : .6); });
   P.scarf.rotation.x = -.2 + Math.sin(t * 3) * .1;
+  P.body.rotation.z = (Math.PI / 2) * ease(A.dead);
 }
-function animate(t, dt) {
-  const P = hero; if (!P) return; if (P.capy) return animateCapy(P, t, dt);
-  const br = Math.sin(t * 2.2);
+function animActor(A, t, dt) {
+  A.hurt = Math.max(0, A.hurt - dt * 4); if (A.dead) A.dead = Math.min(1, A.dead + dt * 2.2);
+  if (A.P.capy) return animCapy(A, t, dt);
+  const P = A.P, role = A.role, br = Math.sin(t * 2.2 + (A === enemy ? 1.5 : 0));
   let armRx = -.25, armRz = -.08, armLx = -.35, armLz = .1, torY = 0, lean = 0, crouch = 0;
   if (role === 'mage') { armRx = -.55; armLx = -.2; }
   if (role === 'archer') { armLx = -1.45; armLz = 0; armRx = -1.2; armRz = -.4; }
   if (role === 'guard') { armLx = -.9; armLz = .35; }
-  if (atk) { if (!atk.freeze) atk.t += dt; const p = atk.t / atk.dur;
+  if (A.atk && !A.dead) { const at = A.atk; if (!at.freeze) at.t += dt; const p = at.t / at.dur;
     if (role === 'warrior' || role === 'guard') {
       const up = ease(p / .4), down = ease((p - .4) / .2), back = ease((p - .72) / .28);
       armRx = -.25 - 2.65 * up + 1.9 * down + .75 * back;
       torY = .35 * up - .7 * down + .35 * back; lean = .12 * down - .12 * back; crouch = .06 * down - .06 * back;
       if (role === 'guard') armLx = -.9 - .5 * down + .5 * back;
-      if (!atk.hit && p > .52) { atk.hit = true; hit(role === 'warrior' ? 1.2 : 1); }
+      if (!at.hit && p > .52) { at.hit = true; A.onStrike(role === 'warrior' ? 1.2 : 1); }
     } else if (role === 'mage') {
       const up = ease(p / .45), fw = ease((p - .45) / .15), back = ease((p - .7) / .3);
       armRx = -.55 - 2.3 * up + 1.1 * fw + 1.2 * back; armLx = -.2 - 1.0 * up + 1.0 * back; lean = .1 * fw - .1 * back; torY = -.25 * up + .25 * back;
       if (P.glow) P.glow.scale.setScalar(1 + 1.5 * up * (1 - fw));
-      if (!atk.shot && p > .55) { atk.shot = true; projectile(); }
+      if (!at.shot && p > .55) { at.shot = true; projectile(A); }
     } else {
       const pull = ease(p / .45), rel = p > .5 ? 1 : 0;
       armRz = -.4 - .9 * pull * (1 - rel); if (P.string) P.string.position.z = .19 - .3 * pull * (1 - rel);
       lean = -.05 * pull * (1 - rel);
-      if (!atk.shot && p > .5) { atk.shot = true; projectile(); }
+      if (!at.shot && p > .5) { at.shot = true; projectile(A); }
     }
-    if (p >= 1) atk = null;
+    if (p >= 1) A.atk = null;
   }
+  lean -= .35 * A.hurt;
   P.armR.rotation.set(armRx + br * .03, 0, armRz); P.armL.rotation.set(armLx - br * .03, 0, armLz);
   P.torso.rotation.set(lean, torY, 0); P.torso.position.y = .8 + br * .012 - crouch; P.head.rotation.x = -lean * .6;
-  P.cape.rotation.x = .12 + Math.sin(t * 1.7) * .05 + Math.abs(torY) * .25 + lean * .5;
+  P.cape.rotation.x = .12 + Math.sin(t * 1.7) * .05 + Math.abs(torY) * .25 + Math.max(0, lean) * .5;
   P.legL.rotation.x = .08; P.legR.rotation.x = -.08; P.legL.position.y = P.legR.position.y = .8 - crouch;
   if (P.crystal) P.crystal.rotation.y = t * 2;
+  P.body.rotation.x = -(Math.PI / 2) * ease(A.dead); P.body.position.y = .12 * ease(A.dead);
 }
 
-function burst(n = 10) {
-  for (let i = 0; i < n; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(.07, .025, .2), M(Math.random() < .5 ? 0xF2D06A : 0xD9AA4A));
-    m.position.copy(TARGET_P).add(new THREE.Vector3((Math.random() - .5) * .3, (Math.random() - .5) * .4, .1)); scene.add(m);
+function burst(pos, cols, n = 10) {
+  for (let i = 0; i < n; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(.07, .025, .2), M(cols[i % cols.length]));
+    m.position.copy(pos).add(new THREE.Vector3((Math.random() - .5) * .3, (Math.random() - .5) * .4, .1)); scene.add(m);
     fx.push({ m, v: new THREE.Vector3((Math.random() - .5) * 3.5, Math.random() * 3 + 1.2, Math.random() * 2), r: new THREE.Vector3(Math.random() * 9, Math.random() * 9, Math.random() * 9), life: .8 }); }
-  const fl = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshBasicMaterial({ color: role === 'mage' ? 0xFFB040 : 0xFFFFFF, transparent: true, opacity: .9, depthTest: false }));
-  fl.position.copy(TARGET_P); scene.add(fl); fx.push({ m: fl, flash: true, life: .18 });
+  const fl = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshBasicMaterial({ color: cols[0], transparent: true, opacity: .9, depthTest: false }));
+  fl.position.copy(pos); scene.add(fl); fx.push({ m: fl, flash: true, life: .18 });
 }
-function projectile() {
-  const dir = TARGET_P.clone().sub(HERO_P).setY(0).normalize(), from = HERO_P.clone().addScaledVector(dir, .55).add(new THREE.Vector3(0, 1.35, 0));
-  const m = role === 'mage' ? new THREE.Mesh(new THREE.SphereGeometry(.17, 12, 8), new THREE.MeshBasicMaterial({ color: 0xFFD27A })) : new THREE.Mesh(new THREE.BoxGeometry(.04, .04, .7), M(0xE8E8E8));
-  if (role === 'mage') { m.add(new THREE.Mesh(new THREE.SphereGeometry(.32, 12, 8), new THREE.MeshBasicMaterial({ color: 0xFF7A20, transparent: true, opacity: .45 }))); m.add(new THREE.PointLight(0xffa040, 5, 3)); }
-  m.position.copy(from); m.lookAt(TARGET_P); scene.add(m);
-  fx.push({ m, from, to: TARGET_P.clone(), t: 0, dur: role === 'mage' ? .26 : .15, proj: true });
+function projectile(A) {
+  const to = A.shotTo(), start = A.P.g.position, dir = to.clone().sub(start).setY(0).normalize(), from = start.clone().addScaledVector(dir, .55).add(new THREE.Vector3(0, 1.35 * A.P.g.scale.y, 0));
+  const fire = A.role === 'mage', m = fire ? new THREE.Mesh(new THREE.SphereGeometry(.17, 12, 8), new THREE.MeshBasicMaterial({ color: A === enemy ? 0xB8FF7A : 0xFFD27A })) : new THREE.Mesh(new THREE.BoxGeometry(.04, .04, .7), M(0xE8E8E8));
+  if (fire) { m.add(new THREE.Mesh(new THREE.SphereGeometry(.32, 12, 8), new THREE.MeshBasicMaterial({ color: A === enemy ? 0x4ACB2A : 0xFF7A20, transparent: true, opacity: .45 }))); m.add(new THREE.PointLight(A === enemy ? 0x7aff40 : 0xffa040, 5, 3)); }
+  m.position.copy(from); m.lookAt(to); scene.add(m);
+  fx.push({ m, from, to, t: 0, dur: fire ? .26 : .15, proj: true, done: () => A.onStrike(fire ? 1.3 : 1) });
 }
-function hit(k = 1) { wob.vx -= 7 * k; wob.vz += (Math.random() - .5) * 4 * k; burst(role === 'mage' ? 14 : 10); el.dispatchEvent(new CustomEvent('zn-hit', { detail: k, bubbles: true })); }
+function startAttack(A) {
+  if (!ready || !A || A.dead) return;
+  if (A.atk && A.atk.t / A.atk.dur < .55) { A.atk.dur = Math.max(.22, A.atk.dur * .85); return; }
+  A.atk = { t: 0, dur: A.atk ? .3 : .42, hit: false, shot: false };
+}
 
-export function attack() {
-  if (!ready || !hero) return;
-  if (atk && atk.t / atk.dur < .55) { atk.dur = Math.max(.22, atk.dur * .85); return; }
-  atk = { t: 0, dur: atk ? .3 : .42, hit: false, shot: false };
-}
-let faceCam = false; export function debugFace(v = true) { faceCam = v; place(); }
-export function setSkin(n) { n = n || ''; if (n !== skinName) { skinName = n; if (ready) makeHero(); } }
+// ---------- API для страницы ----------
+export function attack() { startAttack(hero); }
+export function debugFace(v = true) { faceCam = v; place(); }
+export function setSkin(n) { n = n || ''; if (n !== heroOpt.skin) { heroOpt.skin = n; if (ready) makeHero(); } }
 export function setHero(f, r, g) {
-  const ch = (f || 'lions') !== fac || (r || 'warrior') !== role || !!g !== gold; fac = f || 'lions'; role = r || 'warrior'; gold = !!g;
+  const o = { ...heroOpt, fac: f || 'lions', role: r || 'warrior', gold: !!g }, ch = o.fac !== heroOpt.fac || o.role !== heroOpt.role || o.gold !== heroOpt.gold; heroOpt = o;
   if (ready && (ch || !hero)) makeHero();
 }
-export function debugPose(p) { atk = { t: p * .42, dur: .42, hit: true, shot: true, freeze: true }; } // для скриншотов
+export function debugPose(p) { if (hero) hero.atk = { t: p * .42, dur: .42, hit: true, shot: true, freeze: true }; }
+// бой: враг встаёт на место чучела. e = { role, pal: {cloth, metal, skin, ...}, boss }
+export function battleStart(e) {
+  battleEnd(); if (!ready) return;
+  const pal = e.pal || {}; enemy = makeActor({ role: e.role || 'warrior', fc: pal.cloth ?? 0x5A2A2A, emb: '', gold: false, skin: e.skin || '', pal, boss: e.boss });
+  enemy.scaleK = e.boss ? 1.25 : 1; enemy.onStrike = () => strikeHero(); enemy.shotTo = () => chestOf(hero);
+  if (dummy) dummy.visible = false; if (hero) { hero.dead = 0; hero.hurt = 0; } place();
+}
+export function enemyAttack() { startAttack(enemy); }
+export function enemyDie() { if (enemy && !enemy.dead) enemy.dead = .001; }
+export function heroDie() { if (hero && !hero.dead) hero.dead = .001; }
+export function battleEnd() {
+  if (enemy) { scene.remove(enemy.P.g); enemy = null; } if (dummy) dummy.visible = true;
+  if (hero) { hero.dead = 0; hero.hurt = 0; hero.P.body.rotation.set(0, 0, 0); hero.P.body.position.y = 0; }
+}
 
 export async function init(container) {
   el = container;
@@ -234,12 +271,12 @@ export async function init(container) {
   ready = true; makeHero();
   R.setAnimationLoop(() => {
     const dt = Math.min(.05, clock.getDelta()), t = clock.elapsedTime;
-    animate(t, dt);
+    if (hero) animActor(hero, t, dt); if (enemy) animActor(enemy, t, dt);
     if (dummy) { wob.vx += (-wob.x * 70 - wob.vx * 7) * dt; wob.x += wob.vx * dt; wob.vz += (-wob.z * 70 - wob.vz * 7) * dt; wob.z += wob.vz * dt;
       const b = dummy.userData.body; b.rotation.x = wob.x * .15; b.rotation.z = wob.z * .15; }
     if (auraG) auraG.rotation.y += dt * 1.5;
     fx = fx.filter(f => {
-      if (f.proj) { f.t += dt / f.dur; f.m.position.lerpVectors(f.from, f.to, Math.min(1, f.t)); if (f.t >= 1) { scene.remove(f.m); hit(role === 'mage' ? 1.3 : 1); return false; } return true; }
+      if (f.proj) { f.t += dt / f.dur; f.m.position.lerpVectors(f.from, f.to, Math.min(1, f.t)); if (f.t >= 1) { scene.remove(f.m); f.done(); return false; } return true; }
       f.life -= dt; if (f.flash) { f.m.scale.setScalar(1 + (0.18 - f.life) * 9); f.m.material.opacity = Math.max(0, f.life / .18); if (f.life <= 0) { scene.remove(f.m); return false; } return true; }
       f.v.y -= 9 * dt; f.m.position.addScaledVector(f.v, dt); f.m.rotation.x += f.r.x * dt; f.m.rotation.y += f.r.y * dt;
       if (f.m.position.y < .02) { f.m.position.y = .02; f.v.set(0, 0, 0); } if (f.life <= 0) { scene.remove(f.m); return false; } return true; });
