@@ -96,6 +96,68 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .msg .h{font-size:12px;font-weight:800;color:#c8a0ff}.msg .h em{font-style:normal;color:var(--gold);font-weight:700;margin-left:4px}.msg .x{font-size:15px;word-break:break-word}.msg .tm{font-size:10px;color:var(--mut);text-align:right}
 .crow{display:flex;gap:6px;margin-top:8px}.crow input,.gin{flex:1;min-width:0;border-radius:12px;border:1px solid #ffffff30;background:#0a1230;color:#fff;padding:10px;font-size:15px;user-select:text;-webkit-user-select:text}
 .fpick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.fpick button{border:2px solid #ffffff22;border-radius:12px;padding:10px;font-weight:900;color:#fff;background:#0a1230;cursor:pointer;font-size:15px}.fpick button.on{border-color:var(--gold)}
+
+/* ===== редизайн «по полочкам» (как у Wargram) ===== */
+#app{padding:calc(8px + env(safe-area-inset-top)) 8px calc(6px + env(safe-area-inset-bottom))}
+.hdr{display:flex;gap:7px;align-items:stretch}
+.lvbox,.lgbox{border:2px solid var(--gold2);border-radius:16px;background:linear-gradient(180deg,var(--pn2),var(--pn));color:#fff;box-shadow:inset 0 0 0 2px #0a1230,0 4px 10px #0008;cursor:pointer;font:inherit}
+.lvbox{flex:1;display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;position:relative;text-align:left;min-width:0}
+.lvbox .ava{width:46px;height:46px;font-size:24px;border-width:2px}.lvb{position:absolute;left:30px;bottom:2px;min-width:20px;height:20px;border-radius:10px;background:#3a8cff;border:2px solid #fff;font-style:normal;font-weight:900;font-size:11px;display:grid;place-items:center;padding:0 3px}
+.lvt{flex:1;min-width:0}.lvt .r1{display:flex;justify-content:space-between;align-items:baseline}.lvt b{font-size:16px}.lvt small{color:var(--mut);font-weight:800}
+.lgbox{display:flex;align-items:center;gap:4px;padding:0 12px;font-weight:900;font-size:14px;white-space:nowrap}
+.side{top:calc(112px + env(safe-area-inset-top))}.side.L{left:max(8px,calc(50% - 252px));right:auto}.side.R{right:max(8px,calc(50% - 252px))}
+.cpill{display:inline-flex;align-items:center;gap:10px;padding:4px 20px 4px 6px;border-radius:999px;background:linear-gradient(180deg,#1d2a5a,#101a3a);border:2px solid var(--gold2);box-shadow:0 4px 10px #0009;font-size:34px;font-weight:900;color:#fff}
+.cpill .coin{width:42px;height:42px}
+.bal{margin-top:8px}
+.pills{display:flex;justify-content:center;gap:6px;margin-top:6px;pointer-events:none}
+.pills span{background:#0a1230cc;border:1px solid #ffffff22;border-radius:999px;padding:4px 11px;font-weight:800;font-size:13px}.pills em{font-style:normal;color:#fff}
+.cta{align-self:center;margin-top:10px;border:0;border-radius:16px;padding:12px 22px;font:inherit;font-weight:900;font-size:17px;color:#fff;background:linear-gradient(180deg,#ff8a3a,#e0501a);box-shadow:0 4px 0 #8a2a0a,0 6px 14px #0008;cursor:pointer;text-shadow:0 1px 2px #0006}
+.tip{display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,#fbeccc,#e8d0a0);color:#3a2410;border-radius:14px;padding:9px 10px;box-shadow:0 4px 12px #0008;margin-bottom:8px;font-weight:600;font-size:14px}
+.tip .tic{width:34px;height:34px;border-radius:50%;background:#6a4424;display:grid;place-items:center;flex:none}.tip b{color:#3a1d00}.tip span{flex:1}.tip .tx{border:0;background:none;font-size:18px;color:#6a4424;cursor:pointer}
+.btn.ad{margin:0 0 8px}
+.enp{display:flex;align-items:center;gap:10px;margin:0 0 8px;padding:8px 10px;border-radius:16px;background:linear-gradient(180deg,var(--pn2),var(--pn));border:2px solid var(--gold2);box-shadow:0 4px 10px #0008}
+.enp .eic{width:42px;height:42px;border-radius:12px;background:linear-gradient(180deg,#5ad06a,#2a9a3a);display:grid;place-items:center;font-size:22px;flex:none;box-shadow:inset 0 -3px 0 #1a6a24}
+.enp .ew{flex:1}.enp .l1{display:flex;justify-content:space-between;align-items:baseline}.enp .l1 b{font-size:19px}.enp .l1 small{color:var(--mut);font-size:13px}.enp .l1 em{font-style:normal;color:#7be07b;font-weight:800;font-size:13px}
+.enp .bar{height:12px;margin-top:4px}.enp .bar i{background:linear-gradient(90deg,#3ac85a,#9af07a)}
+/* окна разделов */
+.page:not(#p-tap){margin-top:22px}
+.panel{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;border-radius:20px;border:2px solid var(--gold2);background:linear-gradient(180deg,#1d2a5e,#121c42);box-shadow:inset 0 0 0 2px #0a1230,0 6px 18px #000a;padding:36px 10px 10px}
+.ribbon{position:absolute;top:-19px;left:50%;transform:translateX(-50%);padding:7px 26px;border-radius:12px;background:linear-gradient(180deg,#ff8a3a,#d8481a);border:2px solid #ffd27a;font-weight:900;font-size:19px;color:#fff;text-shadow:0 2px 0 #8a2a0a;box-shadow:0 4px 10px #0008;white-space:nowrap}
+.px{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:2px solid #fff3;background:linear-gradient(180deg,#ff5a4a,#c8201a);color:#fff;font-weight:900;font-size:16px;cursor:pointer;box-shadow:0 3px 0 #7a1010}
+.seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:#0a1230;margin:6px 0 8px}.seg button{flex:1;border:0;border-radius:10px;padding:9px 4px;font:inherit;font-weight:800;font-size:14px;color:var(--mut);background:transparent;cursor:pointer}
+.seg button.on{background:linear-gradient(180deg,#3a4a8a,#2a3670);color:#fff;border:2px solid var(--gold2)}
+.list{padding:2px}.col{display:flex;flex-direction:column;gap:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.uc{position:relative;border-radius:16px;background:linear-gradient(180deg,#26346a,#1a2552);border:2px solid #ffffff1a;padding:16px 8px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.uc.ok{border-color:#3ac85a}.uc.lock{opacity:.6}
+.uc .tag{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#3ac85a;color:#fff;font-size:11px;font-weight:900;padding:2px 9px;border-radius:8px;white-space:nowrap}
+.uc .ti{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;font-size:28px;position:relative;box-shadow:inset 0 -4px 0 #0004,0 3px 6px #0006}
+.uc .ti i{position:absolute;right:-7px;bottom:-7px;min-width:24px;height:24px;border-radius:8px;background:#26346a;border:2px solid #ffffff40;font-style:normal;font-size:12px;font-weight:900;display:grid;place-items:center}
+.uc b{font-size:15px}.uc .ch{background:#0a1230;border-radius:9px;padding:3px 9px;font-size:12px;font-weight:800;color:var(--mut)}.uc .ch em{font-style:normal;color:#7be07b}
+.uc .buy{width:100%;border:0;border-radius:12px;padding:9px;font:inherit;font-weight:900;font-size:16px;color:#fff;background:linear-gradient(180deg,#5ad06a,#2a9a3a);box-shadow:0 3px 0 #1a6a24;cursor:pointer}
+.uc .buy[disabled]{background:#3a4470;box-shadow:0 3px 0 #1a2040;color:#c8d0f0;cursor:default}.uc .need{font-size:11px;color:#ff8a7a;font-weight:800}
+.uc .lockt{font-size:12px;color:var(--mut)}
+.sech{display:flex;align-items:center;gap:8px;margin:14px 0 8px;font-weight:900;font-size:17px}.sech:after{content:'';flex:1;height:2px;background:linear-gradient(90deg,var(--gold2),transparent)}
+.nextc{border-radius:18px;border:2px solid var(--gold2);overflow:hidden;position:relative;background:linear-gradient(180deg,#3a2a50,#1a1a3a)}
+.nextc .art{height:120px;background:url(bg/dragons.jpg) center 62%/cover;position:relative;display:flex;align-items:flex-end;justify-content:flex-end;padding:8px 14px;font-size:58px}
+.nextc .art:before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#0000 30%,#121c42)}.nextc .art span{position:relative;filter:drop-shadow(0 4px 6px #000)}
+.nextc .bd{padding:0 12px 12px;margin-top:-26px;position:relative}
+.nextc .chip{display:inline-block;background:#0a1230cc;border:1px solid var(--gold2);border-radius:8px;padding:2px 9px;font-size:12px;font-weight:800;color:var(--gl)}
+.nextc h2{margin:4px 0 0;font-size:26px}.nextc .ln{font-size:13px;font-weight:700;color:var(--mut)}.nextc .ln b{color:#fff}
+.dots{display:flex;gap:3px;margin:8px 0}.dots i{flex:1;height:6px;border-radius:3px;background:#ffffff22}.dots i.d{background:#ffc83a}.dots i.c{background:#fff}
+.nextc .row2{display:flex;gap:8px;align-items:center}.bigfight{flex:1;border:0;border-radius:14px;padding:13px;font:inherit;font-weight:900;font-size:19px;color:#fff;background:linear-gradient(180deg,#ff8a3a,#e0501a);box-shadow:0 4px 0 #8a2a0a;cursor:pointer}
+.bigfight small{background:#0003;border-radius:8px;padding:2px 7px;font-size:13px;margin-left:6px}.mapb{width:54px;align-self:stretch;border:0;border-radius:14px;background:linear-gradient(180deg,#3a4a8a,#2a3670);color:#fff;font-size:22px;box-shadow:0 4px 0 #141c40;cursor:pointer}
+.fc{border-radius:16px;padding:10px;background:linear-gradient(160deg,#3a2a5a,#1d2552);border:2px solid #ffffff1a;text-align:left;cursor:pointer;color:#fff;font:inherit;display:flex;flex-direction:column;gap:3px;min-height:118px}
+.fc.ok{border-color:#3ac85a}.fc .fi{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:22px;box-shadow:inset 0 -3px 0 #0004}.fc b{font-size:16px;margin-top:4px}.fc small{color:var(--mut);font-weight:700;font-size:12px}.fc .ft{margin-top:auto;align-self:flex-start;background:#0a1230;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:800}
+.fc.soon{opacity:.55;cursor:default}
+.btn.back{background:#2a3a6a;color:#fff;box-shadow:0 3px 0 #0a1230;padding:8px 14px}
+/* нижнее меню-иконки */
+.nav{display:flex;gap:5px;margin-top:6px;padding:6px;border-radius:18px;background:linear-gradient(180deg,#1d2a5e,#101838);border:2px solid var(--gold2);box-shadow:0 -2px 12px #0008}
+.nb{position:relative;flex:1;min-width:0;height:50px;border:0;border-radius:13px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 75%,#fff 10%),color-mix(in srgb,var(--c) 70%,#000 30%));box-shadow:inset 0 -3px 0 #0005,0 2px 4px #0006;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;color:#fff;font:inherit;filter:saturate(.75) brightness(.85)}
+.nb span{font-size:22px}.nb b{display:none;font-size:14px;font-weight:900;white-space:nowrap}
+.nb.on{flex:2.6;filter:none;border:2px solid #ffd27a;box-shadow:0 0 0 2px #0a1230,0 0 14px #ffc83a66}.nb.on b{display:inline}
+.cnt{position:absolute;top:-6px;right:-3px;min-width:19px;height:19px;border-radius:10px;background:#e8302a;border:2px solid #fff;font-style:normal;font-size:10px;font-weight:900;display:none;place-items:center;padding:0 3px}
+.cnt.on{display:grid}
 .toast{position:fixed;left:50%;top:calc(90px + env(safe-area-inset-top));transform:translateX(-50%);background:#0a1230ee;border:2px solid var(--gold2);color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;z-index:9;max-width:90%;text-align:center;display:none}
 .demo{background:#0a1230cc;border:1px solid #ff4d6a88;border-radius:10px;padding:5px 10px;font-size:12px;margin-top:6px;text-align:center}.demo a{color:var(--gold)}
 .code{font-size:28px;font-weight:900;letter-spacing:3px;color:var(--gold);text-align:center;margin:6px 0}
@@ -105,69 +167,75 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 <body>
 <div id="scene"><button id="king" aria-label="Тренировать героя"></button></div>
 <div id="vig"></div>
-<div class="side">
-  <a class="rb" id="fieldlink" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank" title="Поле битвы">🗺</a>
+<div class="side L">
+  <a class="rb" id="fieldlink" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank" title="Поле битвы">🌐</a>
   <a class="rb" id="instalink" href="#" target="_blank" title="Instagram">📷</a>
+</div>
+<div class="side R">
+  <button class="rb" id="lgside" title="Лиги">🏅</button>
   <button class="rb" id="chatbtn" title="Чат">💬</button>
 </div>
 <div id="app">
-  <div class="top gp">
-    <div class="ava" id="ava">?</div>
-    <div class="who">
-      <div class="r1"><b id="nm">Гость</b><span class="lv" id="lvl">Ур. 0</span></div>
-      <div class="rank" id="rank">Новобранец</div>
-      <div class="xpb"><i id="xpb"></i></div>
-      <div class="nx"><span id="nk">Герой не привязан</span><span id="nxr"></span></div>
-    </div>
+  <div class="hdr">
+    <button class="lvbox" id="lvbtn"><span class="ava" id="ava">?</span><i class="lvb" id="lvbadge">0</i>
+      <span class="lvt"><span class="r1"><b id="lvl">Уровень 0</b><small id="xpt"></small></span><span class="xpb"><i id="xpb"></i></span></span></button>
+    <button class="lgbox" id="lgbtn">🏆 <span id="rank">Новобранец</span></button>
   </div>
-  <div class="badges" id="bdg"></div>
+  <div style="display:none"><span id="nm"></span><span id="nk"></span><span id="nxr"></span><div id="bdg"></div></div>
   <div id="demo" class="demo" style="display:none">Демо в браузере. Настоящая игра — в Telegram: <a href="https://t.me/znameni4_bot">@znameni4_bot</a></div>
 
   <div class="page on" id="p-tap">
-    <div class="bal"><span class="c">
-      <svg class="laur" viewBox="0 0 30 46"><path d="M24 44 Q6 34 8 6" stroke="#e8a21e" stroke-width="2.5" fill="none"/><g fill="#ffc83a" stroke="#a86a00" stroke-width="1">
-        <ellipse cx="6" cy="10" rx="3.5" ry="6" transform="rotate(-20 6 10)"/><ellipse cx="4" cy="20" rx="3.5" ry="6" transform="rotate(-45 4 20)"/><ellipse cx="6" cy="30" rx="3.5" ry="6" transform="rotate(-65 6 30)"/><ellipse cx="13" cy="38" rx="3.5" ry="6" transform="rotate(-85 13 38)"/>
-        <ellipse cx="13" cy="14" rx="3" ry="5.5" transform="rotate(25 13 14)"/><ellipse cx="13" cy="25" rx="3" ry="5.5" transform="rotate(10 13 25)"/></g></svg>
-      <span class="coin">З</span><span id="coins">0</span>
-      <svg class="laur r" viewBox="0 0 30 46"><path d="M24 44 Q6 34 8 6" stroke="#e8a21e" stroke-width="2.5" fill="none"/><g fill="#ffc83a" stroke="#a86a00" stroke-width="1">
-        <ellipse cx="6" cy="10" rx="3.5" ry="6" transform="rotate(-20 6 10)"/><ellipse cx="4" cy="20" rx="3.5" ry="6" transform="rotate(-45 4 20)"/><ellipse cx="6" cy="30" rx="3.5" ry="6" transform="rotate(-65 6 30)"/><ellipse cx="13" cy="38" rx="3.5" ry="6" transform="rotate(-85 13 38)"/>
-        <ellipse cx="13" cy="14" rx="3" ry="5.5" transform="rotate(25 13 14)"/><ellipse cx="13" cy="25" rx="3" ry="5.5" transform="rotate(10 13 25)"/></g></svg>
-    </span></div>
-    <div class="pills"><div class="gp" id="pills"></div></div>
+    <div class="bal"><span class="cpill"><span class="coin"></span><span id="coins">0</span></span></div>
+    <div class="pills" id="pills"></div>
+    <button class="cta" id="cta" style="display:none"></button>
     <div style="flex:1"></div>
-    <div class="enp gp" style="pointer-events:auto">
-      <div class="l1"><span class="bolt">⚡</span><span><span id="en">0</span> / <span id="enm">0</span></span><small id="enr">+60 в минуту</small></div>
-      <div class="bar"><i id="enb"></i></div>
-      <button class="btn ad" id="adbtn" style="display:none">📺 Смотреть рекламу: полная сила (<span id="adn">5</span>)</button>
+    <div class="tip" id="tip" style="display:none"><span class="tic">📜</span><span id="tipt"></span><button class="tx" id="tipx">✕</button></div>
+    <button class="btn ad" id="adbtn" style="display:none">📺 Смотреть рекламу: полная сила (<span id="adn">5</span>)</button>
+    <div class="enp">
+      <span class="eic">⚡</span>
+      <div class="ew"><div class="l1"><b><span id="en">0</span> <small>/ <span id="enm">0</span> сил</small></b><em id="enr">+60 в минуту</em></div><div class="bar"><i id="enb"></i></div></div>
     </div>
   </div>
 
-  <div class="page" id="p-up"><div class="sheet gp"><h3>⬆️ Прокачка</h3><div class="list"><div id="ups" style="display:flex;flex-direction:column;gap:9px"></div><div class="sec">🏗 Постройки<small>Приносят золото каждый час, даже когда тебя нет. Копят не дольше 3 часов.</small></div><div id="blds" style="display:flex;flex-direction:column;gap:9px"></div></div></div></div>
-  <div class="page" id="p-tasks"><div class="sheet gp"><h3>📜 Задания</h3><div class="list" id="tasks"></div></div></div>
-  <div class="page" id="p-war"><div class="sheet gp"><h3>⚔️ В бой</h3><div class="list">
-    <div class="card" style="flex-direction:column;align-items:stretch"><b>🗺 Поход · 10 глав</b><small id="campsum" style="color:var(--mut)"></small></div>
-    <div id="map"></div>
-    <div class="sec">🏆 Рейтинг тренировок<small id="facsum"></small></div><div id="tops" style="display:flex;flex-direction:column;gap:6px"></div></div></div></div>
-  <div class="page" id="p-shop"><div class="sheet gp"><h3>⭐ Лавка за Stars</h3><div class="sub">Покупки поддерживают игру и новые битвы.</div><div class="list" id="shop"></div></div></div>
-  <div class="page" id="p-me"><div class="sheet gp"><h3>🚩 Твоё знамя</h3>
-    <div class="ctabs" style="margin-top:0"><button data-mt="prof" class="on">Профиль</button><button data-mt="fr">Друзья</button><button data-mt="gl">Гильдия</button></div>
-    <div class="list">
-      <div id="mt-prof" style="display:flex;flex-direction:column;gap:9px"><div id="mebox"></div><div id="facbox"></div>
-      <div class="card"><div class="t"><b>⚔️ Битва каждый день в 20:00</b><small id="nb">…</small></div></div>
-      <a class="btn" style="text-align:center;text-decoration:none" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank">🗺 Смотреть поле битвы</a></div>
-      <div id="mt-fr" style="display:none;flex-direction:column;gap:9px"><div id="frbox" style="display:flex;flex-direction:column;gap:9px"></div></div>
-      <div id="mt-gl" style="display:none;flex-direction:column;gap:9px"><div class="sub" style="text-align:center">Гильдии живут внутри знамён. Золото участников идёт в недельный рейтинг.</div><div id="gbox" style="display:flex;flex-direction:column;gap:8px"></div></div>
-    </div></div>
-  </div>
+  <div class="page" id="p-guild"><div class="panel"><div class="ribbon">Гильдия</div><button class="px" data-home="1">✕</button><div class="list">
+    <div class="sub" style="text-align:center">Гильдии живут внутри знамён: золото бойцов идёт в недельный рейтинг гильдии.</div><div id="gbox" class="col"></div></div></div></div>
 
-  <div class="tabs gp">
-    <button class="tab on" data-p="tap"><span>🏕</span>Лагерь</button>
-    <button class="tab" data-p="up"><span>⬆️</span>Прокачка</button>
-    <button class="tab" data-p="tasks"><span>📜</span>Задания<i class="dot" id="tdot" style="display:none"></i></button>
-    <button class="tab" data-p="war"><span>⚔️</span>В бой</button>
-    <button class="tab" data-p="shop"><span>⭐</span>Лавка</button>
-    <button class="tab" data-p="me"><span>🚩</span>Знамя</button>
-  </div>
+  <div class="page" id="p-up"><div class="panel"><div class="ribbon">Прокачка</div><button class="px" data-home="1">✕</button>
+    <div class="seg"><button data-sub="up:gear" class="on">Снаряжение</button><button data-sub="up:bld">Постройки</button></div>
+    <div class="list"><div id="up-gear"><div class="sub" style="text-align:center;margin-bottom:8px">Сила героя в боях и золото за каждый удар.</div><div id="ups" class="grid"></div></div>
+      <div id="up-bld" style="display:none"><div class="sub" style="text-align:center;margin-bottom:8px">Копят золото, даже когда тебя нет. Не дольше 3 часов.</div><div id="blds" class="grid"></div></div></div></div></div>
+
+  <div class="page" id="p-war"><div class="panel"><div class="ribbon">В бой</div><button class="px" data-home="1">✕</button><div class="list">
+    <div id="nextcard"></div>
+    <div id="war-main"><div class="sech">Сражения</div><div class="grid" id="fights"></div>
+      <div class="sech">Рейтинг тренировок</div><div class="sub" id="facsum" style="text-align:center"></div><div id="tops" class="col"></div></div>
+    <div id="war-map" style="display:none"><button class="btn back" data-mapclose="1">‹ Назад</button><div class="sub" id="campsum" style="text-align:center;margin-top:8px"></div><div id="map"></div></div>
+  </div></div></div>
+
+  <div class="page" id="p-shop"><div class="panel"><div class="ribbon">Лавка</div><button class="px" data-home="1">✕</button><div class="list">
+    <div class="sub" style="text-align:center">Покупки за ⭐ Stars поддерживают игру и новые битвы.</div><div id="shop" class="col"></div></div></div></div>
+
+  <div class="page" id="p-tasks"><div class="panel"><div class="ribbon">Задания</div><button class="px" data-home="1">✕</button><div class="list" id="tasks"></div></div></div>
+
+  <div class="page" id="p-me"><div class="panel"><div class="ribbon">Герой</div><button class="px" data-home="1">✕</button>
+    <div class="seg"><button data-mt="prof" class="on">Профиль</button><button data-mt="fr">Друзья</button></div>
+    <div class="list">
+      <div id="mt-prof" class="col"><div id="mebox"></div><div id="facbox"></div>
+        <div class="card"><div class="t"><b>⚔️ Битва знамён каждый день в 20:00</b><small id="nb">…</small></div></div>
+        <a class="btn" style="text-align:center;text-decoration:none" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank">🗺 Смотреть поле битвы</a></div>
+      <div id="mt-fr" class="col" style="display:none"><div id="frbox" class="col"></div></div>
+    </div></div></div>
+
+  <nav class="nav">
+    <button class="nb on" data-p="tap" style="--c:#c99a5a"><span>⛺</span><b>Лагерь</b></button>
+    <button class="nb" data-p="guild" style="--c:#6a7a9a"><span>🏰</span><b>Гильдия</b></button>
+    <button class="nb" data-p="up" style="--c:#c07a3a"><span>🔨</span><b>Прокачка</b><i class="cnt" id="c-up"></i></button>
+    <button class="nb" data-p="war" style="--c:#d0503a"><span>⚔️</span><b>В бой</b><i class="cnt" id="c-war"></i></button>
+    <button class="nb" data-p="shop" style="--c:#8a5ac8"><span>🛍</span><b>Лавка</b></button>
+    <button class="nb" data-p="tasks" style="--c:#4a9a5a"><span>📜</span><b>Задания</b><i class="cnt" id="c-tasks"></i></button>
+    <button class="nb" data-p="me" style="--c:#3a8a9a"><span>🛡</span><b>Герой</b></button>
+  </nav>
+  <i id="tdot" style="display:none"></i>
 </div>
 <div class="toast" id="toast"></div>
 <div class="modal" id="stm"><div class="gp" id="stbox"></div></div>
@@ -314,7 +382,8 @@ function apply(d) {
   document.documentElement.style.setProperty('--fc', fc ? fc[2] : '#8a6a3a');
   $('nm').textContent = S.name || 'Игрок'; $('ava').textContent = fc ? fc[1] : ((S.name || '?').trim()[0] || '?');
   $('nk').textContent = h ? (fc ? fc[0] : '') + (RL[h.r] ? ' · ' + RL[h.r][0] : '') : 'Герой не привязан';
-  const lv = h ? h.lv : 0; $('lvl').textContent = 'Ур. ' + lv; $('rank').textContent = '🏅 ' + (S.league ? S.league.name : rankOf(lv)) + (S.nick ? ' · @' + S.nick : '');
+  const lv = h ? h.lv : 0; $('lvl').textContent = 'Уровень ' + lv; $('lvbadge').textContent = lv; $('rank').textContent = S.league ? S.league.name : rankOf(lv);
+  $('xpt').textContent = h ? fmt(Math.max(0, h.xp - h.cur)) + ' / ' + fmt(Math.max(1, h.next - h.cur)) : (S.linked ? '' : 'без героя');
   $('xpb').style.width = h ? Math.min(100, 100 * (h.xp - h.cur) / Math.max(1, h.next - h.cur)) + '%' : '0%';
   $('nxr').textContent = S.league ? (S.league.next ? 'след.: ' + S.league.next.name + ' ›' : 'высшая лига') : '';
   const now = Date.now(), bd = [];
@@ -326,7 +395,7 @@ function apply(d) {
   const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
-  draw(); renderUps(); renderShop(); renderMe(); renderTasks(); renderLeagues(); renderMap(); renderFac();
+  draw(); renderUps(); renderShop(); renderMe(); renderTasks(); renderLeagues(); renderMap(); renderFac(); renderWar(); renderTip();
   if (d.refGift) toast(`🎁 Ты пришёл по приглашению — держи +${fmt(d.refGift)} золота!`, 4000);
   for (const L of d.newLeagues || []) { hap('ok'); toast(`🏅 Новая лига «${L.name}»! Награда +${fmt(L.prize)} золота`, 4000); }
 }
@@ -342,17 +411,21 @@ function draw() {
   return e;
 }
 setInterval(draw, 250);
-function renderUps() { renderBlds();
-  $('ups').innerHTML = Object.entries(UP).map(([k, [ic, nm, ds]]) => { const c = S.costs[k], l = S.lv[k];
-    return `<div class="card"><div class="ic">${ic}</div><div class="t"><b>${nm} · ур. ${l}</b><small>${c == null ? 'Максимум' : ds(l)}</small></div>
-    <button class="btn" data-up="${k}" ${c == null || c > S.coins + pending * S.power * mult() ? 'disabled' : ''}>${c == null ? 'MAX' : fmt(c)}</button></div>`; }).join('');
+const UPC = { power: ['🗡', 'Сила удара', '#d8483a', (l, S) => [`+${S.power}`, `+${S.power + 1}`, 'за удар']], energy: ['💗', 'Выносливость', '#d84a9a', (l, S) => [fmt(S.maxE), fmt(S.maxE + 250), 'сил']], regen: ['🔥', 'Костёр', '#e08a2a', (l, S) => [`+${fmt(S.regen * 60)}`, `+${fmt((S.regen + .5) * 60)}`, 'в мин']] };
+const BC = { tavern: '#b8783a', forge: '#6a7a9a', stable: '#8a5a3a', range: '#3a8a5a', barracks: '#5a6ad8', tower: '#7a8aa8', temple: '#c8402a' };
+function renderUps() { renderBlds(); const have = S.coins + pending * S.power * mult(); let nAff = 0;
+  $('ups').innerHTML = Object.entries(UPC).map(([k, [ic, nm, col, ds]]) => { const c = S.costs[k], l = S.lv[k], ok = c != null && c <= have; if (ok) nAff++; const [a, b2, u] = ds(l, S);
+    return `<div class="uc ${ok ? 'ok' : ''}">${ok ? '<span class="tag">Хватает!</span>' : ''}<div class="ti" style="background:${col}">${ic}<i>${l}</i></div><b>${nm}</b>
+      <span class="ch">${a} » <em>${b2}</em> ${u}</span><button class="buy" data-up="${k}" ${ok ? '' : 'disabled'}>${c == null ? 'MAX' : '🪙 ' + fmt(c)}</button>${c != null && !ok ? `<span class="need">не хватает ${fmt(c - have)}</span>` : ''}</div>`; }).join('');
+  nAff += (S.blds || []).filter(b => !b.locked && b.cost != null && b.cost <= have).length; cnt('c-up', nAff);
 }
 function renderBlds() {
   const have = S.coins + pending * S.power * mult();
-  $('blds').innerHTML = (S.blds || []).map(b => b.locked
-    ? `<div class="card lock"><div class="ic">${b.ic}</div><div class="t"><b>${b.title}</b><small>🔒 Откроется в лиге «${b.locked}»</small></div><button class="btn" disabled>${fmt(b.cost)}</button></div>`
-    : `<div class="card"><div class="ic">${b.ic}</div><div class="t"><b>${b.title} · ур. ${b.lv}</b><small><em>+${fmt(b.inc)} в час</em>, окупится за ${b.payback} ч</small></div>
-      <button class="btn" data-bld="${b.k}" ${b.cost == null || b.cost > have ? 'disabled' : ''}>${b.cost == null ? 'MAX' : fmt(b.cost)}</button></div>`).join('');
+  $('blds').innerHTML = (S.blds || []).map(b => { const ok = !b.locked && b.cost != null && b.cost <= have;
+    return b.locked ? `<div class="uc lock"><div class="ti" style="background:#3a4470">🔒</div><b>${b.title}</b><span class="lockt">Откроется в лиге «${b.locked}»</span><button class="buy" disabled>Закрыто</button></div>`
+    : `<div class="uc ${ok ? 'ok' : ''}">${ok ? '<span class="tag">Хватает!</span>' : ''}<div class="ti" style="background:${BC[b.k] || '#5a6ad8'}">${b.ic}<i>${b.lv}</i></div><b>${b.title}</b>
+      <span class="ch">+${fmt(b.inc * b.lv)} » <em>+${fmt(b.inc * (b.lv + 1))}</em> в час</span><button class="buy" data-bld="${b.k}" ${ok ? '' : 'disabled'}>${b.cost == null ? 'MAX' : '🪙 ' + fmt(b.cost)}</button>
+      ${b.cost != null && !ok ? `<span class="need">не хватает ${fmt(b.cost - have)}</span>` : `<span class="lockt">окупится за ${b.payback} ч</span>`}</div>`; }).join('');
 }
 function renderTasks() {
   if (!S.daily) return; const L = S.login, D = S.daily;
@@ -365,6 +438,7 @@ function renderTasks() {
     <div class="card"><div class="ic">🎁</div><div class="t"><b>Сундук дня</b><small>Выполни все задания дня — в сундуке ${fmt(D.chest.r)} золота</small></div>
       <button class="btn" data-claim="chest" ${D.chest.ready && !D.chest.got ? '' : 'disabled'}>${D.chest.got ? '✓' : 'Открыть'}</button></div>`;
   const any = L.can || D.tasks.some(t => !t.got && t.p >= t.n) || (D.chest.ready && !D.chest.got); $('tdot').style.display = any ? 'block' : 'none';
+  const nT = (L.can ? 1 : 0) + D.tasks.filter(t => !t.got && t.p >= t.n).length + (D.chest.ready && !D.chest.got ? 1 : 0); cnt('c-tasks', nT);
 }
 function renderLeagues() {
   if (!S.league) return;
@@ -393,6 +467,42 @@ async function renderTop() {
 }
 
 document.addEventListener('zn-hit', () => { const sc = $('scene'); sc.classList.remove('shk'); void sc.offsetWidth; sc.classList.add('shk'); });
+// ---------- навигация, счётчики, подсказки ----------
+function cnt(id, n) { const e = $(id); if (!e) return; e.textContent = n > 9 ? '9+' : n; e.classList.toggle('on', n > 0); }
+function go(p) {
+  document.querySelectorAll('.nb').forEach(b => b.classList.toggle('on', b.dataset.p === p)); document.querySelectorAll('.page').forEach(x => x.classList.toggle('on', x.id === 'p-' + p));
+  document.querySelectorAll('.side').forEach(x => x.style.display = p === 'tap' ? '' : 'none');
+  if (p === 'war') { renderTop(); renderWar(); } if (p === 'guild') renderGuild();
+  if (p === 'me') { const v = document.querySelector('[data-mt].on').dataset.mt; if (v === 'fr') renderFriends(); }
+  hap('light');
+}
+let tipHide = 0;
+function renderTip() {
+  if (!S || Date.now() < tipHide) { $('tip').style.display = 'none'; return; }
+  const have = S.coins + pending * S.power * mult(), cheap = Object.entries(S.costs || {}).filter(([, c]) => c != null).sort((a, b) => a[1] - b[1])[0];
+  let t = '';
+  if (!S.fac && !S.linked) t = 'Выбери знамя — за кого ты сражаешься? Нажми «Выбери знамя» выше.';
+  else if (S.daily && (S.login.can || S.daily.tasks.some(x => !x.got && x.p >= x.n))) t = 'Тебя ждёт награда. Открой «Задания».';
+  else if (cheap && cheap[1] <= have) t = `Золота хватает на «${UPC[cheap[0]][1]}». Открой «Прокачку».`;
+  else if (S.camp && S.energy >= 50 && S.camp.max < 3) t = 'Враги рядом! Открой «В бой» и пройди первые этапы похода.';
+  else if ((S.blds || []).some(b => !b.locked && b.cost != null && b.cost <= have)) t = 'Можно улучшить постройку — она приносит золото, даже когда тебя нет.';
+  $('tip').style.display = t ? 'flex' : 'none'; if (t) $('tipt').innerHTML = '<b>Интендант:</b> ' + t;
+  $('cta').style.display = !S.fac && !S.linked ? '' : 'none'; $('cta').innerHTML = '🚩 Выбери знамя ›';
+}
+function renderWar() {
+  if (!PGm || !S || !S.camp) return; const PG = PGm, C = S.camp, n = Math.min(C.max + 1, PG.STAGES), St = PG.stage(n), H = hStats(), ch = St.ch;
+  const RI = { warrior: '⚔️', guard: '🛡', mage: '🔮', archer: '🏹' };
+  $('nextcard').innerHTML = `<div class="nextc"><div class="art"><span>${St.boss ? '👑' : ''}${RI[St.role]}</span></div><div class="bd"><span class="chip">Поход · ${St.chName}</span>
+    <h2>${St.boss ? '👑 ' : ''}${St.name}</h2><div class="ln">Этап ${n} из ${PG.STAGES} · сила врага <b style="color:${H.power >= St.power ? '#7be07b' : '#ff7a5a'}">${fmt(St.power)}</b>, твоя <b>${fmt(H.power)}</b></div>
+    <div class="dots">${Array.from({ length: 10 }, (_, i) => { const k = ch * 10 + i + 1; return `<i class="${k <= C.max ? 'd' : k === n ? 'c' : ''}"></i>`; }).join('')}</div>
+    <div class="ln" style="text-align:right;margin:-2px 0 8px">⭐ ${C.total} / ${PG.STAGES * 3}</div>
+    <div class="row2"><button class="bigfight" data-fight="${n}">⚔️ В бой <small>⚡ ${PG.BATTLE_COST}</small></button><button class="mapb" data-mapopen="1" title="Карта похода">🗺</button></div></div></div>`;
+  $('fights').innerHTML = `<button class="fc ok" data-mapopen="1"><span class="fi" style="background:#c8803a">🗺</span><b>Поход</b><small>10 глав, боссы и звёзды</small><span class="ft">⭐ ${C.total} из ${PG.STAGES * 3}</span></button>
+    <button class="fc" data-soon="Дуэли с друзьями онлайн"><span class="fi" style="background:#8a5ad8">🤝</span><b>Дуэль с другом</b><small>Онлайн 1 на 1</small><span class="ft">скоро</span></button>
+    <button class="fc soon" data-soon="Бесконечная башня"><span class="fi" style="background:#5a7ab8">🗼</span><b>Башня</b><small>Бесконечные этажи</small><span class="ft">после 1-й главы</span></button>
+    <button class="fc soon" data-soon="Испытание дня"><span class="fi" style="background:#3a9a6a">🗿</span><b>Испытание дня</b><small>Особый враг раз в день</small><span class="ft">после 3-го этапа</span></button>`;
+  cnt('c-war', S.energy >= PG.BATTLE_COST ? 1 : 0);
+}
 // ---------- чат ----------
 let CH = { ch: 'world', last: 0, timer: 0, ids: new Set() };
 function openChat() { $('chm').classList.add('on'); chatLoad(true); clearInterval(CH.timer); CH.timer = setInterval(() => $('chm').classList.contains('on') ? chatLoad() : clearInterval(CH.timer), 3500); }
@@ -476,7 +586,7 @@ async function fight(n) {
   await sync(); let d; try { d = await api('battle_start', { n }); } catch (e) { toast(e.message); return; }
   apply(d); const b = d.battle; $('stm').classList.remove('on');
   BT = { n, b, hp: b.heroHp, ehp: b.hp, taps: 0, t0: 0, over: false, every: b.role === 'archer' || b.role === 'mage' ? 1.4 : 1.1 };
-  $('app').classList.add('hide'); document.querySelector('.side').classList.add('hide'); $('bhud').classList.add('on');
+  $('app').classList.add('hide'); document.querySelectorAll('.side').forEach(x => x.classList.add('hide')); $('bhud').classList.add('on');
   $('ename').textContent = (b.boss ? '👑 ' : '') + b.name; $('binfo').innerHTML = `🗡 ${fmt(b.heroDmg)} за удар · 💀 ${fmt(b.dps)} в секунду по тебе`;
   if (window.ZN3D_ON) window.ZN3D.battleStart({ role: b.role, pal: PGm.PAL[b.pal], boss: b.boss });
   bDraw(); const go = $('bgo'); go.style.display = 'block'; setTimeout(() => go.style.display = 'none', 700);
@@ -517,8 +627,8 @@ function showResult(r) {
   $('resm').classList.add('on'); if (r.win) hap('ok');
 }
 function leaveBattle() {
-  BT = null; $('resm').classList.remove('on'); $('bhud').classList.remove('on'); $('app').classList.remove('hide'); document.querySelector('.side').classList.remove('hide');
-  if (window.ZN3D_ON) window.ZN3D.battleEnd(); renderMap();
+  BT = null; $('resm').classList.remove('on'); $('bhud').classList.remove('on'); $('app').classList.remove('hide'); document.querySelectorAll('.side').forEach(x => x.classList.remove('hide'));
+  if (window.ZN3D_ON) window.ZN3D.battleEnd(); renderMap(); renderWar();
 }
 // ---------- удары ----------
 function tap(ev) {
@@ -528,7 +638,7 @@ function tap(ev) {
   const f = document.createElement('div'); f.className = 'fx'; f.textContent = '+' + S.power * mult(); f.style.left = (x - 14) + 'px'; f.style.top = (y - 40) + 'px';
   document.body.appendChild(f); setTimeout(() => f.remove(), 900); draw();
 }
-$('rank').parentElement.parentElement.addEventListener('click', () => { if (S && S.league) { renderLeagues(); $('lgm').classList.add('on'); } });
+
 $('lgm').addEventListener('click', e => { if (e.target.id === 'lgm') $('lgm').classList.remove('on'); });
 $('king').addEventListener('pointerdown', e => { e.preventDefault(); tap(e); });
 async function sync() {
@@ -541,7 +651,17 @@ setInterval(sync, 1500); document.addEventListener('visibilitychange', () => doc
 // ---------- кнопки ----------
 document.addEventListener('click', async e => {
   const t = e.target.closest('button'); if (!t) return;
-  if (t.dataset.p) { document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b === t)); document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + t.dataset.p)); if (t.dataset.p === 'war') { renderTop(); renderMap(); } if (t.dataset.p === 'me') { const v = document.querySelector('[data-mt].on').dataset.mt; if (v === 'gl') renderGuild(); if (v === 'fr') renderFriends(); } document.querySelector('.side').style.display = t.dataset.p === 'tap' ? '' : 'none'; hap('light'); return; }
+  if (t.dataset.home) { go('tap'); return; }
+  if (t.dataset.p) { go(t.dataset.p); return; }
+  if (t.dataset.sub) { const [pg, v] = t.dataset.sub.split(':'); t.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === t)); document.querySelectorAll(`[id^="${pg}-"]`).forEach(x => x.style.display = x.id === pg + '-' + v ? '' : 'none'); return; }
+  if (t.id === 'cta') { go('me'); return; }
+  if (t.id === 'tipx') { tipHide = Date.now() + 90e3; $('tip').style.display = 'none'; return; }
+  if (t.dataset.go) { go(t.dataset.go); return; }
+  if (t.dataset.mapopen) { $('war-main').style.display = 'none'; $('nextcard').style.display = 'none'; $('war-map').style.display = ''; renderMap(); return; }
+  if (t.dataset.mapclose) { $('war-main').style.display = ''; $('nextcard').style.display = ''; $('war-map').style.display = 'none'; return; }
+  if (t.dataset.soon) { toast('Скоро! ' + t.dataset.soon); return; }
+  if (t.id === 'lgbtn' || t.id === 'lgside' || t.id === 'lvbtn') { if (S && S.league) { renderLeagues(); $('lgm').classList.add('on'); } return; }
+  if (false) { document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b === t)); document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'p-' + t.dataset.p)); if (t.dataset.p === 'war') { renderTop(); renderMap(); } if (t.dataset.p === 'me') { const v = document.querySelector('[data-mt].on').dataset.mt; if (v === 'gl') renderGuild(); if (v === 'fr') renderFriends(); } document.querySelector('.side').style.display = t.dataset.p === 'tap' ? '' : 'none'; hap('light'); return; }
   if (t.dataset.up) { await sync(); try { apply(await api('upgrade', { kind: t.dataset.up })); hap('ok'); toast('⬆️ Улучшено!'); } catch (er) { toast(er.message); } return; }
   if (t.dataset.buy) {
     try { const { link } = await api('invoice', { item: t.dataset.buy });
@@ -558,7 +678,7 @@ document.addEventListener('click', async e => {
   if (t.dataset.gcreate || t.dataset.gjoin || t.dataset.gleave) { await sync();
     try { const d = t.dataset.gcreate ? await api('guild_create', { name: $('gname').value }) : t.dataset.gjoin ? await api('guild_join', { id: t.dataset.gjoin }) : await api('guild_leave');
       apply(d); renderGuild(d.guilds); hap('ok'); toast(t.dataset.gcreate ? '🏰 Гильдия создана!' : t.dataset.gjoin ? '🏰 Ты в гильдии!' : 'Ты вышел из гильдии'); } catch (er) { toast(er.message); } return; }
-  if (t.dataset.mt) { document.querySelectorAll('[data-mt]').forEach(b => b.classList.toggle('on', b === t)); for (const k of ['prof', 'fr', 'gl']) $('mt-' + k).style.display = k === t.dataset.mt ? 'flex' : 'none';
+  if (t.dataset.mt) { document.querySelectorAll('[data-mt]').forEach(b => b.classList.toggle('on', b === t)); for (const k of ['prof', 'fr']) $('mt-' + k).style.display = k === t.dataset.mt ? 'flex' : 'none';
     if (t.dataset.mt === 'gl') renderGuild(); if (t.dataset.mt === 'fr') renderFriends(); return; }
   if (t.dataset.copynum) { try { await navigator.clipboard.writeText(String(FRD.num)); toast('Номер скопирован: ' + FRD.num); } catch (e) { toast('Твой номер: ' + FRD.num); } return; }
   if (t.dataset.share) { const txt = 'Вступай в войну знамён! Львы, Волки, Драконы, Вороны — за кого ты? ⚔️ По этой ссылке нам обоим дадут золото:';
