@@ -416,3 +416,45 @@ export function buildCamp(fk, FAC, opts = {}) {
   return { group, pick, labels, anim, biome: P, node, rings: RINGS.length, sect: SECT, lots };
 }
 export { KIND_LIST };
+
+// ---------- лагерь на старте: поляна с одним костром ----------
+export function buildFireCamp(fk, FAC) {
+  const P = BIOME[fk], F = FAC[fk], group = new THREE.Group(), pick = [], labels = [], anim = { fires: [], flags: [], sparks: [] }, R = rnd(fk.length * 131 + 5);
+  const L = c => new THREE.MeshLambertMaterial({ color: c }), m4 = new THREE.Matrix4(), v = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0);
+  const add = (m, x, y, z, p = group) => { m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; p.add(m); return m; };
+  (() => { const G = 160, c = document.createElement('canvas'); c.width = c.height = 1024; const g = c.getContext('2d'), k = 1024 / G, cx = 512;
+    g.fillStyle = P.ground; g.fillRect(0, 0, 1024, 1024); for (let i = 0; i < 4000; i++) { g.fillStyle = R() < .5 ? P.ground2 + '88' : '#ffffff1a'; g.beginPath(); g.arc(R() * 1024, R() * 1024, 1 + R() * 5, 0, 7); g.fill(); }
+    const gr = g.createRadialGradient(cx, cx, 0, cx, cx, 26 * k); gr.addColorStop(0, '#5a4a38'); gr.addColorStop(.25, '#7a6a52'); gr.addColorStop(.75, P.paving + 'aa'); gr.addColorStop(1, P.paving + '00'); g.fillStyle = gr; g.beginPath(); g.arc(cx, cx, 26 * k, 0, 7); g.fill();
+    for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + .4; g.strokeStyle = P.paving + '99'; g.lineWidth = 2.4 * k; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx + Math.cos(a) * 20 * k, cx + Math.sin(a) * 20 * k); g.quadraticCurveTo(cx + Math.cos(a + .3) * 45 * k, cx + Math.sin(a + .3) * 45 * k, cx + Math.cos(a + .2) * 80 * k, cx + Math.sin(a + .2) * 80 * k); g.stroke(); }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const m = new THREE.Mesh(new THREE.PlaneGeometry(G, G), new THREE.MeshLambertMaterial({ map: t })); m.rotation.x = -Math.PI / 2; m.receiveShadow = true; group.add(m);
+    const out = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), L(P.ground)); out.rotation.x = -Math.PI / 2; out.position.y = -.04; group.add(out); })();
+  // костёр
+  const fire = new THREE.Group(); fire.userData.info = 'fire';
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; add(new THREE.Mesh(new THREE.DodecahedronGeometry(.42), L(i % 2 ? '#7a7470' : '#8e8880')), Math.cos(a) * 1.7, .2, Math.sin(a) * 1.7, fire); }
+  for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, lg = new THREE.Mesh(new THREE.CylinderGeometry(.16, .2, 2.4, 7), L('#5a3a22')); lg.position.set(Math.cos(a) * .45, .75, Math.sin(a) * .45); lg.rotation.set(Math.sin(a) * .7, 0, -Math.cos(a) * .7); lg.castShadow = true; fire.add(lg); }
+  add(new THREE.Mesh(new THREE.CylinderGeometry(1, 1.2, .12, 12), new THREE.MeshBasicMaterial({ color: '#ff5a1a' })), 0, .08, 0, fire);
+  [[1, 2.6, '#ff6a1a', 0], [.7, 2, '#ffa52a', .1], [.4, 1.3, '#ffe27a', .2]].forEach(([r, h, c, y]) => { for (let i = 0; i < 3; i++) { const f = new THREE.Mesh(new THREE.ConeGeometry(r * (1 - i * .15), h * (1 - i * .1), 7), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: .92 })); f.position.set((i - 1) * r * .35, h / 2 + .2 + y, (i % 2 - .5) * r * .3); fire.add(f); anim.fires.push(f); } });
+  const glow = new THREE.PointLight(0xff8a30, 60, 30, 1.6); glow.position.y = 2.5; fire.add(glow); anim.glow = glow;
+  const sp = new THREE.InstancedMesh(new THREE.BoxGeometry(.08, .08, .08), new THREE.MeshBasicMaterial({ color: '#ffd27a' }), 40); sp.frustumCulled = false; fire.add(sp); anim.sparkMesh = sp;
+  for (let i = 0; i < 40; i++) anim.sparks.push({ a: R() * 6.28, r: R() * .8, y: R() * 6, s: .8 + R() * 1.4 });
+  group.add(fire); pick.push(fire); labels.push({ t: '🔥 Костёр знамени', p: [0, 4.6, 0], c: 'b' });
+  // брёвна-скамьи вокруг
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + .3, lg = new THREE.Mesh(new THREE.CylinderGeometry(.32, .34, 2.4, 9), L(i % 2 ? '#7a5634' : '#6a4a2c')); lg.rotation.z = Math.PI / 2; lg.rotation.y = -a + Math.PI / 2; lg.position.set(Math.cos(a) * 3.6, .32, Math.sin(a) * 3.6); lg.castShadow = true; group.add(lg); }
+  // знамя у костра
+  add(new THREE.Mesh(new THREE.CylinderGeometry(.09, .11, 6.5, 7), L('#5a3a22')), 6.5, 3.25, -5);
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.8, 10, 2).translate(1.2, 0, 0), new THREE.MeshLambertMaterial({ map: flagTex(F), side: THREE.DoubleSide })); fl.position.set(6.6, 5.6, -5); group.add(fl); anim.flags.push(fl);
+  // мелочи: котелок, дрова, бочка, мешки
+  const pot = new THREE.Group(); for (const s of [-1, 1]) { const st = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 2.2, 5), L('#3a2a1a')); st.position.set(s * 1.1, 1, 0); st.rotation.z = s * .15; pot.add(st); }
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 2.4, 5), L('#3a2a1a')); bar.rotation.z = Math.PI / 2; bar.position.y = 2.05; pot.add(bar); const kettle = new THREE.Mesh(new THREE.SphereGeometry(.45, 10, 8, 0, 6.29, 0, 2), L('#2a2a30')); kettle.position.y = 1.3; pot.add(kettle); pot.rotation.y = .6; group.add(pot);
+  for (let i = 0; i < 8; i++) add(new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, 1.4, 7), L('#8a6a44')), -7 + (i % 4) * .38, .18 + Math.floor(i / 4) * .32, 5.5).rotation.x = Math.PI / 2;
+  add(new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 1.1, 10), L('#6a4a2c')), -6, .55, -6); for (let i = 0; i < 3; i++) add(new THREE.Mesh(new THREE.SphereGeometry(.45, 8, 6), L('#c9b48a')), -4.8 + i * .5, .35, -6.8).scale.set(1, .8, 1.2);
+  // лес вокруг поляны
+  (() => { const trees = []; for (let i = 0; i < 260; i++) { const a = R() * 6.28, r = 26 + R() * 50; trees.push([Math.cos(a) * r, Math.sin(a) * r, .9 + R() * .8]); }
+    const ty = P.tree, parts = ty === 'round' || ty === 'shadow'
+      ? [[new THREE.CylinderGeometry(.18, .26, 1.8, 6).translate(0, .9, 0), ty === 'shadow' ? '#3a2e40' : '#5a3e28'], [ICO(1.3).translate(0, 2.6, 0), P.leaf], [ICO(.9).translate(.5, 3.4, -.3), ty === 'shadow' ? '#8a5ab0' : '#8aac44']]
+      : [[new THREE.CylinderGeometry(.18, .26, 1.2, 6).translate(0, .6, 0), '#5a3a22'], [new THREE.ConeGeometry(1.4, 2.6, 7).translate(0, 2.2, 0), ty === 'pine' ? '#3e5a2c' : '#24543f'], [new THREE.ConeGeometry(1, 2, 7).translate(0, 3.5, 0), ty === 'pine' ? '#4a6a34' : '#2a6048']].concat(ty === 'snowpine' ? [[new THREE.ConeGeometry(.6, .9, 7).translate(0, 4.3, 0), '#f4f8fc']] : []);
+    for (const [geo, col] of parts) { const im = new THREE.InstancedMesh(geo, L(col), trees.length); trees.forEach(([x, z, s], i) => im.setMatrixAt(i, m4.compose(v.set(x, 0, z), q.setFromAxisAngle(Y, x * 7 + z), sc.setScalar(s)))); im.castShadow = true; group.add(im); }
+    const rocks = []; for (let i = 0; i < 40; i++) { const a = R() * 6.28, r = 18 + R() * 40; rocks.push([Math.cos(a) * r, Math.sin(a) * r, .4 + R() * 1.1]); }
+    const rk = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), L(P.lava ? '#3a3230' : P.stone), rocks.length); rocks.forEach(([x, z, s], i) => rk.setMatrixAt(i, m4.compose(v.set(x, s * .3, z), q.setFromAxisAngle(Y, x), sc.set(s, s * .7, s)))); rk.castShadow = true; group.add(rk); })();
+  return { group, pick, labels, anim, biome: P, lots: [], fire: true };
+}
