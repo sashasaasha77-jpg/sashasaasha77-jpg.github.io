@@ -44,6 +44,53 @@ const SKINS = {
   sea: { metal: 0x3AC8C0, metalD: 0x1E8A8A, trim: 0xFF8A6A, pants: 0x1A3A4A, boots: 0x1E5A6A },
   candy: { metal: 0xFF9AD0, metalD: 0xD86AA8, trim: 0xFFFFFF, pants: 0x6A3A6A, boots: 0xC85A9A, hair: 0xFFD0E8 },
 };
+// ---------- скины-персонажи (как у Wargram: свой образ + титул над головой) ----------
+const glowM = c => new THREE.MeshBasicMaterial({ color: c });
+function blade(hand, len, col, glow) { const w = new THREE.Group(); w.rotation.x = -.9; hand.add(w); box(w, .05, .05, .22, 0x2a2a30, 0, 0, 0); box(w, .2, .05, .06, 0xC8A24A, 0, 0, .12);
+  const b = new THREE.Mesh(new THREE.BoxGeometry(.07, .03, len), glow ? glowM(col) : new THREE.MeshToonMaterial({ color: col, gradientMap: grad })); b.position.z = .15 + len / 2; w.add(b); return w; }
+function swapWeapon(P, make) { if (P.wR) P.wR.visible = false; if (P.handR) P.wR2 = make(P.handR); }
+export const CHAR = {
+  diamond: { cape: 0x5AB8E8, title: 'АЛМАЗНЫЙ МЕЧНИК', c: '#7ad8ff', pal: { metal: 0xBFEFFF, metalD: 0x6FC8F0, trim: 0xFFFFFF, pants: 0x2A5A8A, boots: 0x3A6A9A, hair: 0xE8F8FF },
+    extra(P, S) { swapWeapon(P, h => blade(h, .9, 0x9AF0FF, true)); for (const s of [-1, 1]) { const c = new THREE.Mesh(new THREE.OctahedronGeometry(.1), glowM(0xBFF6FF)); c.position.set(s * .36, .62, 0); c.scale.y = 1.6; P.torso.add(c); }
+      const cr = new THREE.Mesh(new THREE.OctahedronGeometry(.08), glowM(0xBFF6FF)); cr.position.set(0, .66, 0); cr.scale.y = 1.8; P.head.add(cr); const l = new THREE.PointLight(0x9AF0FF, 2, 3); l.position.y = .4; P.torso.add(l); } },
+  samurai: { cape: 0x8A1A14, title: 'САМУРАЙ', c: '#e0503a', noHelm: true, pal: { metal: 0xB8261E, metalD: 0x5A1210, trim: 0xE8B931, pants: 0x1A1A22, boots: 0x1A1A22, hair: 0x111111 },
+    extra(P, S) { const h = P.head; box(h, .42, .18, .4, 0x2a1a18, 0, .38, 0); box(h, .62, .05, .56, 0x8A1A14, 0, .3, -.02).rotation.x = .12;
+      const m = box(h, .34, .05, .03, 0xE8B931, 0, .56, .17); m.rotation.z = 0; box(h, .05, .16, .03, 0xE8B931, -.15, .64, .17).rotation.z = .4; box(h, .05, .16, .03, 0xE8B931, .15, .64, .17).rotation.z = -.4;
+      for (const s of [-1, 1]) box(P.torso, .2, .08, .34, 0x8A1A14, s * .36, .58, 0).rotation.z = s * -.35;
+      swapWeapon(P, hd => blade(hd, .95, 0xEEF2F6)); } },
+  ninja: { cape: 0x22222A, title: 'НИНДЗЯ', c: '#3a3a44', noHelm: true, pal: { metal: 0x22222A, metalD: 0x15151A, trim: 0xD8342A, pants: 0x22222A, boots: 0x111116, skin: 0xF0C49A, hair: 0x15151A },
+    extra(P, S) { const h = P.head; box(h, .37, .37, .35, 0x22222A, 0, .2, -.01); box(h, .3, .07, .02, 0xF0C49A, 0, .22, .17); box(h, .06, .04, .02, 0x111, -.07, .22, .18); box(h, .06, .04, .02, 0x111, .07, .22, .18);
+      box(h, .39, .06, .37, 0xD8342A, 0, .3, -.01); for (const s of [-1, 1]) box(h, .05, .22, .04, 0xD8342A, s * .05, .2, -.24).rotation.x = .5;
+      swapWeapon(P, hd => blade(hd, .8, 0xD8DCE4)); const back = blade(P.torso, .7, 0x6a6a72); back.rotation.set(0, 0, 2.4); back.position.set(.05, .35, -.2); } },
+  viking: { cape: 0x6A4A30, title: 'ВИКИНГ', c: '#c8742a', noHelm: true, pal: { metal: 0x8A8A92, metalD: 0x5A5A62, trim: 0xC8A24A, pants: 0x5A4030, boots: 0x4A3020, hair: 0xC8742A },
+    extra(P, S) { const h = P.head; box(h, .38, .16, .36, 0x8A8A92, 0, .37, 0); box(h, .4, .04, .38, 0xC8A24A, 0, .3, 0);
+      for (const s of [-1, 1]) { const hn = new THREE.Mesh(new THREE.ConeGeometry(.06, .3, 6), new THREE.MeshToonMaterial({ color: 0xF2EAD8, gradientMap: grad })); hn.position.set(s * .24, .48, 0); hn.rotation.z = s * -.9; h.add(hn); }
+      box(h, .34, .2, .08, 0xC8742A, 0, .03, .17); box(h, .2, .12, .06, 0xC8742A, 0, -.08, .17); box(P.torso, .62, .14, .36, 0x8A6A44, 0, .58, 0);
+      swapWeapon(P, hd => { const w = new THREE.Group(); w.rotation.x = -.9; hd.add(w); box(w, .05, .05, .9, 0x6A4424, 0, 0, .35); box(w, .05, .32, .22, 0xC8CCD4, 0, .1, .75); return w; }); } },
+  cossack: { cape: 0x2A3460, title: 'КАЗАК', c: '#3a4a9a', noHelm: true, pal: { metal: 0x3A4A8A, metalD: 0x2A3460, trim: 0xE8B931, pants: 0xC8302A, boots: 0x15151A, hair: 0x3A2414 },
+    extra(P, S) { const h = P.head; box(h, .4, .3, .38, 0x1A1A1E, 0, .46, 0); box(h, .3, .05, .28, 0xC8302A, 0, .62, 0); box(h, .24, .05, .04, 0x3A2414, 0, .1, .17);
+      for (const s of [-1, 1]) box(h, .08, .04, .04, 0x3A2414, s * .13, .07, .17).rotation.z = s * .5; for (let i = 0; i < 4; i++) box(P.torso, .04, .1, .03, 0xE8E8E8, -.12 + i * .08, .42, .16);
+      swapWeapon(P, hd => { const w = blade(hd, .85, 0xDCE0E8); w.children[2].rotation.y = .12; return w; }); } },
+  tsar: { cape: 0xB8141E, title: 'ЦАРЬ', c: '#ffd23a', noHelm: true, pal: { metal: 0xF2C84A, metalD: 0xB0841C, trim: 0xFFF0A0, pants: 0x8A1A14, boots: 0x6A4420, hair: 0x6A4424 },
+    extra(P, S) { const h = P.head; box(h, .38, .1, .36, 0xF2C84A, 0, .4, 0); for (let i = 0; i < 4; i++) for (const s of [-1, 1]) box(h, .07, .14, .07, 0xF2C84A, (i < 2 ? s * .15 : 0), .5, (i < 2 ? 0 : s * .15));
+      for (const [x, z, c] of [[0, .18, 0xE0303A], [.18, 0, 0x30A0E0], [-.18, 0, 0x30C060]]) { const g = new THREE.Mesh(new THREE.OctahedronGeometry(.045), glowM(c)); g.position.set(x, .42, z); h.add(g); }
+      box(h, .3, .12, .06, 0x6A4424, 0, .03, .17); box(P.torso, .64, .12, .38, 0xF6F2EA, 0, .6, -.02); if (P.cape) P.cape.scale.set(1.2, 1.25, 1); } },
+  vampire: { cape: 0x2A0E1A, title: 'ВАМПИР', c: '#c8102a', noHelm: true, pal: { metal: 0x2A1A2A, metalD: 0x1A0E1A, trim: 0xC8102A, pants: 0x15101A, boots: 0x111111, skin: 0xE8E4F0, hair: 0x111111 },
+    extra(P, S) { const h = P.head; box(h, .36, .12, .34, 0x111111, 0, .36, -.01); box(h, .08, .08, .04, 0x111111, 0, .3, .16);
+      for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.BoxGeometry(.06, .04, .02), glowM(0xFF2030)); e.position.set(s * .08, .21, .17); h.add(e); box(P.torso, .08, .34, .3, 0xC8102A, s * .3, .66, -.05).rotation.z = s * .3; } } },
+  robot: { cape: 0x5A6474, title: 'РОБОТ', c: '#3ae0ff', noHelm: true, pal: { metal: 0x9AA4B4, metalD: 0x5A6474, trim: 0x3AE0FF, pants: 0x5A6474, boots: 0x3A4250, skin: 0x9AA4B4, hair: 0x9AA4B4 },
+    extra(P, S) { const h = P.head; box(h, .4, .4, .38, 0x9AA4B4, 0, .2, 0); const v = new THREE.Mesh(new THREE.BoxGeometry(.3, .08, .02), glowM(0x3AE0FF)); v.position.set(0, .23, .2); h.add(v);
+      box(h, .03, .2, .03, 0x5A6474, 0, .5, 0); const b = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), glowM(0xFF4040)); b.position.y = .62; h.add(b); for (const s of [-1, 1]) box(h, .05, .14, .14, 0x5A6474, s * .22, .2, 0);
+      const c = new THREE.Mesh(new THREE.BoxGeometry(.14, .14, .02), glowM(0x3AE0FF)); c.position.set(0, .34, .17); P.torso.add(c); } },
+  ogre: { cape: 0x5A4028, title: 'ЗЕЛЁНЫЙ ОГР', c: '#6ab04a', noHelm: true, scale: 1.12, pal: { metal: 0x7A5A3A, metalD: 0x5A4028, trim: 0xC8A24A, pants: 0x5A4028, boots: 0x3A2818, skin: 0x7AB04A, hair: 0x5A7A30 },
+    extra(P, S) { const h = P.head; box(h, .42, .36, .38, 0x7AB04A, 0, .19, 0); for (const s of [-1, 1]) { box(h, .1, .14, .05, 0x6AA03A, s * .25, .24, 0).rotation.z = s * -.5; box(h, .04, .08, .04, 0xF6F0DC, s * .08, .02, .19); box(h, .06, .05, .02, 0x2a2a20, s * .09, .24, .2); }
+      swapWeapon(P, hd => { const w = new THREE.Group(); w.rotation.x = -.9; hd.add(w); cyl(w, .07, .14, .9, 0x7A5030, 0, 0, .45, 8).rotation.x = Math.PI / 2; return w; }); } },
+  darklord: { cape: 0x2A1A44, title: 'ТЁМНЫЙ ЛОРД', c: '#9a5aff', noHelm: true, pal: { metal: 0x2A2438, metalD: 0x15121E, trim: 0x9A5AFF, pants: 0x15121E, boots: 0x0E0C14, hair: 0x15121E },
+    extra(P, S) { const h = P.head; box(h, .42, .44, .4, 0x2A2438, 0, .2, 0); for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.BoxGeometry(.08, .04, .02), glowM(0xB070FF)); e.position.set(s * .08, .22, .21); h.add(e);
+        const hn = new THREE.Mesh(new THREE.ConeGeometry(.05, .34, 5), new THREE.MeshToonMaterial({ color: 0x15121E, gradientMap: grad })); hn.position.set(s * .18, .5, -.02); hn.rotation.z = s * -.35; h.add(hn);
+        const sp = new THREE.Mesh(new THREE.ConeGeometry(.06, .22, 5), new THREE.MeshToonMaterial({ color: 0x15121E, gradientMap: grad })); sp.position.set(s * .38, .72, 0); sp.rotation.z = s * -.6; P.torso.add(sp); }
+      const l = new THREE.PointLight(0x9A5AFF, 2.2, 3); l.position.y = .5; P.torso.add(l); swapWeapon(P, hd => blade(hd, .95, 0x9A5AFF, true)); } },
+};
 function buildCapy(o) { // капибара на 4 лапах, без доспехов: платок знамени и мандарин
   const fur = 0x9A6A40, furD = 0x7A5030, furL = 0xB07E50, fc = o.fc;
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body); const P = { g, body, capy: true, legs: [] };
@@ -86,7 +133,8 @@ function buildHero(o) {
   } else {
   box(head, .34, .34, .32, S.skin, 0, .19, 0);
   box(head, .06, .05, .02, 0x2a2a30, -.08, .21, .165); box(head, .06, .05, .02, 0x2a2a30, .08, .21, .165);
-  if (role === 'warrior') { box(head, .38, .2, .36, S.metal, 0, .33, 0); box(head, .4, .05, .38, S.trim, 0, .24, 0); box(head, .08, .22, .3, fc, 0, .52, -.04); box(head, .3, .12, .06, S.hair, 0, .07, .16); box(head, .38, .3, .06, S.metal, 0, .18, -.18); }
+  if (o.noHelm) { box(head, .36, .1, .34, S.hair, 0, .38, -.01); }
+  else if (role === 'warrior') { box(head, .38, .2, .36, S.metal, 0, .33, 0); box(head, .4, .05, .38, S.trim, 0, .24, 0); box(head, .08, .22, .3, fc, 0, .52, -.04); box(head, .3, .12, .06, S.hair, 0, .07, .16); box(head, .38, .3, .06, S.metal, 0, .18, -.18); }
   else if (role === 'guard') { box(head, .4, .42, .38, S.metal, 0, .2, 0); box(head, .3, .04, .02, 0x15151a, 0, .2, .2); box(head, .04, .14, .02, 0x15151a, 0, .12, .2); box(head, .42, .05, .4, S.trim, 0, .4, 0); box(head, .05, .2, .32, fc, 0, .5, -.02); }
   else if (role === 'mage') { box(head, .3, .12, .06, 0xE8E8EE, 0, .02, .17); box(head, .14, .18, .06, 0xE8E8EE, 0, -.08, .17);
     box(head, .56, .05, .56, fcd, 0, .38, 0); box(head, .36, .22, .36, fc, 0, .51, 0); box(head, .37, .05, .37, S.trim, 0, .44, 0); box(head, .24, .2, .24, fc, -.02, .7, -.03).rotation.z = .2; box(head, .12, .16, .12, fc, -.06, .86, -.07).rotation.z = .45; }
@@ -98,11 +146,11 @@ function buildHero(o) {
     if (role === 'mage') box(arm, .2, .06, .2, S.trim, 0, -.53, 0);
     const hand = new THREE.Group(); hand.position.y = -.6; arm.add(hand);
     P[s < 0 ? 'armL' : 'armR'] = arm; P[s < 0 ? 'handL' : 'handR'] = hand; }
-  if (role === 'warrior') { const w = new THREE.Group(); w.rotation.x = -.9; P.handR.add(w); box(w, .05, .05, .2, 0x6A4424, 0, 0, 0); box(w, .26, .05, .06, S.trim, 0, 0, .12); box(w, .09, .03, .8, 0xE6EAF0, 0, 0, .55); box(w, .06, .035, .12, 0xE6EAF0, 0, 0, 1.0); box(w, .06, .06, .06, S.trim, 0, 0, -.12);
+  if (role === 'warrior') { const w = new THREE.Group(); w.rotation.x = -.9; P.handR.add(w); P.wR = w; box(w, .05, .05, .2, 0x6A4424, 0, 0, 0); box(w, .26, .05, .06, S.trim, 0, 0, .12); box(w, .09, .03, .8, 0xE6EAF0, 0, 0, .55); box(w, .06, .035, .12, 0xE6EAF0, 0, 0, 1.0); box(w, .06, .06, .06, S.trim, 0, 0, -.12);
     const sh = new THREE.Group(); sh.position.set(-.1, .12, .08); P.handL.add(sh); cyl(sh, .26, .26, .06, fc, 0, 0, 0, 12).rotation.z = Math.PI / 2; cyl(sh, .28, .28, .04, S.trim, .01, 0, 0, 12).rotation.z = Math.PI / 2; cyl(sh, .07, .07, .08, S.metal, -.03, 0, 0, 8).rotation.z = Math.PI / 2; }
-  if (role === 'guard') { const w = new THREE.Group(); w.rotation.x = -.9; P.handR.add(w); box(w, .06, .06, .7, 0x6A4424, 0, 0, .2); box(w, .2, .2, .2, S.metalD, 0, 0, .6); for (let a = 0; a < 4; a++) box(w, .06, .06, .12, S.metal, Math.cos(a * Math.PI / 2) * .13, Math.sin(a * Math.PI / 2) * .13, .6);
+  if (role === 'guard') { const w = new THREE.Group(); w.rotation.x = -.9; P.handR.add(w); P.wR = w; box(w, .06, .06, .7, 0x6A4424, 0, 0, .2); box(w, .2, .2, .2, S.metalD, 0, 0, .6); for (let a = 0; a < 4; a++) box(w, .06, .06, .12, S.metal, Math.cos(a * Math.PI / 2) * .13, Math.sin(a * Math.PI / 2) * .13, .6);
     const sh = new THREE.Group(); sh.position.set(-.12, .15, .1); P.handL.add(sh); box(sh, .06, .8, .5, fc, 0, 0, 0); box(sh, .07, .84, .06, S.trim, 0, 0, .25); box(sh, .07, .84, .06, S.trim, 0, 0, -.25); box(sh, .07, .06, .5, S.trim, 0, .4, 0); box(sh, .07, .06, .5, S.trim, 0, -.4, 0); box(sh, .08, .2, .2, S.trim, 0, .05, 0); }
-  if (role === 'mage') { const w = new THREE.Group(); P.handR.add(w); w.rotation.x = Math.PI / 2 - .9; box(w, .06, 1.5, .06, 0x6A4424, 0, .2, 0); box(w, .14, .06, .14, S.trim, 0, .92, 0);
+  if (role === 'mage') { const w = new THREE.Group(); P.handR.add(w); P.wR = w; w.rotation.x = Math.PI / 2 - .9; box(w, .06, 1.5, .06, 0x6A4424, 0, .2, 0); box(w, .14, .06, .14, S.trim, 0, .92, 0);
     const cr = new THREE.Mesh(new THREE.OctahedronGeometry(.13), new THREE.MeshBasicMaterial({ color: 0xFFB040 })); cr.position.y = 1.06; w.add(cr); P.crystal = cr;
     const gl = new THREE.Mesh(new THREE.SphereGeometry(.22, 12, 8), new THREE.MeshBasicMaterial({ color: 0xFF8A20, transparent: true, opacity: .3, depthWrite: false })); gl.position.y = 1.06; w.add(gl); P.glow = gl;
     const pl = new THREE.PointLight(0xff9a30, 2.5, 3); pl.position.y = 1.06; w.add(pl); }
@@ -110,6 +158,7 @@ function buildHero(o) {
     for (const s of [-1, 1]) { box(bow, .05, .45, .05, 0x7A4A24, 0, s * .24, .06).rotation.x = s * .35; box(bow, .06, .06, .06, S.trim, 0, s * .45, .14); }
     box(bow, .05, .14, .06, 0x3a2414, 0, 0, 0); P.string = box(bow, .012, .92, .012, 0xEEEEEE, 0, 0, .19);
     const quiver = box(P.torso, .14, .5, .14, 0x6A4424, .14, .42, -.22); quiver.rotation.z = -.35; for (let i = 0; i < 3; i++) box(quiver, .03, .12, .03, 0xE8E8E8, -.03 + i * .03, .3, 0); }
+  if (o.def && o.def.extra) o.def.extra(P, S, o);
   return P;
 }
 
@@ -156,7 +205,8 @@ function place() {
 }
 function makeHero() {
   if (hero) scene.remove(hero.P.g); if (auraG) scene.remove(auraG);
-  const o = heroOpt; hero = makeActor({ role: o.role, fc: FC[o.fac], emb: EMB[o.fac], gold: o.gold, skin: o.skin, pal: o.skin && o.skin !== 'capybara' && SKINS[o.skin] ? SKINS[o.skin] : undefined });
+  const o = heroOpt; const D = CHAR[o.skin]; hero = makeActor({ role: o.role, fc: D ? D.cape : FC[o.fac], emb: EMB[o.fac], gold: o.gold, skin: o.skin, pal: D ? D.pal : (o.skin && o.skin !== 'capybara' && SKINS[o.skin] ? SKINS[o.skin] : undefined), def: D, noHelm: D && D.noHelm });
+  if (D && D.scale) hero.scaleK = D.scale;
   hero.onStrike = k => strikeTarget(k); hero.shotTo = () => enemy && !enemy.dead ? chestOf(enemy) : TARGET_P.clone();
   auraG = new THREE.Group(); const ring = new THREE.Mesh(new THREE.RingGeometry(.48, .62, 40), new THREE.MeshBasicMaterial({ color: o.gold ? 0xFFD75A : FC[o.fac], transparent: true, opacity: .9 })); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; auraG.add(ring);
   if (o.gold) { const glow = new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, 2.4, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFD75A, transparent: true, opacity: .18, side: THREE.DoubleSide, depthWrite: false })); glow.position.y = 1.2; auraG.add(glow); }
@@ -296,3 +346,8 @@ export async function init(container) {
   });
   return true;
 }
+// экранная точка над головой героя (для таблички с титулом скина)
+const _hv = new THREE.Vector3();
+export function heroHeadScreen() { if (!ready || !hero || !cam || !el) return null; hero.P.head.getWorldPosition(_hv); _hv.y += .75 * (hero.P.g.scale.y || 1); _hv.project(cam);
+  const r = el.getBoundingClientRect(); return [r.left + (_hv.x + 1) / 2 * r.width, r.top + (1 - _hv.y) / 2 * r.height]; }
+export function skinTitle(k) { const D = CHAR[k]; return D ? { title: D.title, c: D.c } : null; }

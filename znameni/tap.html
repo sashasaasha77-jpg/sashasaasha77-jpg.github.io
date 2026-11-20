@@ -174,6 +174,9 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .sk.on{border-color:var(--gold)}.sk .sw{width:46px;height:46px;margin:2px auto 4px;border-radius:12px;background:var(--c);box-shadow:inset 0 -6px 0 #0004,0 2px 6px #0008;display:grid;place-items:center;font-size:22px}
 .sk b{display:block;font-size:12px;color:#fff}.sk .pb{height:6px;border-radius:4px;background:#0a1028;margin:5px 0;overflow:hidden}.sk .pb i{display:block;height:100%;background:linear-gradient(90deg,#5ad06a,#9cf06a)}
 .sk small{display:block;font-size:10px;color:var(--mut)}.sk button{margin-top:5px;width:100%;padding:6px 4px;font-size:11px}
+
+#sktitle{position:fixed;z-index:2;transform:translate(-50%,-100%);pointer-events:none;display:none;font-weight:900;font-size:13px;color:#fff;padding:4px 12px;border-radius:10px;
+  background:linear-gradient(180deg,#24305e,#141c3e);border:2px solid var(--c);box-shadow:0 0 12px var(--c),0 0 3px var(--c) inset;text-shadow:0 2px 0 #000;white-space:nowrap;letter-spacing:.3px}
 </style>
 </head>
 <body>
@@ -187,6 +190,7 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
   <button class="rb" id="lgside" title="Лиги">🏅</button>
   <button class="rb" id="chatbtn" title="Чат">💬</button>
 </div>
+<div id="sktitle"></div>
 <div id="app">
   <div class="hdr">
     <button class="lvbox" id="lvbtn"><span class="ava" id="ava">?</span><i class="lvb" id="lvbadge">0</i>
@@ -463,9 +467,9 @@ function renderLeagues() {
 }
 function renderSkins() {
   if (!PGm || !S || !S.skins) return; const L = PGm.SKIN_LIST, need = PGm.SKIN_ADS;
-  $('skins').innerHTML = `<div class="skh">🎨 Скины за рекламу<small>Посмотри ${need} реклам — скин твой навсегда. Сегодня осталось: ${S.skinAdsLeft}</small></div><div class="skg">` + L.map(x => {
+  $('skins').innerHTML = `<div class="skh">🎨 Скины героев<small>Посмотри ${need} реклам — образ твой навсегда, а над героем загорится его титул. Сегодня осталось: ${S.skinAdsLeft}</small></div><div class="skg">` + L.map(x => {
     const own = S.skins.includes(x.k), on = S.skin === x.k, n = Math.min(need, (S.skinAds || {})[x.k] || 0);
-    return `<div class="sk ${on ? 'on' : ''}"><div class="sw" style="--c:${x.c}">${own ? (on ? '✅' : '') : '🔒'}</div><b>${x.n}</b>${own ? '<small>Открыт</small>' : `<div class="pb"><i style="width:${n / need * 100}%"></i></div><small>📺 ${n} / ${need}</small>`}
+    return `<div class="sk ${on ? 'on' : ''}"><div class="sw" style="--c:${x.c};${own ? '' : 'filter:grayscale(.6) brightness(.8)'}">${x.e || ''}${own ? (on ? '<i style="position:absolute;margin:30px 0 0 34px;font-size:13px;font-style:normal">✅</i>' : '') : '<i style="position:absolute;margin:30px 0 0 34px;font-size:13px;font-style:normal">🔒</i>'}</div><b>${x.n}</b>${own ? '<small>Открыт</small>' : `<div class="pb"><i style="width:${n / need * 100}%"></i></div><small>📺 ${n} / ${need}</small>`}
       ${own ? `<button class="btn ${on ? '' : 'g'}" data-skinset="${on ? '' : x.k}">${on ? 'Снять' : 'Надеть'}</button>` : `<button class="btn" data-skinad="${x.k}" ${S.skinAdsLeft > 0 ? '' : 'disabled'}>📺 Смотреть</button>`}</div>`; }).join('') + '</div>';
 }
 function renderShop() {
@@ -720,6 +724,12 @@ document.addEventListener('click', async e => {
   if (t.id === 'bquit') { if (BT && !BT.over) bEnd(false); return; }
   if (t.dataset.close) { $(t.dataset.close).classList.remove('on'); return; }
 });
+(function skTitleLoop() {
+  const el = $('sktitle'); let last = '';
+  (function f() { try { const Z = window.ZN3D, on = window.ZN3D_ON && Z && S && S.skin && document.querySelector('#p-tap.on'), T = on && Z.skinTitle(S.skin), p = T && Z.heroHeadScreen();
+      if (p) { if (last !== S.skin) { el.textContent = T.title; el.style.setProperty('--c', T.c); last = S.skin; } el.style.display = 'block'; el.style.left = p[0] + 'px'; el.style.top = p[1] + 'px'; } else el.style.display = 'none'; } catch (e) { }
+    requestAnimationFrame(f); })();
+})();
 async function showSkinAd(k) {
   const go = async () => { const d = await api('skin_ad', { skin: k }); apply(d); renderSkins(); hap('ok');
     if (d.skinGot) toast('🎉 Новый скин открыт и надет!'); else toast(`📺 ${(d.skinAds || {})[k] || 0} / ${PGm.SKIN_ADS} — ещё немного!`); };
