@@ -1,0 +1,12 @@
+# «Четыре знамени»: будит сервер каждые 10 минут — бот рассылает напоминания (серия в 19:00, битва в 19:45, итог после 20:00)
+name: znameni-tick
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: curl -fsS -m 120 -X POST -H 'content-type: application/json' -d '{}' https://otgwiroxifqtktbipbsu.supabase.co/functions/v1/znameni/api/tick || true
