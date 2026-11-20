@@ -157,7 +157,7 @@ function strikeTarget(k = 1) {
   else { wob.vx -= 7 * k; wob.vz += (Math.random() - .5) * 4 * k; burst(TARGET_P, [0xF2D06A, 0xD9AA4A], hero.role === 'mage' ? 14 : 10); }
   el.dispatchEvent(new CustomEvent('zn-hit', { detail: k, bubbles: true }));
 }
-function strikeHero() { if (!hero) return; hero.hurt = 1; burst(chestOf(hero), [0xFF4040, 0xFFFFFF], 7); el.dispatchEvent(new CustomEvent('zn-hurt', { bubbles: true })); }
+function strikeHero() { if (!hero) return; hero.hurt = 1; burst(chestOf(hero), [0xFF4040, 0xFFFFFF], 6, false); el.dispatchEvent(new CustomEvent('zn-hurt', { bubbles: true })); }
 
 const ease = x => x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x);
 function animCapy(A, t, dt) {
@@ -210,11 +210,12 @@ function animActor(A, t, dt) {
   P.body.rotation.x = -(Math.PI / 2) * ease(A.dead); P.body.position.y = .12 * ease(A.dead);
 }
 
-function burst(pos, cols, n = 10) {
+function burst(pos, cols, n = 10, flash = true) {
   for (let i = 0; i < n; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(.07, .025, .2), M(cols[i % cols.length]));
     m.position.copy(pos).add(new THREE.Vector3((Math.random() - .5) * .3, (Math.random() - .5) * .4, .1)); scene.add(m);
     fx.push({ m, v: new THREE.Vector3((Math.random() - .5) * 3.5, Math.random() * 3 + 1.2, Math.random() * 2), r: new THREE.Vector3(Math.random() * 9, Math.random() * 9, Math.random() * 9), life: .8 }); }
-  const fl = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshBasicMaterial({ color: cols[0], transparent: true, opacity: .9, depthTest: false }));
+  if (!flash) return;
+  const fl = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 8), new THREE.MeshBasicMaterial({ color: cols[0], transparent: true, opacity: .55 }));
   fl.position.copy(pos); scene.add(fl); fx.push({ m: fl, flash: true, life: .18 });
 }
 function projectile(A) {
