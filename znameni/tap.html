@@ -391,7 +391,8 @@ function apply(d) {
   if (S.auto > now) bd.push(`<span class="bdg">🛡 ${Math.ceil((S.auto - now) / 36e5)} ч</span>`);
   if (h && h.banner) bd.push('<span class="bdg">🚩</span>');
   $('bdg').innerHTML = bd.join('');
-  const BGS = { dragons: 'bg/dragons.jpg' }; $('scene').style.backgroundImage = `url(${BGS[h && h.f] || BGS.dragons})`;
+  const BGS = { dragons: 'bg/dragons.jpg', lions: 'bg/lions.jpg', wolves: 'bg/wolves.jpg', ravens: 'bg/ravens.jpg' }, myF = (h && h.f) || S.fac; $('scene').style.backgroundImage = `url(${BGS[myF] || BGS.dragons})`;
+  { const art = document.querySelector('.nextc .art'); if (art) art.style.backgroundImage = `url(${BGS[myF] || BGS.dragons})`; }
   const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
