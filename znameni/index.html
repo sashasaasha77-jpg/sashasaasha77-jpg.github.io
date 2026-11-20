@@ -34,7 +34,14 @@ html,body{margin:0;height:100%;background:#0c1024;color:var(--txt);font:14px/1.3
 .modal .col{display:flex;flex-direction:column;gap:8px}
 .list{text-align:left;color:var(--mut);margin:8px 0}.list b{color:#fff}
 #load{position:fixed;inset:0;display:grid;place-items:center;font-weight:800;color:var(--mut);z-index:0}
-@media(max-width:640px){.top .btn{display:none}#q{width:30vw}.joy{bottom:calc(18px + env(safe-area-inset-bottom))}.logo{font-size:14px;letter-spacing:1px}.logo small{display:none}.tabs a{padding:5px 7px;font-size:12px}#q{width:26vw;padding:7px 8px}.top .btn{padding:8px 9px;font-size:12px}.pop button{font-size:11px;padding:5px 7px}.biome{top:calc(150px + env(safe-area-inset-top));font-size:12px}.hint{display:none}}
+.gbtn{border:0;border-radius:11px;padding:8px 12px;font-weight:900;font-size:13px;color:#fff;background:#2a3670;cursor:pointer;white-space:nowrap}.gbtn.voting{background:linear-gradient(180deg,#ff6a4a,#d8341e);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px #ff6a4a44}}
+.gl{text-align:left}.gl h3{margin:14px 0 6px;font-size:15px}.gl .vote{border:2px solid var(--c);border-radius:12px;padding:10px;background:#0a102866}
+.opt{display:block;width:100%;text-align:left;border:1px solid #ffffff22;border-radius:10px;background:#141c40;color:#fff;padding:8px 10px;margin:6px 0;cursor:pointer;position:relative;overflow:hidden;font:inherit}
+.opt i{position:absolute;left:0;top:0;bottom:0;background:var(--c);opacity:.25}.opt b,.opt small,.opt span{position:relative}.opt small{display:block;color:var(--mut)}.opt span{float:right;font-weight:900}.opt.mine{outline:2px solid var(--gold)}.opt:disabled{cursor:default}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}.tbl td{padding:5px 4px;border-bottom:1px solid #ffffff14}.tbl td:first-child{font-weight:800}
+.blt{display:flex;flex-wrap:wrap;gap:6px}.blt span{background:#141c40;border:1px solid #ffffff22;border-radius:8px;padding:4px 8px;font-size:12px}
+@media(max-width:640px){.gbtn{padding:7px 8px;font-size:12px}.top .btn{display:none}#q{width:30vw}.joy{bottom:calc(18px + env(safe-area-inset-bottom))}.logo{font-size:14px;letter-spacing:1px}.logo small{display:none}.tabs a{padding:5px 7px;font-size:12px}#q{width:26vw;padding:7px 8px}.top .btn{padding:8px 9px;font-size:12px}.pop button{font-size:11px;padding:5px 7px}.biome{top:calc(150px + env(safe-area-inset-top));font-size:12px}.hint{display:none}}
 @media(hover:hover) and (pointer:fine){.joy,.hgt{display:none}}
 </style>
 </head>
@@ -44,6 +51,7 @@ html,body{margin:0;height:100%;background:#0c1024;color:var(--txt);font:14px/1.3
 <div class="top glass">
   <div class="logo">ЧЕТЫРЕ ЗНАМЕНИ<small>Сезон I · лагерь подписчиков</small></div>
   <div class="tabs"><a class="on">⛺ Лагерь</a><a href="bitva.html">⚔️ Битва</a></div><div class="sp"></div>
+  <button class="gbtn" id="gbtn">🏆 Слава</button>
   <input id="q" placeholder="🔍 Найди себя" autocomplete="off">
   <a class="btn" href="https://t.me/znameni4_bot/lager" target="_blank">Играть</a>
 </div>
@@ -64,6 +72,7 @@ import * as THREE from '../three.module.js';
 import { FACTIONS, ROLES, FKEYS, RKEYS, rng } from './battle.mjs';
 import { soldierGeo } from './army3d.mjs';
 import { buildCamp, KINDS, BIOME } from './town3d.mjs';
+import { UPG_BY, pickOptions } from './glory.mjs';
 const $ = id => document.getElementById(id);
 const API = 'https://otgwiroxifqtktbipbsu.supabase.co/functions/v1/znameni/api/', INSTA = '4znameni';
 
@@ -84,8 +93,11 @@ const sun = new THREE.DirectionalLight(0xfff2dc, 2.3); sun.position.set(-50, 80,
 Object.assign(sun.shadow.camera, { left: -66, right: 66, top: 66, bottom: -66, far: 260 }); sun.shadow.bias = -.0006; scene.add(sun);
 
 // ---------- лагеря знамён ----------
-const CAMPS = {}; let cur = null, C = null;
-function camp(f) { if (!CAMPS[f]) { CAMPS[f] = buildCamp(f, FACTIONS); scene.add(CAMPS[f].group); } return CAMPS[f]; }
+const CAMPS = {}; let cur = null, C = null, BUILT = null;
+const builtOf = f => (BUILT && BUILT[f]) || [];
+function camp(f) { const sig = builtOf(f).join(','); if (CAMPS[f] && CAMPS[f].sig !== sig) { scene.remove(CAMPS[f].group); CAMPS[f] = null; }
+  if (!CAMPS[f]) { CAMPS[f] = buildCamp(f, FACTIONS, { built: builtOf(f) }); CAMPS[f].sig = sig; scene.add(CAMPS[f].group); } return CAMPS[f]; }
+function setBuilt(b) { const old = JSON.stringify(BUILT); BUILT = b; if (cur && JSON.stringify(b) !== old) { const f = cur; cur = null; showCamp(f, false); } }
 function showCamp(f, fly = true) {
   if (cur === f) return; cur = f; C = camp(f); for (const k in CAMPS) CAMPS[k].group.visible = k === f;
   const P = C.biome; scene.background = new THREE.Color(P.sky); scene.fog.color.set(P.fog); hemi.color.set(P.hemi[0]); hemi.groundColor.set(P.hemi[1]); sun.color.set(P.sun);
@@ -102,7 +114,9 @@ let MESH = {}, SLOT = [], PEOPLE = [], meNick = null, me = -1;
 const PEOPLE_ME = () => -1;
 const RN = 5, KN = 8;
 const nodeXZ = (ri, k, off) => { const r = [8.5, 15.5, 27, 42, 52.5][ri] + off, a = k * Math.PI / 4; return [Math.sin(a) * r, Math.cos(a) * r]; };
-function nextNode(p) { const opts = []; if (p.ri > 0) opts.push([p.ri - 1, p.k]); if (p.ri < RN - 1) opts.push([p.ri + 1, p.k]); opts.push([p.ri, (p.k + 1) % KN], [p.ri, (p.k + KN - 1) % KN]);
+function nextNode(p) { if (p.job && Math.random() < .5) { const j = p.job; let to = null; if (p.ri < 3) to = [p.ri + 1, p.k]; else if (p.ri > 3) to = [p.ri - 1, p.k]; else { const d = ((j.s - p.k) % 8 + 8) % 8; to = [3, d === 0 ? p.k : d <= 4 ? (p.k + 1) % KN : (p.k + KN - 1) % KN]; }
+    if (to && !(to[0] === p.ri && to[1] === p.k)) { p.from = [p.ri, p.k]; [p.ri, p.k] = to; p.t = 0; const [ax, az] = nodeXZ(...p.from, p.off), [bx, bz] = nodeXZ(p.ri, p.k, p.off); p.len = p.from[0] === p.ri ? (42 + p.off) * Math.PI / 4 : Math.hypot(bx - ax, bz - az); return; } }
+  const opts = []; if (p.ri > 0) opts.push([p.ri - 1, p.k]); if (p.ri < RN - 1) opts.push([p.ri + 1, p.k]); opts.push([p.ri, (p.k + 1) % KN], [p.ri, (p.k + KN - 1) % KN]);
   if (p.ri === 0) opts.push([0, (p.k + 1) % KN], [0, (p.k + 1) % KN]); const [ri, k] = opts[Math.random() * opts.length | 0]; p.from = [p.ri, p.k]; p.ri = ri; p.k = k; p.t = 0;
   const [ax, az] = nodeXZ(...p.from, p.off), [bx, bz] = nodeXZ(ri, k, p.off); p.len = p.from[0] === ri ? ([8.5, 15.5, 27, 42, 52.5][ri] + p.off) * Math.PI / 4 : Math.hypot(bx - ax, bz - az); }
 function buildPeople() {
@@ -113,14 +127,29 @@ function buildPeople() {
   const c = new THREE.Color(); PEOPLE.forEach((w, i) => { const [r, k] = SLOT[i]; MESH[r][0].setColorAt(k, c.set(w.skin === 'gold' ? 0xffe08a : 0xffffff)); MESH[r][1].setColorAt(k, c.set(w.skin === 'gold' ? 0xffd75a : FACTIONS[w.f].color)); });
   for (const r of RKEYS) MESH[r].forEach(m => { if (m.instanceColor) m.instanceColor.needsUpdate = true; });
   me = meNick ? PEOPLE.findIndex(p => p.nick === meNick) : -1;
+  // жители ходят в постройки, построенные за «Славу»
+  const free = PEOPLE.slice().sort(() => R() - .5);
+  for (const L of (C.lots || []).filter(l => l.built)) { const u = UPG_BY[L.key]; if (!u || u.kind !== 'building') continue; const n = Math.max(1, Math.min(u.cap, Math.round(PEOPLE.length * u.share * 2.5)));
+    for (let i = 0; i < n && free.length; i++) { const p = free.pop(); p.job = L; } }
 }
+function startVisit(p) { const L = p.job, r = 42 + p.off, a0 = p.k * Math.PI / 4; let a1 = L.a; if (a1 - a0 > Math.PI) a1 -= Math.PI * 2; if (a0 - a1 > Math.PI) a1 += Math.PI * 2;
+  const path = []; for (let i = 1; i <= 6; i++) { const a = a0 + (a1 - a0) * i / 6; path.push([Math.sin(a) * r, Math.cos(a) * r]); }
+  const j = (Math.random() - .5) * 2.4, ta = L.a + j / 43.6; path.push([Math.sin(ta) * (43.4 + Math.random() * .6), Math.cos(ta) * (43.4 + Math.random() * .6)]);
+  p.path = path; p.ret = path.slice(0, -1).reverse().concat([nodeXZ(3, p.k, p.off)]); p.mode = 'go'; const acts = UPG_BY[L.key].act; p.act = acts[Math.random() * acts.length | 0]; }
 const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e3 = new THREE.Euler(0, 0, 0, 'YXZ'), v3 = new THREE.Vector3(), sv = new THREE.Vector3();
 function stepPeople(dt, t) {
   for (const p of PEOPLE) { let moving = false;
-    if (p.wait > 0) p.wait -= dt; else { p.t += 1.35 * dt / Math.max(1, p.len); moving = true; if (p.t >= 1) { if (Math.random() < .35) p.wait = 1 + Math.random() * 5; nextNode(p); } }
-    const [fr, fk] = p.from, tt = Math.min(1, p.t); let x, z;
+    let x, z;
+    if (p.path) { const [tx, tz] = p.path[0], dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz), st = 1.35 * dt; moving = true;
+      if (d <= st) { x = tx; z = tz; p.path.shift(); if (!p.path.length) { p.path = null; if (p.mode === 'go') { p.mode = 'stay'; p.wait = 25 + Math.random() * 35; p.yaw = Math.atan2(p.job.fx, p.job.fz); } else { p.mode = null; p.act = null; p.cool = 40 + Math.random() * 40; p.t = 1; } } } else { x = p.x + dx / d * st; z = p.z + dz / d * st; } }
+    else if (p.mode === 'stay') { x = p.x; z = p.z; p.wait -= dt; if (p.wait <= 0) { p.mode = 'back'; p.path = p.ret; } }
+    else {
+    if (p.cool > 0) p.cool -= dt;
+    if (p.wait > 0) p.wait -= dt; else { p.t += 1.35 * dt / Math.max(1, p.len); moving = true; if (p.t >= 1) { if (p.job && !(p.cool > 0) && p.ri === 3 && (p.k === p.job.s || p.k === (p.job.s + 1) % 8) && Math.random() < .7) { startVisit(p); continue; } if (Math.random() < .35) p.wait = 1 + Math.random() * 5; nextNode(p); } }
+    const [fr, fk] = p.from, tt = Math.min(1, p.t);
     if (fr === p.ri) { const r = [8.5, 15.5, 27, 42, 52.5][fr] + p.off; let a0 = fk * Math.PI / 4, a1 = p.k * Math.PI / 4; if (a1 - a0 > Math.PI) a1 -= Math.PI * 2; if (a0 - a1 > Math.PI) a1 += Math.PI * 2; const a = a0 + (a1 - a0) * tt; x = Math.sin(a) * r; z = Math.cos(a) * r; }
     else { const [ax, az] = nodeXZ(fr, fk, 0), [bx, bz] = nodeXZ(p.ri, p.k, 0), a = p.k * Math.PI / 4; x = ax + (bx - ax) * tt + Math.cos(a) * p.off; z = az + (bz - az) * tt - Math.sin(a) * p.off; }
+    }
     if (moving) { const dx = x - p.x, dz = z - p.z; if (dx * dx + dz * dz > 1e-6) { let w = Math.atan2(dx, dz) - p.yaw; w = Math.atan2(Math.sin(w), Math.cos(w)); p.yaw += w * Math.min(1, dt * 8); } }
     p.x = x; p.z = z;
     const big = p.lv >= 20 ? 1.25 : p.lv >= 10 ? 1.12 : 1, bob = moving ? Math.abs(Math.sin(t * 9 + p.ph)) * .07 : Math.sin(t * 2 + p.ph) * .01;
@@ -166,16 +195,19 @@ function pick(x, y) {
 function show(html) { $('infobox').innerHTML = html; $('info').classList.add('on'); }
 const CLOSE = '<button class="btn g" data-close="1">Закрыть</button>';
 function person(i) { const p = PEOPLE[i], F = FACTIONS[p.f], Ro = ROLES[p.r]; followI = i; Object.assign(camT, { dist: 17, pitch: .72 });
-  show(`<div style="font-size:42px">${F.icon}</div><h2>@${p.nick}${i === me ? ' — это ты' : ''}</h2><p>${Ro.icon} ${Ro.name} знамени «${F.name}» · уровень ${p.lv || 0}${p.skin === 'gold' ? ' · ✨ Золотое знамя' : ''}</p>
+  show(`<div style="font-size:42px">${F.icon}</div><h2>@${p.nick}${i === me ? ' — это ты' : ''}</h2><p>${Ro.icon} ${Ro.name} знамени «${F.name}» · уровень ${p.lv || 0}${p.skin === 'gold' ? ' · ✨ Золотое знамя' : ''}</p>${p.mode === 'stay' && p.act ? `<p><b>${UPG_BY[p.job.key].icon} ${p.act}</b></p>` : ''}
     <div class="col"><a class="btn" href="https://instagram.com/${encodeURIComponent(p.nick)}" target="_blank">Профиль в Instagram</a>${CLOSE}</div>`); }
 const HOUSE_TXT = { cottage: 'Уютный домик воинов: здесь отдыхают после битвы.', townhouse: 'Городской дом с лавкой на первом этаже.', corner: 'Дом с башенкой — с неё видно весь район.', manor: 'Усадьба знатного воина знамени.', farmhouse: 'Хутор: отсюда в лагерь везут хлеб и молоко.',
   rowhouse: 'Дома в ряд — здесь живут целыми семьями.', barracks: 'Казарма: здесь тренируются новобранцы.', temple: 'Храм знамени: воины молятся о победе перед битвой.', warehouse: 'Склад припасов на случай долгой осады.', markethall: 'Торговые ряды: фрукты, ткани и трофеи.',
   forge: 'Кузница: здесь куют мечи и чинят доспехи.', windmill: 'Мельница: свежая мука для всего лагеря.', barn: 'Амбар с сеном и зерном.', workshop: 'Мастерская: луки, щиты и телеги.', garden: 'Огород: жители копают и поливают грядки.', well: 'Сквер с колодцем — место для разговоров.' };
-function house(h) { const K = KINDS[h.kind]; show(`<div style="font-size:38px">🏠</div><h2>${K.name}</h2><p>${C.biome.name} · ${h.dist}</p><p>${HOUSE_TXT[h.kind] || ''}</p><div class="col">${CLOSE}</div>`); }
+function house(h) { const K = KINDS[h.kind];
+  if (h.kind === 'lot') { const u = UPG_BY[h.upg]; return show(`<div style="font-size:38px">🔨</div><h2>Место под стройку</h2><p>${h.dist}</p><p>Здесь появится <b>${u.icon} ${u.name}</b> — ${u.desc.toLowerCase()}. Для этого знамя должно победить в битве, а подписчики — выбрать эту постройку.</p><div class="col"><button class="btn" data-glory="1">🗳 К голосованию</button>${CLOSE}</div>`); }
+  if (h.upg) { const u = UPG_BY[h.upg], n = PEOPLE.filter(p => p.job && p.job.key === h.upg && p.mode === 'stay').length; return show(`<div style="font-size:38px">${u.icon}</div><h2>${u.name}</h2><p>${h.dist} · построено за победу в битве</p><p>${u.desc}</p>${n ? `<p>Сейчас здесь жителей: <b>${n}</b></p>` : ''}<div class="col">${CLOSE}</div>`); } show(`<div style="font-size:38px">🏠</div><h2>${K.name}</h2><p>${C.biome.name} · ${h.dist}</p><p>${HOUSE_TXT[h.kind] || ''}</p><div class="col">${CLOSE}</div>`); }
 function nextBattleTxt() { const n = ST && ST.nextBattle ? ST.nextBattle - Date.now() : (() => { const a = new Date(), b = new Date(a); b.setHours(20, 0, 0, 0); if (b <= a) b.setDate(b.getDate() + 1); return b - a; })(); const h = Math.floor(n / 36e5), m = Math.floor(n / 6e4) % 60; return `${h} ч ${m} мин`; }
 function openInfo(k) {
   const P = (ST && ST.past) || [], F = FACTIONS[cur];
   const T = {
+    statue: `<div style="font-size:42px">🗿</div><h2>Статуя героя</h2><p>Статуя героя знамени «${F.name}» на площади. Построена за победу в битве по голосованию подписчиков.</p><div class="col">${CLOSE}</div>`,
     keep: `<div style="font-size:42px">🏰</div><h2>Цитадель знамени «${F.name}»</h2><p>Сердце лагеря. Отсюда воины ${F.icon} выходят на битву знамён. ${F.bonus}.</p><p>Жителей в лагере: <b>${PEOPLE.length}</b></p><div class="col">${CLOSE}</div>`,
     arena: `<div style="font-size:42px">⚔️</div><h2>Арена</h2><p>Каждый день в 20:00 четыре знамени сходятся в битве. Победившее знамя получает +100 золота каждому воину. До битвы: <b>${nextBattleTxt()}</b>.</p><div class="col"><a class="btn" href="bitva.html">Смотреть битву</a>${CLOSE}</div>`,
     tavern: `<div style="font-size:42px">🍺</div><h2>Таверна</h2><p>Здесь тренируются воины: бей чучело, копи золото, прокачивай героя, ходи в поход и вступай в гильдию.</p><div class="col"><a class="btn" href="https://t.me/znameni4_bot/lager" target="_blank">Открыть игру в Telegram</a>${CLOSE}</div>`,
@@ -200,16 +232,50 @@ function labels() {
   for (const l of C.labels) if (l.c === 'b' || (l.c === 'd' && far && innerWidth > 640)) want.push(l);
   if (me >= 0) { const p = PEOPLE[me]; want.push({ t: '★ @' + p.nick + ' (это ты)', p: [p.x, 2.4, p.z], c: 'me' }); }
   const cx = camS.tx, cz = camS.tz, rad = Math.max(8, camS.dist * .4);
-  if (camS.dist < 40) for (const p of PEOPLE) { if (want.length > 40) break; if (p.i === me) continue; if (Math.hypot(p.x - cx, p.z - cz) < rad) want.push({ t: p.nick, p: [p.x, 1.9 * (p.lv >= 20 ? 1.25 : 1), p.z], c: '' }); }
+  if (camS.dist < 40) for (const p of PEOPLE) { if (want.length > 40) break; if (p.i === me) continue; if (Math.hypot(p.x - cx, p.z - cz) < rad) want.push({ t: (p.mode === 'stay' ? UPG_BY[p.job.key].icon + ' ' : '') + p.nick, p: [p.x, 1.9 * (p.lv >= 20 ? 1.25 : 1), p.z], c: '' }); }
   while (lblPool.length < want.length) { const e = document.createElement('div'); $('labels').appendChild(e); lblPool.push(e); }
   lblPool.forEach((e, j) => { const w = want[j]; if (!w) { e.style.display = 'none'; return; } v3.set(...w.p).project(cam); if (v3.z > 1 || Math.abs(v3.x) > 1.1 || Math.abs(v3.y) > 1.1) { e.style.display = 'none'; return; }
     e.style.display = ''; e.className = 'lbl ' + w.c; e.textContent = w.t; e.style.left = (v3.x + 1) / 2 * innerWidth + 'px'; e.style.top = (1 - v3.y) / 2 * innerHeight + 'px'; });
 }
 
+// ---------- слава лагерей ----------
+const VOTER = (() => { try { let v = localStorage.getItem('zn.voter'); if (!v) { v = 'v' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('zn.voter', v); } return v; } catch (e) { return 'v' + Math.random().toString(36).slice(2, 14) + 'tmp'; } })();
+const DEMO_BUILT = { lions: ['brewery', 'windmill', 'statue', 'banners'], wolves: ['fishpond', 'bathhouse', 'lanterns', 'watchtower', 'stone_walls'], dragons: ['armory', 'arena', 'stone_walls', 'lanterns'], ravens: ['library', 'shrine', 'music_hall'] };
+let GL = null;
+const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c; };
+const hm = ts => new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+const nextTs = () => (ST && ST.nextBattle) || (() => { const a = new Date(), b = new Date(a); b.setHours(20, 0, 0, 0); if (b <= a) b.setDate(b.getDate() + 1); return +b; })();
+function demoGlory() { const fac = 'wolves', opts = pickOptions(DEMO_BUILT[fac], 'demo'); let mine = null; try { mine = localStorage.getItem('zn.demo.vote'); } catch (e) { }
+  const pop = f => ROSTER.filter(w => w.f === f).length, W = { wolves: [5, 2], lions: [3, 0], ravens: [3, 0], dragons: [2, 0] };
+  return { demo: true, built: DEMO_BUILT, last: { fac: 'wolves', key: 'stone_walls' }, vote: { fac, options: opts, counts: Object.fromEntries(opts.map((k, i) => [k, [12, 3, 6, 8][i] + (mine === k ? 1 : 0)])), closes: nextTs(), mine },
+    standings: Object.keys(W).map(f => ({ fac: f, wins: W[f][0], battles: 13, streak: W[f][1], upgrades: DEMO_BUILT[f].length, population: pop(f) })), best: 'wolves' }; }
+async function loadGlory() { if (!DEMO) { try { const r = await fetch(API + 'glory', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voter: VOTER }) }); if (r.ok) { GL = await r.json(); setBuilt(GL.built); gbtn(); return; } } catch (e) { } }
+  GL = demoGlory(); setBuilt(GL.built); gbtn(); }
+function gbtn() { const b = $('gbtn'), v = GL && GL.vote; b.classList.toggle('voting', !!(v && !v.mine)); b.textContent = v && !v.mine ? '🗳 Голосование' : GL && GL.best ? '👑 ' + FACTIONS[GL.best].name : '🏆 Слава'; }
+function gloryHtml() { const g = GL; if (!g) return '<p>Загружаем…</p>' + CLOSE; const v = g.vote;
+  let h = `<div class="gl"><div style="text-align:center;font-size:40px">🏆</div><h2 style="text-align:center">Слава лагерей</h2><p>Победа в битве — это +100 золота каждому воину знамени и голосование: что построить в своём лагере.</p>`;
+  if (v) { const F = FACTIONS[v.fac], tot = Object.values(v.counts).reduce((a, b) => a + b, 0);
+    h += `<div class="vote" style="--c:${F.color}"><b>🗳 Что построить в лагере «${F.name}»?</b><p style="margin:4px 0">${F.icon} ${F.name} победили в битве. Голосовать может каждый — победитель голосования появится в их лагере. Голосование закончится в начале следующей битвы (${hm(v.closes)}).</p>`
+      + v.options.map(k => { const u = UPG_BY[k], n = v.counts[k] || 0, pc = tot ? n / tot * 100 : 0; return `<button class="opt ${v.mine === k ? 'mine' : ''}" data-vote="${k}" ${v.mine ? 'disabled' : ''}><i style="width:${pc}%"></i><span>${n} ${plural(n, 'голос', 'голоса', 'голосов')}${v.mine === k ? ' · ваш голос ✓' : ''}</span><b>${u.icon} ${u.name}</b><small>${u.desc}</small></button>`; }).join('') + '</div>'; }
+  else h += '<p>Голосование откроется после ближайшей битвы в 20:00 — для знамени-победителя.</p>';
+  if (g.last && UPG_BY[g.last.key]) h += `<p>Последнее улучшение: ${FACTIONS[g.last.fac].icon} ${FACTIONS[g.last.fac].name} построили «${UPG_BY[g.last.key].name}»</p>`;
+  h += '<h3>Таблица знамён</h3><table class="tbl">' + [...g.standings].sort((a, b) => b.wins - a.wins || b.streak - a.streak).map(x => `<tr><td>${g.best === x.fac ? '👑 ' : ''}${FACTIONS[x.fac].icon} ${FACTIONS[x.fac].name}</td><td>${x.wins} ${plural(x.wins, 'победа', 'победы', 'побед')} из ${x.battles}${x.streak > 1 ? ' · серия ' + x.streak : ''}</td><td>построек ${x.upgrades} · воинов ${x.population}</td></tr>`).join('') + '</table><p style="font-size:12px;color:var(--mut)">👑 Звание «Лучший лагерь» — у знамени с наибольшим числом побед.</p>';
+  const b = g.built[cur] || []; h += `<h3>Постройки лагеря «${FACTIONS[cur].name}»</h3>` + (b.length ? '<div class="blt">' + b.map(k => `<span>${UPG_BY[k].icon} ${UPG_BY[k].name}</span>`).join('') + '</div>' : '<p>Пока ничего не построено — побеждайте в битвах и голосуйте.</p>');
+  if (g.demo) h += '<p style="font-size:11px;color:var(--mut)">Демо-режим: настоящие голоса начнут считаться после запуска сервера.</p>';
+  return h + '<div class="col" style="margin-top:12px">' + CLOSE + '</div></div>'; }
+async function voteFor(k) { if (!GL || !GL.vote || GL.vote.mine) return;
+  if (GL.demo) { try { localStorage.setItem('zn.demo.vote', k); } catch (e) { } GL = demoGlory(); }
+  else { try { const r = await fetch(API + 'glory_vote', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voter: VOTER, key: k }) }), j = await r.json(); if (!r.ok) { alertBox(j.message || 'Не удалось проголосовать'); return; } GL = j; } catch (e) { alertBox('Не удалось проголосовать — проверь интернет'); return; } }
+  gbtn(); show(gloryHtml()); }
+const alertBox = m => show(`<div style="font-size:38px">⚠️</div><p>${m}</p><div class="col">${CLOSE}</div>`);
+$('gbtn').onclick = () => show(gloryHtml());
+document.addEventListener('click', e => { const v = e.target.closest('[data-vote]'); if (v) voteFor(v.dataset.vote); if (e.target.closest('[data-glory]')) show(gloryHtml()); });
+
 // ---------- данные ----------
 async function load() {
   try { const r = await fetch(API + 'state', { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } }); ST = await r.json();
     if (ST && Array.isArray(ST.army) && ST.army.length) { ROSTER = ST.army; DEMO = false; buildPeople(); renderTabs(); }
+    if (ST && ST.built) setBuilt(ST.built);
     const Bt = ST && ST.battle; if (Bt && Date.now() - Bt.at >= 0 && Date.now() - Bt.at < ((Bt.result && Bt.result.time) || 240) * 1000 + 5000) $('live').style.display = 'flex'; } catch (e) { }
 }
 setInterval(() => { const n = ST && ST.nextBattle; if (n && Date.now() >= n && Date.now() - n < 300000) $('live').style.display = 'flex'; }, 3000);
@@ -231,7 +297,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 const start = FKEYS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'lions';
-showCamp(start); Object.assign(camS, camT); $('load').style.display = 'none'; requestAnimationFrame(frame); load();
+window.ZN = { camT, showCamp }; BUILT = DEMO_BUILT; showCamp(start); Object.assign(camS, camT); $('load').style.display = 'none'; requestAnimationFrame(frame); load().finally(loadGlory);
 </script>
 </body>
 </html>

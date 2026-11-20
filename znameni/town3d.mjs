@@ -2,6 +2,7 @@
 // Здания собраны из простых блоков (фахверк, ставни, цветы, трубы) и рисуются «пачками» (InstancedMesh).
 import * as THREE from '../three.module.js';
 import { mergeGeometries } from '../lib/BufferGeometryUtils.js';
+import { soldierGeo } from './army3d.mjs';
 
 const PARTS = ['body', 'wall', 'roof', 'glass'];
 const BASE = { stone: '#b7aea0', dark: '#6e655c', timber: '#5a3a24', wood: '#8a5f3a', plank: '#b98c5a', thatch: '#c9a65a', leaf: '#5c8a3a', barn: '#8a3326', door: '#5a3620',
@@ -171,6 +172,84 @@ export const KINDS = {
     k.add('roof', new THREE.ConeGeometry(1.8, 1.2, 4).rotateY(Math.PI / 4).translate(0, .6, 0), 0, 3.2, 0);
     for (let i = 0; i < 4; i++) { const a = Math.PI / 4 + i * Math.PI / 2; rot(k, t => { t.box('body', 2, .08, .44, 0, .4, 0, P.plank); for (const s of [-.8, .8]) t.box('body', .12, .4, .36, s, 0, 0, P.timber); }, a + Math.PI / 2, Math.sin(a) * 2.8, Math.cos(a) * 2.8); tree(k, Math.sin(a + .5) * 3.9, Math.cos(a + .5) * 3.9, .9); } } },
 };
+
+// ---------- постройки за «Славу» ----------
+function logs(k, w, d, h, cx = 0, cz = 0) { const cols = ['#8a6a44', '#7a5a38'];
+  for (let i = 0; i * .42 < h; i++) { const y = .22 + i * .42, c = cols[i % 2];
+    for (const s of [1, -1]) { k.add('body', new THREE.CylinderGeometry(.22, .22, w + .5, 7).rotateZ(Math.PI / 2), cx, y, cz + s * d / 2, 0, c); k.add('body', new THREE.CylinderGeometry(.22, .22, d + .5, 7).rotateX(Math.PI / 2), cx + s * w / 2, y + .21, cz, 0, c); } } }
+Object.assign(KINDS, {
+  brewery: { name: 'Пивоварня', w: 10, d: 7.5, fn(k) { const P = k.P; k.box('body', 7.3, .5, 6.3, -1.3, 0, 0, P.stone); k.box('wall', 7, 3.6, 6, -1.3, .5, 0); frame(k, 7, .5, 3.6, -1.3, 3.01, 0, 5);
+    gable(k, 7, 6, 4.1, 2.6, .45, -1.3, 0); door(k, -1.3, 3, 0); win(k, -3.6, 1.4, 3, 0, .8, 1, true, 0); win(k, .9, 1.4, 3, 0, .8, 1, true, 1); chim(k, -3.4, -1.5, 8);
+    k.cyl('body', 1.35, 1.35, 2.6, 3.7, 0, -1, '#b8743a', 14); k.cyl('body', 1.42, 1.42, .15, 3.7, 1.3, -1, '#8a5426', 14); k.add('body', new THREE.SphereGeometry(1.35, 14, 8, 0, 6.29, 0, 1.2), 3.7, 2.6, -1, 0, '#c88446');
+    k.add('body', new THREE.CylinderGeometry(.12, .12, 1.6, 6).rotateZ(Math.PI / 2), 2.4, 3, -1, 0, '#8a5426');
+    for (let i = 0; i < 3; i++) k.add('body', new THREE.CylinderGeometry(.45, .45, .9, 10).rotateX(Math.PI / 2), 3 + i * .95, .45, 1.6, 0, '#6a4a2c'); k.add('body', new THREE.CylinderGeometry(.45, .45, .9, 10).rotateX(Math.PI / 2), 3.5, 1.3, 1.6, 0, '#6a4a2c');
+    k.box('body', 2.6, .1, 1, -1.3, .8, 4.6, P.plank); for (const s of [-1, 1]) { k.box('body', .14, .8, .8, -1.3 + s, 0, 4.6, P.timber); k.box('body', 2.6, .1, .4, -1.3, .45, 4.6 + s * .9, P.plank); }
+    for (const u of [-.6, .3]) k.cyl('body', .13, .12, .32, -1.3 + u, .9, 4.6, '#e8c060', 8); k.box('body', .14, .14, 1.4, .9, 3.3, 3.7, P.timber); k.cyl('body', .3, .26, .5, .9, 2.6, 4.3, '#e8c060', 8); } },
+  bathhouse: { name: 'Баня', w: 8, d: 7, fn(k) { const P = k.P; k.box('body', 6.6, .3, 5.6, 0, 0, 0, P.stone); logs(k, 6, 5, 2.9); gable(k, 6.5, 5.5, 3.2, 2.2, .5, 0, 0, 'body', '#7a5a38');
+    door(k, -1.2, 2.75, 0, false, .9, 1.8); win(k, 1.3, 1.3, 2.75, 0, .6, .6, false, 1); k.cyl('body', .3, .35, 6.4, 2, 0, -1.2, '#4a4a52', 8);
+    for (let i = 0; i < 4; i++) k.add('glass', new THREE.SphereGeometry(.35 + i * .12, 8, 6), 2 + i * .25, 6.8 + i * .55, -1.2 - i * .1);
+    for (let i = 0; i < 7; i++) k.add('body', new THREE.CylinderGeometry(.18, .18, 1.4, 7).rotateX(Math.PI / 2), -3.6 + (i % 4) * .38, .2 + Math.floor(i / 4) * .34, -.6, 0, '#9a7a50'); k.cyl('body', .3, .25, .45, 1.6, 0, 3.3, '#7a5a38', 8); } },
+  library: { name: 'Библиотека', w: 10, d: 7.5, fn(k) { const P = k.P, w = 9, d = 6.6; k.box('body', w + .4, .7, d + .4, 0, 0, 0, P.stone); k.box('wall', w, 5.2, d, 0, .7, 0); k.box('body', w + .2, .3, d + .2, 0, 5.9, 0, P.stone);
+    hip(k, w, d, 6.2, 2.6, .4); k.add('roof', new THREE.SphereGeometry(1.3, 12, 8, 0, 6.29, 0, 1.57), 0, 8.6, 0); k.cyl('body', .05, .05, .8, 0, 9.8, 0, '#d6b04a', 6);
+    for (const x of [-3, 3]) win(k, x, 1.6, d / 2, 0, 1, 2.6, false, 2); for (const s of [-1, 1]) k.cyl('body', .25, .28, 4.2, s * 1.3, .7, d / 2 + 1, '#ece6da', 10); k.box('body', 3.2, .35, 1.6, 0, 4.9, d / 2 + .7, '#ece6da');
+    door(k, 0, d / 2, 0, false, 1.3, 2.6); k.box('body', 2.8, .3, 1.6, 0, 0, d / 2 + .9, P.stone);
+    k.box('body', 1.6, 1.1, .12, 0, 3.2, d / 2 + .1, '#7a3a2c'); k.box('body', .1, 1, .14, 0, 3.25, d / 2 + .12, '#f2e6c8');
+    for (const s of [-1, 1]) for (const z of [-1.6, 1.6]) win(k, s * w / 2, 1.8, z, s * Math.PI / 2, .9, 2.2, false, 2); } },
+  apiary: { name: 'Пасека', w: 9, d: 7, fn(k) { const P = k.P; k.box('body', 9, .08, 6.6, 0, 0, 0, '#7aa04a');
+    for (let i = 0; i < 6; i++) { const x = -3.3 + (i % 3) * 2.2, z = -1.4 + Math.floor(i / 3) * 2.6; k.box('body', .3, .4, .3, x, 0, z, P.timber); for (let j = 0; j < 3; j++) k.box('body', 1, .42, 1, x, .4 + j * .44, z, j % 2 ? '#f2d27a' : '#e8e0c8');
+      rot(k, t => gable(t, 1.2, 1.2, 1.72, .5, .08, 0, 0, 'body', '#8a5a30'), 0, x, z); }
+    k.box('body', 2, 2.2, 1.6, 3.6, 0, -2.2, P.wood); gable(k, 2, 1.6, 2.2, 1, .25, 3.6, -2.2); door(k, 3.6, -1.4, 0, false, .8, 1.6);
+    for (let i = 0; i < 18; i++) k.add('body', ICO(.16), -4 + (i * 1.7) % 8.2, .2, 2.6 + (i % 3) * .25, 0, P.flowers[i % 4]); } },
+  armory: { name: 'Оружейная', w: 10, d: 7.5, fn(k) { const P = k.P; k.box('body', 7.4, .5, 6, -1.2, 0, 0, P.dark); k.box('body', 7, 3.8, 5.6, -1.2, .5, 0, P.stone);
+    for (let i = 0; i < 5; i++) k.box('body', .5, .5, .5, -4.4 + i * 1.6, 4.3, 2.6, P.stone); gable(k, 7, 5.6, 4.3, 2.4, .4, -1.2, 0, 'body', P.stone);
+    k.box('body', 2, 2.8, .1, -1.2, .5, 2.85, '#4a3020'); k.box('body', 2.3, .2, .14, -1.2, 3.3, 2.88, '#3a3a40'); k.add('body', new THREE.CylinderGeometry(.55, .55, .1, 12).rotateX(Math.PI / 2), -1.2, 3.9, 2.9, 0, '#c0392b');
+    for (const [x, z] of [[3.2, -1.6], [3.2, 1.2]]) { k.box('body', .14, 2, .14, x - .9, 0, z, P.timber); k.box('body', .14, 2, .14, x + .9, 0, z, P.timber); k.box('body', 2, .12, .2, x, 1.6, z, P.timber);
+      for (let i = 0; i < 4; i++) k.box('body', .07, 1.6, .05, x - .6 + i * .4, .1, z + .12, '#d8dce4'); k.add('body', new THREE.CylinderGeometry(.42, .42, .08, 10).rotateX(Math.PI / 2), x, 1, z - .2, 0, P.shutter[(x + z) & 3]); }
+    k.cyl('body', .08, .08, 1.8, 1.7, 0, 3.2, P.timber, 6); k.box('body', .9, .12, .12, 1.7, 1.4, 3.2, P.timber); k.add('body', new THREE.CylinderGeometry(.35, .3, .8, 8), 1.7, 1.1, 3.2, 0, '#c9a65a'); k.add('body', new THREE.SphereGeometry(.25, 8, 6), 1.7, 1.75, 3.2, 0, '#c9a65a'); } },
+  tilt: { name: 'Ристалище', w: 12, d: 8.6, fn(k) { const P = k.P, rx = 5.6, rz = 3.6; k.add('body', new THREE.CylinderGeometry(1, 1, .1, 24).scale(rx, 1, rz), 0, .05, 0, 0, '#d8c08a');
+    for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2; k.box('body', .16, 1.1, .16, Math.cos(a) * rx, 0, Math.sin(a) * rz, P.timber); }
+    for (let i = 0; i < 20; i++) { const a = (i + .5) / 20 * Math.PI * 2, a2 = (i + 1) / 20 * Math.PI * 2, x = Math.cos(a) * rx, z = Math.sin(a) * rz, L = Math.hypot(Math.cos(a2) * rx - Math.cos(a2 - .314) * rx, Math.sin(a2) * rz - Math.sin(a2 - .314) * rz);
+      if (Math.abs(Math.sin(a)) > .95 && Math.sin(a) > 0) continue; k.add('body', B(L + .1, .1, .08).rotateY(-Math.atan2(-Math.sin(a) * rz, Math.cos(a) * rx * 1) + Math.PI / 2), x, .8, z, 0, P.plank); }
+    for (let r = 0; r < 2; r++) k.box('body', 6, .5 + r * .5, .9, 0, 0, -rz - 1 - r * .9, P.plank);
+    for (const s of [-1, 1]) { k.cyl('body', .06, .06, 3.2, s * (rx + .5), 0, 0, P.timber, 6); k.add('body', B(1, .7, .04).translate(.5, 0, 0), s * (rx + .5), 2.8, 0, 0, P.shutter[s > 0 ? 1 : 2]); } } },
+  watchtower: { name: 'Сторожевая башня', w: 6, d: 6, fn(k) { const P = k.P, h = 8;
+    for (const a of [-1, 1]) for (const b of [-1, 1]) k.add('body', B(.3, h + .2, .3).translate(0, (h + .2) / 2, 0).rotateX(b * .05).rotateZ(-a * .05), a * 1.4, 0, b * 1.4, 0, P.timber);
+    for (const y of [2.5, 5.2]) for (const s of [-1, 1]) { k.box('body', 3, .14, .14, 0, y, s * 1.35, P.timber); k.box('body', .14, .14, 3, s * 1.35, y, 0, P.timber); }
+    k.box('body', 3.6, .25, 3.6, 0, h, 0, P.plank); for (const s of [-1, 1]) { k.box('body', 3.6, .7, .1, 0, h + .25, s * 1.75, P.wood); k.box('body', .1, .7, 3.6, s * 1.75, h + .25, 0, P.wood); }
+    for (const a of [-1, 1]) for (const b of [-1, 1]) k.box('body', .14, 2, .14, a * 1.6, h + .25, b * 1.6, P.timber); hip(k, 3.6, 3.6, h + 2.2, 1.6, .35);
+    for (const s of [-.35, .35]) k.add('body', B(.08, h, .08).translate(0, h / 2, 0).rotateX(-.12), s, 0, 2.1, 0, P.timber); for (let i = 1; i < 11; i++) k.box('body', .7, .06, .06, 0, i * .72, 2.1 - i * .087, P.timber);
+    k.add('glass', B(.3, .4, .3), 1.75, h + 1.1, 1.75); } },
+  music_hall: { name: 'Дом музыки', w: 10, d: 8.6, fn(k) { const P = k.P; k.cyl('body', 3.6, 3.8, .6, 0, 0, 0, P.stone, 16); k.cyl('body', 3.5, 3.5, .1, 0, .6, 0, P.plank, 16);
+    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; k.cyl('body', .18, .2, 3.4, Math.cos(a) * 3.2, .6, Math.sin(a) * 3.2, '#ece6da', 8); }
+    k.cyl('body', 3.6, 3.6, .3, 0, 4, 0, P.timber, 16); k.add('roof', new THREE.ConeGeometry(4.1, 2.6, 16).translate(0, 1.3, 0), 0, 4.3, 0); k.add('body', ICO(.3), 0, 7, 0, 0, '#d6b04a');
+    k.cyl('body', .5, .5, .7, -1, .7, -.8, '#c0392b', 12); k.cyl('body', .52, .52, .06, -1, 1.4, -.8, '#f2ece0', 12); k.cyl('body', .35, .35, .5, .2, .7, -1.4, '#2e86c1', 10);
+    k.add('body', new THREE.SphereGeometry(.35, 8, 6).scale(1, 1.3, .5), 1.4, 1.5, -.6, 0, '#b8743a'); k.box('body', .08, 1, .06, 1.4, 1.7, -.6, '#5a3a22');
+    for (let i = 0; i < 3; i++) k.box('body', 2.2, .08, .44, -2.2 + i * 2.2, .4, 5, P.plank); } },
+  shrine: { name: 'Святилище героев', w: 8, d: 7, fn(k) { const P = k.P; k.box('body', 6, .5, 5, 0, 0, 0, P.stone); k.box('body', 4.4, .4, 3.6, 0, .5, 0, P.dark);
+    k.add('body', new THREE.CylinderGeometry(.35, .7, 5.5, 4).rotateY(Math.PI / 4).translate(0, 2.75, 0), 0, .9, 0, 0, P.stone); k.add('body', new THREE.ConeGeometry(.4, .7, 4).rotateY(Math.PI / 4).translate(0, .35, 0), 0, 6.4, 0, 0, '#d6b04a');
+    for (let i = 0; i < 7; i++) { const a = Math.PI * (.15 + i * .7 / 6); k.box('body', 1.1, 1.2 + (i % 2) * .2, .5, Math.cos(a) * 3.2, 0, -Math.sin(a) * 2.6, P.stone, -a + Math.PI / 2); }
+    for (const s of [-1, 1]) { k.cyl('body', .3, .2, 1, s * 2.4, .5, 1.9, P.dark, 8); k.add('glass', new THREE.ConeGeometry(.25, .5, 7), s * 2.4, 1.75, 1.9); }
+    for (let i = 0; i < 8; i++) { k.cyl('body', .05, .05, .25, -1.4 + i * .4, .9, 1.4, '#f4eee0', 6); k.add('glass', ICO(.05), -1.4 + i * .4, 1.2, 1.4); }
+    for (let i = 0; i < 12; i++) k.add('body', ICO(.14), -1.8 + (i % 6) * .7, .95, 1.75 + Math.floor(i / 6) * .25, 0, P.flowers[i % 4]); } },
+  fishpond: { name: 'Пруд', w: 10, d: 8, fn(k) { const P = k.P; k.add('body', new THREE.CylinderGeometry(1, 1, .1, 24).scale(4.4, 1, 3), 0, .02, 0, 0, '#7a6a4a'); k.add('body', new THREE.CylinderGeometry(1, 1, .08, 24).scale(4, 1, 2.6), 0, .07, 0, 0, '#4a8ab8');
+    for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2; k.add('body', ICO(.3 + (i % 3) * .08), Math.cos(a) * 4.3, .12, Math.sin(a) * 2.9, 0, i % 2 ? '#8a8478' : '#a09a8c'); }
+    for (let i = 0; i < 9; i++) k.box('body', .06, .9 + (i % 3) * .3, .06, -3.6 + (i % 3) * .2, 0, -1.5 + i * .2, '#5a8a3a');
+    k.box('body', 1, .12, 2.6, 2.4, .35, 2.2, P.plank); for (const s of [-1, 1]) for (const z of [1.3, 3.2]) k.box('body', .12, .45, .12, 2.4 + s * .4, 0, z, P.timber);
+    k.add('body', B(1.8, .35, .7).translate(0, .175, 0), -.8, .1, .6, .4, '#8a5a30'); k.add('body', B(.05, 2, .05).rotateZ(-.7), 2.9, 1.1, 1.8, 0, '#5a3a22');
+    for (let i = 0; i < 3; i++) k.add('body', new THREE.CylinderGeometry(.3, .3, .03, 10), 1 - i * 1.6, .13, -1 + i * .8, 0, '#5a9a4a'); } },
+  hunters: { name: 'Охотничий домик', w: 9, d: 7, fn(k) { const P = k.P; k.box('body', 6.1, .3, 5.1, -1, 0, 0, P.stone); logs(k, 5.6, 4.6, 2.7, -1, 0); gable(k, 6, 5, 3, 2.2, .5, -1, 0, 'body', '#7a5a38');
+    door(k, -1, 2.55, 0, true, .9, 1.9); win(k, -2.8, 1.2, 2.55, 0, .6, .6, false, 3);
+    for (const s of [-1, 1]) { k.add('body', B(.08, .7, .08).rotateZ(s * .5), -1 + s * .35, 2.75, 2.7, 0, '#e8dcc0'); k.add('body', B(.06, .35, .06).rotateZ(s * 1.1), -1 + s * .55, 2.95, 2.7, 0, '#e8dcc0'); }
+    for (const x of [2.6, 4.4]) k.box('body', .12, 2, .12, x, 0, 0, P.timber); k.box('body', 2, .1, .1, 3.5, 1.9, 0, P.timber); k.box('body', .8, 1.1, .04, 3.1, .8, 0, '#9a6a3a'); k.box('body', .7, .9, .04, 3.9, .95, 0, '#7a5030');
+    k.cyl('body', .4, .45, .5, 3.4, 0, 2.2, '#8a6a44', 8); k.add('body', B(.06, .7, .06).rotateZ(.4), 3.3, .8, 2.2, 0, '#5a3a22'); } },
+  lot: { name: 'Место под стройку', w: 8, d: 6, fn(k) { const P = k.P; k.box('body', 8, .08, 6, 0, 0, 0, '#8a6a4a');
+    for (const a of [-1, 1]) for (const b of [-1, 1]) k.box('body', .14, .9, .14, a * 3.8, 0, b * 2.8, P.timber); for (const s of [-1, 1]) { k.box('body', 7.6, .04, .04, 0, .7, s * 2.8, '#e8d6a0'); k.box('body', .04, .04, 5.6, s * 3.8, .7, 0, '#e8d6a0'); }
+    for (let i = 0; i < 6; i++) k.box('body', 3, .14, .4, -1.5, .08 + Math.floor(i / 3) * .14, -1 + (i % 3) * .45, P.plank); for (let i = 0; i < 5; i++) k.add('body', new THREE.DodecahedronGeometry(.3), 1.6 + (i % 3) * .5, .25, .5 + (i % 2) * .4, 0, P.stone);
+    k.box('body', .12, 1.6, .12, 2.6, 0, 2.4, P.timber); k.box('body', 1.4, .8, .08, 2.6, 1.1, 2.46, '#e8c060'); } },
+});
+const UPG_KIND = { arena: 'tilt' };
+export const UPG_DIST = { citadel: ['watchtower'], military: ['barracks', 'armory', 'arena'], industry: ['hunters'], culture: ['library', 'shrine'], farm: ['windmill', 'garden', 'apiary', 'fishpond'], trade: ['music_hall'], home: ['brewery', 'bathhouse'] };
+
 const KIND_LIST = Object.keys(KINDS);
 const GEO = new Map();
 function kindGeo(bk, kind) { const key = bk + '|' + kind; if (!GEO.has(key)) { const k = new Kit(BIOME[bk]); KINDS[kind].fn(k); GEO.set(key, k.build()); } return GEO.get(key); }
@@ -217,6 +296,7 @@ const ROWS = [[17.2, 1, 7.9], [29, 1, 11.4], [44.2, 1, 6.5]];
 const SPECIAL = { military: 'arena', culture: 'hall', home: 'tavern' };
 
 export function buildCamp(fk, FAC, opts = {}) {
+  const built = opts.built || [], lots = [];
   const P = BIOME[fk], F = FAC[fk], group = new THREE.Group(), pick = [], labels = [], lights = [], anim = { fires: [], flags: [] }, R = rnd(fk.length * 977 + 13);
   const mats = { body: new THREE.MeshLambertMaterial({ vertexColors: true }), wall: new THREE.MeshLambertMaterial({ color: 0xffffff }), roof: new THREE.MeshLambertMaterial({ color: 0xffffff }), glass: new THREE.MeshBasicMaterial({ color: P.glass }) };
   const add = (m, x, y, z) => { m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; group.add(m); return m; };
@@ -246,6 +326,11 @@ export function buildCamp(fk, FAC, opts = {}) {
     ROWS.forEach(([rf, dir, maxD], ri) => {
       const pad = (ROAD + .6) / rf, a0 = s * SECT + pad, a1 = (s + 1) * SECT - pad, arc = (a1 - a0) * rf;
       if (ri === 1 && SPECIAL[dk]) { specialAt[SPECIAL[dk]] = { a: mid, r: rf + 6.4 * dir, dist: dname, s }; for (const a of [a0 + 1.6 / rf, a1 - 1.6 / rf]) trees.push([WX(a) * (rf + 3), WZ(a) * (rf + 3), 1]); return; }
+      if (ri === 2 && UPG_DIST[dk]) { const ks = UPG_DIST[dk], ws = ks.map(u => KINDS[UPG_KIND[u] || u].w * S + 1.4), tot2 = ws.reduce((a, b) => a + b, 0); let pos = a0 * rf + (arc - tot2) / 2;
+        ks.forEach((u, j) => { const kind = built.includes(u) ? (UPG_KIND[u] || u) : 'lot', a = (pos + ws[j] / 2) / rf, rc = rf + dir * (KINDS[kind].d * S / 2 + 1.5);
+          push(kind, { x: WX(a) * rc, z: WZ(a) * rc, yaw: Math.atan2(-dir * WX(a), -dir * WZ(a)), ti: R() * 5 | 0, ri: R() * 5 | 0, dist: dname, kind, upg: u });
+          lots.push({ key: u, built: built.includes(u), a, s, fx: WX(a) * (rf - .6), fz: WZ(a) * (rf - .6) }); pos += ws[j]; });
+        if (arc - tot2 > 3) for (const a of [a0 + .9 / rf, a1 - .9 / rf]) trees.push([WX(a) * (rf + 2.5), WZ(a) * (rf + 2.5), .9]); return; }
       let used = 0; const list = [];
       for (let tries = 0; tries < 12; tries++) { let x = R() * tot, kind = mix[0][0]; for (const [kk, w] of mix) { x -= w; if (x <= 0) { kind = kk; break; } }
         const K = KINDS[kind], w = K.w * S + 1.4, d = K.d * S + 1.5; if (d > maxD || used + w > arc) continue; list.push({ kind, w, d }); used += w; }
@@ -254,7 +339,7 @@ export function buildCamp(fk, FAC, opts = {}) {
         push(h.kind, { x: WX(a) * rc, z: WZ(a) * rc, yaw, ti: R() * 5 | 0, ri: R() * 5 | 0, dist: dname, kind: h.kind }); pos += h.w; }
     });
     labels.push({ t: dname, p: [WX(mid) * 22, 7, WZ(mid) * 22], c: 'd' });
-    for (const r of [19, 24, 33, 38, 47, 51]) for (const sd of [-1, 1]) { const a = s * SECT + sd * (ROAD + .5) / r; lamps.push([WX(a) * r, WZ(a) * r]); }
+    for (const r of (built.includes('lanterns') ? [19, 24, 33, 38, 47, 51] : [19, 24])) for (const sd of [-1, 1]) { const a = s * SECT + sd * (ROAD + .5) / r; lamps.push([WX(a) * r, WZ(a) * r]); }
   });
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), m4 = new THREE.Matrix4(), Y = new THREE.Vector3(0, 1, 0), cc = new THREE.Color();
   for (const kind of Object.keys(slots)) { const list = slots[kind], parts = kindGeo(fk, kind);
@@ -291,8 +376,14 @@ export function buildCamp(fk, FAC, opts = {}) {
   (() => { const seg = [], crenel = [], towers = [];
     const ring = (R0, h, th, ts, every) => { const n = Math.round(R0 * 2 * Math.PI / 1.4); for (let i = 0; i < n; i++) { const a = (i + .5) / n * Math.PI * 2, gap = Math.abs(((a + SECT / 2) % SECT) - SECT / 2) * R0; if (gap < ROAD + .9) continue; seg.push([a, R0, h, th, 1.45]); if (i % 2) crenel.push([a, R0, h, th]); }
       for (let s = 0; s < 8; s += every) for (const sd of [-1, 1]) { const a = s * SECT + sd * (ROAD + .6 + ts) / R0; towers.push([WX(a) * R0, WZ(a) * R0, h, ts]); } };
-    ring(IN_WALL, 2.4, 1, .7, 2); ring(OUT_WALL, 3.6, 1.4, 1.25, 1);
-    for (let s = 0; s < 8; s++) { const a = (s + .5) * SECT; towers.push([WX(a) * OUT_WALL, WZ(a) * OUT_WALL, 3.6, 1.25]); }
+    const stoneW = built.includes('stone_walls'); ring(IN_WALL, 2.4, 1, .7, 2); if (stoneW) { ring(OUT_WALL, 3.6, 1.4, 1.25, 1); for (let s = 0; s < 8; s++) { const a = (s + .5) * SECT; towers.push([WX(a) * OUT_WALL, WZ(a) * OUT_WALL, 3.6, 1.25]); } }
+    else { const st = [], gt = [], n = Math.round(OUT_WALL * 2 * Math.PI / .5); for (let i = 0; i < n; i++) { const a = (i + .5) / n * Math.PI * 2; if (Math.abs(((a + SECT / 2) % SECT) - SECT / 2) * OUT_WALL < ROAD + .9) continue; st.push([a, 2.6 + (i % 3) * .25]); }
+      for (let s = 0; s < 8; s++) for (const sd of [-1, 1]) { const a = s * SECT + sd * (ROAD + 1.4) / OUT_WALL; gt.push([WX(a) * OUT_WALL, WZ(a) * OUT_WALL]); }
+      const wood = L('#7a5634'), im = new THREE.InstancedMesh(new THREE.CylinderGeometry(.24, .26, 1, 6).translate(0, .5, 0), wood, st.length), tip = new THREE.InstancedMesh(new THREE.ConeGeometry(.25, .6, 6).translate(0, .3, 0), wood, st.length);
+      st.forEach(([a, h], i) => { im.setMatrixAt(i, m4.compose(v.set(WX(a) * OUT_WALL, 0, WZ(a) * OUT_WALL), q.identity(), sc.set(1, h, 1))); tip.setMatrixAt(i, m4.compose(v.set(WX(a) * OUT_WALL, h, WZ(a) * OUT_WALL), q, sc.setScalar(1))); }); im.castShadow = tip.castShadow = true; group.add(im, tip);
+      const leg = new THREE.InstancedMesh(B(.22, 4.6, .22).translate(0, 2.3, 0), L(P.timber), gt.length * 4), plat = new THREE.InstancedMesh(B(2.2, .25, 2.2), L(P.plank), gt.length), rf = new THREE.InstancedMesh(new THREE.ConeGeometry(1.7, 1.2, 4).rotateY(Math.PI / 4).translate(0, .6, 0), L(F.color), gt.length);
+      gt.forEach(([x, z], i) => { [[-.9, -.9], [.9, -.9], [-.9, .9], [.9, .9]].forEach(([dx, dz], j) => leg.setMatrixAt(i * 4 + j, m4.compose(v.set(x + dx, 0, z + dz), q.identity(), sc.setScalar(1)))); plat.setMatrixAt(i, m4.compose(v.set(x, 4, z), q, sc)); rf.setMatrixAt(i, m4.compose(v.set(x, 5.6, z), q, sc)); });
+      for (const m of [leg, plat, rf]) { m.castShadow = true; group.add(m); } }
     const mk = (geo, mat, list, f) => { const im = new THREE.InstancedMesh(geo, mat, list.length); list.forEach((e, i) => { f(e); im.setMatrixAt(i, m4.compose(v, q, sc)); }); im.castShadow = true; im.receiveShadow = true; group.add(im); };
     const stone = L(P.stone), dark = L(P.dark);
     mk(B(1, 1, 1).translate(0, .5, 0), stone, seg, ([a, r, h, th, l]) => { v.set(WX(a) * r, 0, WZ(a) * r); q.setFromAxisAngle(Y, a); sc.set(l, h, th); });
@@ -315,8 +406,13 @@ export function buildCamp(fk, FAC, opts = {}) {
     const rk = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), L(P.lava ? '#3a3230' : P.stone), rocks.length); rocks.forEach(([x, z, s], i) => rk.setMatrixAt(i, m4.compose(v.set(x, s * .3, z), q.setFromAxisAngle(Y, x), sc.set(s, s * .7, s)))); rk.castShadow = true; group.add(rk);
   })();
 
+  if (built.includes('banners')) { const spots = []; for (let s = 0; s < 8; s++) { for (const sd of [-1, 1]) { const a = s * SECT + sd * (ROAD + .4) / (OUT_WALL - 2); spots.push([WX(a) * (OUT_WALL - 2), WZ(a) * (OUT_WALL - 2), 5]); } const a = (s + .5) * SECT; spots.push([WX(a) * 11.6, WZ(a) * 11.6, 4.2]); }
+    const tex = flagTex(F); for (const [x, z, h] of spots) { add(new THREE.Mesh(new THREE.CylinderGeometry(.07, .09, h, 6), L('#5a3a22')), x, h / 2, z); const f = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .9, 6, 2).translate(.6, 0, 0), new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide })); f.position.set(x, h - .55, z); f.rotation.y = Math.atan2(x, z) + Math.PI / 2; group.add(f); anim.flags.push(f); } }
+  if (built.includes('statue')) { const a = SECT * 4.5, x = WX(a) * 10, z = WZ(a) * 10, g = new THREE.Group(); const ped = new THREE.Mesh(B(2, 1.6, 2), L(P.dark)); ped.position.y = .8; ped.castShadow = true; g.add(ped); const top = new THREE.Mesh(B(2.3, .25, 2.3), L(P.stone)); top.position.y = 1.7; g.add(top);
+    const [gn, gt] = soldierGeo('warrior'), stM = new THREE.MeshLambertMaterial({ color: P.stone === '#7d6f63' ? '#b8a890' : '#d8d4cc' }); for (const geo of [gn, gt]) { const m = new THREE.Mesh(geo, stM); m.scale.setScalar(2.4); m.position.y = 1.8; m.castShadow = true; g.add(m); }
+    g.position.set(x, 0, z); g.rotation.y = Math.atan2(x, z); g.userData.info = 'statue'; group.add(g); pick.push(g); labels.push({ t: '🗿 Статуя героя', p: [x, 6, z], c: 'b' }); }
   // --- улицы для жителей: кольца × лучи ---
   const node = (ri, k) => { const a = k * SECT, r = RINGS[ri]; return [WX(a) * r, WZ(a) * r]; };
-  return { group, pick, labels, anim, biome: P, node, rings: RINGS.length, sect: SECT };
+  return { group, pick, labels, anim, biome: P, node, rings: RINGS.length, sect: SECT, lots };
 }
 export { KIND_LIST };
