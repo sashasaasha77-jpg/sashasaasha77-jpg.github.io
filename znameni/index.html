@@ -83,7 +83,11 @@ const SYL = ['ka', 'ri', 'mo', 'na', 'lex', 'vi', 'to', 'sha', 'dim', 'ar', 'ten
 function demoRoster(n = 400) { const R = rng(7), out = [];
   for (let i = 0; i < n; i++) { const nick = SYL[R() * 24 | 0] + SYL[R() * 24 | 0] + (R() < .5 ? '_' + (R() * 99 | 0) : (R() < .5 ? '.' + SYL[R() * 24 | 0] : '')); out.push({ nick, f: FKEYS[i % 4], r: RKEYS[R() * 4 | 0], lv: R() < .1 ? 10 + (R() * 20 | 0) : R() * 9 | 0, skin: R() < .03 ? 'gold' : '' }); }
   return out; }
-let ROSTER = demoRoster(), DEMO = true, ST = null;
+// Основатель стоит у каждого костра; демо-жителей больше нет.
+const FOUNDER = INSTA, FOUNDER_ROLE = { lions: 'warrior', wolves: 'guard', dragons: 'mage', ravens: 'archer' };
+const founders = () => FKEYS.map(f => ({ nick: FOUNDER, f, r: FOUNDER_ROLE[f], lv: 30, skin: 'gold', founder: true }));
+const withFounder = army => founders().concat(army.filter(w => w.nick !== FOUNDER));
+let ROSTER = withFounder([]), DEMO = false, ST = null;
 
 // ---------- сцена ----------
 const R3 = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' }); R3.setPixelRatio(Math.min(2, devicePixelRatio || 1));
@@ -108,7 +112,7 @@ function showCamp(f, fly = true) {
   $('biome').textContent = `${FACTIONS[f].icon} Лагерь знамени «${FACTIONS[f].name}» · ${P.name}`; $('biome').style.opacity = 1; clearTimeout(showCamp.t); showCamp.t = setTimeout(() => $('biome').style.opacity = 0, 3500);
   renderTabs(); try { history.replaceState(null, '', '#' + f); } catch (e) { }
 }
-function renderTabs() { $('pop').innerHTML = FKEYS.map(f => `<button class="glass ${f === cur ? 'on' : ''}" data-f="${f}" style="--c:${FACTIONS[f].color}">${FACTIONS[f].icon} ${FACTIONS[f].name} <small>${ROSTER.filter(w => w.f === f).length}</small></button>`).join('') + (DEMO ? '<button class="glass" style="--c:#888;pointer-events:none"><small>демо-жители</small></button>' : ''); }
+function renderTabs() { $('pop').innerHTML = FKEYS.map(f => `<button class="glass ${f === cur ? 'on' : ''}" data-f="${f}" style="--c:${FACTIONS[f].color}">${FACTIONS[f].icon} ${FACTIONS[f].name} <small>${ROSTER.filter(w => w.f === f && !w.founder).length}</small></button>`).join('') + ''; }
 $('pop').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) showCamp(b.dataset.f); });
 
 // ---------- жители ходят по улицам: кольца × лучи ----------
@@ -210,7 +214,7 @@ function pick(x, y) {
 function show(html) { $('infobox').innerHTML = html; $('info').classList.add('on'); }
 const CLOSE = '<button class="btn g" data-close="1">Закрыть</button>';
 function person(i) { const p = PEOPLE[i], F = FACTIONS[p.f], Ro = ROLES[p.r]; followI = i; Object.assign(camT, { dist: 17, pitch: .72 });
-  show(`<div style="font-size:42px">${F.icon}</div><h2>@${p.nick}${i === me ? ' — это ты' : ''}</h2><p>${Ro.icon} ${Ro.name} знамени «${F.name}» · уровень ${p.lv || 0}${p.skin === 'gold' ? ' · ✨ Золотое знамя' : ''}</p>${p.mode === 'stay' && p.act ? `<p><b>${UPG_BY[p.job.key].icon} ${p.act}</b></p>` : ''}
+  show(`<div style="font-size:42px">${F.icon}</div><h2>${p.founder ? '👑 ' : ''}@${p.nick}${i === me ? ' — это ты' : ''}</h2>${p.founder ? '<p><b>Основатель «Четырёх знамён»</b> — стоит у костра каждого знамени.</p>' : ''}<p>${Ro.icon} ${Ro.name} знамени «${F.name}» · уровень ${p.lv || 0}${p.skin === 'gold' ? ' · ✨ Золотое знамя' : ''}</p>${p.mode === 'stay' && p.act ? `<p><b>${UPG_BY[p.job.key].icon} ${p.act}</b></p>` : ''}
     <div class="col"><a class="btn" href="https://instagram.com/${encodeURIComponent(p.nick)}" target="_blank">Профиль в Instagram</a>${CLOSE}</div>`); }
 const HOUSE_TXT = { cottage: 'Уютный домик воинов: здесь отдыхают после битвы.', townhouse: 'Городской дом с лавкой на первом этаже.', corner: 'Дом с башенкой — с неё видно весь район.', manor: 'Усадьба знатного воина знамени.', farmhouse: 'Хутор: отсюда в лагерь везут хлеб и молоко.',
   rowhouse: 'Дома в ряд — здесь живут целыми семьями.', barracks: 'Казарма: здесь тренируются новобранцы.', temple: 'Храм знамени: воины молятся о победе перед битвой.', warehouse: 'Склад припасов на случай долгой осады.', markethall: 'Торговые ряды: фрукты, ткани и трофеи.',
@@ -222,7 +226,7 @@ function nextBattleTxt() { const n = ST && ST.nextBattle ? ST.nextBattle - Date.
 function openInfo(k) {
   const P = (ST && ST.past) || [], F = FACTIONS[cur];
   const T = {
-    fire: `<div style="font-size:42px">🔥</div><h2>Костёр знамени «${F.name}»</h2><p>Здесь собираются воины ${F.icon} ${F.name}. Пока лагерь — это поляна и костёр, но с каждым новым воином и каждой победой он будет расти.</p><p>Воинов у костра: <b>${PEOPLE.length}</b></p><div class="col"><a class="btn" href="https://instagram.com/${INSTA}" target="_blank">Вступить в войско</a>${CLOSE}</div>`,
+    fire: `<div style="font-size:42px">🔥</div><h2>Костёр знамени «${F.name}»</h2><p>Здесь собираются воины ${F.icon} ${F.name}. Пока лагерь — это поляна и костёр, но с каждым новым воином и каждой победой он будет расти.</p><p>Воинов у костра: <b>${PEOPLE.filter(p => !p.founder).length}</b>${PEOPLE.some(p => !p.founder) ? '' : ' — стань первым!'}</p><div class="col"><a class="btn" href="https://instagram.com/${INSTA}" target="_blank">Вступить в войско</a>${CLOSE}</div>`,
     statue: `<div style="font-size:42px">🗿</div><h2>Статуя героя</h2><p>Статуя героя знамени «${F.name}» на площади. Построена за победу в битве по голосованию подписчиков.</p><div class="col">${CLOSE}</div>`,
     keep: `<div style="font-size:42px">🏰</div><h2>Цитадель знамени «${F.name}»</h2><p>Сердце лагеря. Отсюда воины ${F.icon} выходят на битву знамён. ${F.bonus}.</p><p>Жителей в лагере: <b>${PEOPLE.length}</b></p><div class="col">${CLOSE}</div>`,
     arena: `<div style="font-size:42px">⚔️</div><h2>Арена</h2><p>Каждый день в 20:00 четыре знамени сходятся в битве. Победившее знамя получает +100 золота каждому воину. До битвы: <b>${nextBattleTxt()}</b>.</p><div class="col"><a class="btn" href="bitva.html">Смотреть битву</a>${CLOSE}</div>`,
@@ -235,7 +239,7 @@ function openInfo(k) {
 document.addEventListener('click', e => { if (e.target.dataset.close || e.target.id === 'info') $('info').classList.remove('on'); });
 
 // ---------- найди себя ----------
-function findMe(v) { const s = String(v || '').trim().toLowerCase().replace(/^@/, ''); if (!s) return false; let w = ROSTER.find(p => p.nick.toLowerCase() === s) || ROSTER.find(p => p.nick.toLowerCase().startsWith(s));
+function findMe(v) { const s = String(v || '').trim().toLowerCase().replace(/^@/, ''); if (!s) return false; let w = ROSTER.find(p => p.f === cur && p.nick.toLowerCase() === s) || ROSTER.find(p => p.nick.toLowerCase() === s) || ROSTER.find(p => p.nick.toLowerCase().startsWith(s));
   if (!w) return false; meNick = w.nick; if (cur !== w.f) showCamp(w.f, false); else me = PEOPLE.findIndex(p => p.nick === meNick); if (me >= 0) person(me); return true; }
 $('find').onclick = () => { if (findMe($('q2').value)) $('hello').classList.remove('on'); else { $('q2').value = ''; $('q2').placeholder = 'Не нашли — проверь ник или вступи в Ратуше'; } };
 $('justlook').onclick = () => $('hello').classList.remove('on');
@@ -246,6 +250,7 @@ const lblPool = [];
 function labels() {
   const want = [], far = camS.dist > 45;
   for (const l of C.labels) if (l.c === 'b' || (l.c === 'd' && far && innerWidth > 640)) want.push(l);
+  for (const p of PEOPLE) if (p.founder && p.i !== me) want.push({ t: '👑 @' + p.nick + ' · основатель', p: [p.x, 2.6, p.z], c: 'me' });
   if (me >= 0) { const p = PEOPLE[me]; want.push({ t: '★ @' + p.nick + ' (это ты)', p: [p.x, 2.4, p.z], c: 'me' }); }
   const cx = camS.tx, cz = camS.tz, rad = Math.max(8, camS.dist * .4);
   if (camS.dist < (C.fire ? 24 : 40)) for (const p of PEOPLE) { if (want.length > 40) break; if (p.i === me) continue; if (Math.hypot(p.x - cx, p.z - cz) < rad) want.push({ t: (p.mode === 'stay' ? UPG_BY[p.job.key].icon + ' ' : '') + p.nick, p: [p.x, 1.9 * (p.lv >= 20 ? 1.25 : 1), p.z], c: '' }); }
@@ -290,7 +295,7 @@ document.addEventListener('click', e => { const v = e.target.closest('[data-vote
 // ---------- данные ----------
 async function load() {
   try { const r = await fetch(API + 'state', { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } }); ST = await r.json();
-    if (ST && Array.isArray(ST.army) && ST.army.length) { ROSTER = ST.army; DEMO = false; buildPeople(); renderTabs(); }
+    if (ST && Array.isArray(ST.army) && ST.army.length) { ROSTER = withFounder(ST.army); buildPeople(); renderTabs(); }
     if (ST && ST.built) setBuilt(ST.built);
     const Bt = ST && ST.battle; if (Bt && Date.now() - Bt.at >= 0 && Date.now() - Bt.at < ((Bt.result && Bt.result.time) || 240) * 1000 + 5000) $('live').style.display = 'flex'; } catch (e) { }
 }
