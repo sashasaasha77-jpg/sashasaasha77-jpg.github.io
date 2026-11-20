@@ -73,10 +73,27 @@ export function claim(s, what, day) {
   if (s.d[T.k] < T.n) return { err: 'Задание ещё не выполнено.' };
   s.d.got.push(i); s.coins += T.r; return { ok: true, r: T.r };
 }
+// ---------- скины за рекламу ----------
+export const SKIN_LIST = [
+  { k: 'silver', n: 'Серебряный', c: '#E6ECF4' }, { k: 'dark', n: 'Тёмный рыцарь', c: '#3A3A44' }, { k: 'ice', n: 'Ледяной', c: '#A8E4FF' },
+  { k: 'forest', n: 'Лесной страж', c: '#6A9A4A' }, { k: 'fire', n: 'Огненный', c: '#FF7A2A' }, { k: 'royal', n: 'Королевский', c: '#8A5AD8' },
+  { k: 'bronze', n: 'Бронзовый', c: '#C8844A' }, { k: 'bone', n: 'Костяной', c: '#EDE6D2' }, { k: 'sea', n: 'Морской', c: '#3AC8C0' }, { k: 'candy', n: 'Карамельный', c: '#FF9AD0' }];
+export const SKIN_ADS = 5, SKIN_ADS_DAY = 15;
+export function skinAd(s, k, day) {
+  s.skins = s.skins || []; s.skinAds = s.skinAds || {}; if (!s.skAd || s.skAd.day !== day) s.skAd = { day, n: 0 };
+  if (!SKIN_LIST.some(x => x.k === k)) return { err: 'Такого скина нет.' };
+  if (s.skins.includes(k)) return { err: 'Этот скин уже открыт.' };
+  if (s.skAd.n >= SKIN_ADS_DAY) return { err: 'На сегодня реклама за скины закончилась — приходи завтра.' };
+  s.skAd.n++; s.skinAds[k] = (s.skinAds[k] || 0) + 1;
+  if (s.skinAds[k] >= SKIN_ADS) { s.skins.push(k); s.skin = k; return { ok: true, unlocked: k }; }
+  return { ok: true, n: s.skinAds[k] };
+}
+export function skinSet(s, k) { k = String(k || ''); if (k && !(s.skins || []).includes(k)) return { err: 'Сначала открой этот скин.' }; s.skin = k; return { ok: true }; }
 export function progressView(s, day) {
   const L = s.league, next = LEAGUES[L + 1];
   const canLogin = s.login.last !== day, streak = canLogin ? (s.login.last === prevDay(day) ? s.login.n % LOGIN.length + 1 : 1) : s.login.n;
   return {
+    skins: s.skins || [], skinAds: s.skinAds || {}, skin: s.skin || '', skinAdsLeft: SKIN_ADS_DAY - (s.skAd && s.skAd.day === day ? s.skAd.n : 0),
     perHour: perHour(s), capHours: CAP_HOURS,
     blds: BUILD.map(b => { const lv = s.bl[b.k] || 0; return { k: b.k, title: b.title, ic: b.ic, lv, inc: b.inc, cost: lv >= BUILD_MAX ? null : buildCost(b, lv), locked: s.league < b.league ? LEAGUES[b.league].name : '', payback: Math.round(buildCost(b, lv) / b.inc) }; }),
     league: { i: L, name: LEAGUES[L].name, next: next ? { name: next.name, need: next.need, prize: next.prize } : null, list: LEAGUES },

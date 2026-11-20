@@ -32,6 +32,17 @@ function capeTex(col, emb, trim) { const c = document.createElement('canvas'); c
 const SKINS = {
   base: { metal: 0xB8C0CC, metalD: 0x6E7682, trim: 0xE8B931, skin: 0xF0C49A, pants: 0x3A3048, boots: 0x5A3A22, hair: 0x5A3420 },
   gold: { metal: 0xF2C84A, metalD: 0xB0841C, trim: 0xFFF0A0, skin: 0xF0C49A, pants: 0x4A3418, boots: 0x6A4420, hair: 0x5A3420 },
+  // скины за рекламу
+  silver: { metal: 0xEEF2F8, metalD: 0x9AA4B4, trim: 0xFFFFFF, pants: 0x4A5060, boots: 0x6A7280 },
+  dark: { metal: 0x3A3A44, metalD: 0x1E1E26, trim: 0xD8342A, pants: 0x1A1A22, boots: 0x111116, hair: 0x111111 },
+  ice: { metal: 0xA8E4FF, metalD: 0x5AA8D8, trim: 0xFFFFFF, pants: 0x2A4A6A, boots: 0x3A5A7A, hair: 0xDDEEFF },
+  forest: { metal: 0x6A9A4A, metalD: 0x3E6A2E, trim: 0xC8A24A, pants: 0x3A4A2A, boots: 0x5A4020 },
+  fire: { metal: 0xFF7A2A, metalD: 0xB8401A, trim: 0xFFD23A, pants: 0x4A1A12, boots: 0x3A1A0A, hair: 0xC83A1A },
+  royal: { metal: 0x8A5AD8, metalD: 0x5A3A9A, trim: 0xFFD75A, pants: 0x2A1A4A, boots: 0x3A2A5A },
+  bronze: { metal: 0xC8844A, metalD: 0x8A5428, trim: 0xFFC890, pants: 0x4A3020, boots: 0x5A3418 },
+  bone: { metal: 0xEDE6D2, metalD: 0xB8AE96, trim: 0x6A6458, pants: 0x4A4438, boots: 0x5A5448, skin: 0xE8E0D0, hair: 0xD8D0C0 },
+  sea: { metal: 0x3AC8C0, metalD: 0x1E8A8A, trim: 0xFF8A6A, pants: 0x1A3A4A, boots: 0x1E5A6A },
+  candy: { metal: 0xFF9AD0, metalD: 0xD86AA8, trim: 0xFFFFFF, pants: 0x6A3A6A, boots: 0xC85A9A, hair: 0xFFD0E8 },
 };
 function buildCapy(o) { // капибара на 4 лапах, без доспехов: платок знамени и мандарин
   const fur = 0x9A6A40, furD = 0x7A5030, furL = 0xB07E50, fc = o.fc;
@@ -59,7 +70,7 @@ function buildHero(o) {
     P[s < 0 ? 'legL' : 'legR'] = leg; }
   const torso = new THREE.Group(); torso.position.y = .8; body.add(torso); P.torso = torso;
   if (role === 'mage') { box(torso, .5, .62, .3, fc, 0, .31, 0); box(torso, .56, .5, .36, fcd, 0, -.12, 0); box(torso, .52, .07, .32, S.trim, 0, .14, 0); }
-  else if (role === 'archer') { box(torso, .5, .6, .3, 0x4A6A3A, 0, .3, 0); box(torso, .52, .08, .32, 0x6A4424, 0, .1, 0); box(torso, .2, .6, .02, fc, 0, .3, .16); }
+  else if (role === 'archer') { box(torso, .5, .6, .3, o.pal ? S.metal : 0x4A6A3A, 0, .3, 0); box(torso, .52, .08, .32, 0x6A4424, 0, .1, 0); box(torso, .2, .6, .02, fc, 0, .3, .16); }
   else { box(torso, .52, .6, .3, S.metal, 0, .3, 0); box(torso, .36, .5, .02, fc, 0, .26, .16); box(torso, .54, .08, .32, 0x6A4424, 0, .06, 0); box(torso, .08, .08, .04, S.trim, 0, .06, .17); box(torso, .3, .18, .02, fc, 0, -.07, .16); }
   const cape = new THREE.Group(); cape.position.set(0, .58, -.17); torso.add(cape); P.cape = cape;
   const cm = new THREE.MeshToonMaterial({ map: capeTex(fc, o.emb, trimHex), gradientMap: grad, side: THREE.DoubleSide });
@@ -79,9 +90,9 @@ function buildHero(o) {
   else if (role === 'guard') { box(head, .4, .42, .38, S.metal, 0, .2, 0); box(head, .3, .04, .02, 0x15151a, 0, .2, .2); box(head, .04, .14, .02, 0x15151a, 0, .12, .2); box(head, .42, .05, .4, S.trim, 0, .4, 0); box(head, .05, .2, .32, fc, 0, .5, -.02); }
   else if (role === 'mage') { box(head, .3, .12, .06, 0xE8E8EE, 0, .02, .17); box(head, .14, .18, .06, 0xE8E8EE, 0, -.08, .17);
     box(head, .56, .05, .56, fcd, 0, .38, 0); box(head, .36, .22, .36, fc, 0, .51, 0); box(head, .37, .05, .37, S.trim, 0, .44, 0); box(head, .24, .2, .24, fc, -.02, .7, -.03).rotation.z = .2; box(head, .12, .16, .12, fc, -.06, .86, -.07).rotation.z = .45; }
-  else { box(head, .4, .4, .4, 0x3E5A30, 0, .24, -.02); box(head, .3, .06, .02, 0x3E5A30, 0, .38, .19); box(head, .3, .3, .2, 0x3E5A30, 0, .02, -.24).rotation.x = -.5; box(head, .26, .08, .04, S.hair, 0, .07, .16); } }
+  else { box(head, .4, .4, .4, (o.pal ? S.metalD : 0x3E5A30), 0, .24, -.02); box(head, .3, .06, .02, (o.pal ? S.metalD : 0x3E5A30), 0, .38, .19); box(head, .3, .3, .2, (o.pal ? S.metalD : 0x3E5A30), 0, .02, -.24).rotation.x = -.5; box(head, .26, .08, .04, S.hair, 0, .07, .16); } }
   for (const s of [-1, 1]) { const arm = new THREE.Group(); arm.position.set(s * .35, .55, 0); torso.add(arm);
-    const sleeve = role === 'mage' ? fc : role === 'archer' ? 0x4A6A3A : S.metal;
+    const sleeve = role === 'mage' ? fc : role === 'archer' ? (o.pal ? S.metal : 0x4A6A3A) : S.metal;
     box(arm, .17, .36, .18, sleeve, 0, -.16, 0); box(arm, .16, .26, .17, role === 'mage' || role === 'archer' ? sleeve : S.metalD, 0, -.42, 0); box(arm, .15, .1, .16, S.skin, 0, -.59, 0);
     if (role === 'warrior' || role === 'guard') { box(arm, .24, .14, .24, S.metal, 0, .02, 0); box(arm, .25, .04, .25, S.trim, 0, -.05, 0); }
     if (role === 'mage') box(arm, .2, .06, .2, S.trim, 0, -.53, 0);
@@ -145,7 +156,7 @@ function place() {
 }
 function makeHero() {
   if (hero) scene.remove(hero.P.g); if (auraG) scene.remove(auraG);
-  const o = heroOpt; hero = makeActor({ role: o.role, fc: FC[o.fac], emb: EMB[o.fac], gold: o.gold, skin: o.skin });
+  const o = heroOpt; hero = makeActor({ role: o.role, fc: FC[o.fac], emb: EMB[o.fac], gold: o.gold, skin: o.skin, pal: o.skin && o.skin !== 'capybara' && SKINS[o.skin] ? SKINS[o.skin] : undefined });
   hero.onStrike = k => strikeTarget(k); hero.shotTo = () => enemy && !enemy.dead ? chestOf(enemy) : TARGET_P.clone();
   auraG = new THREE.Group(); const ring = new THREE.Mesh(new THREE.RingGeometry(.48, .62, 40), new THREE.MeshBasicMaterial({ color: o.gold ? 0xFFD75A : FC[o.fac], transparent: true, opacity: .9 })); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; auraG.add(ring);
   if (o.gold) { const glow = new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, 2.4, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFD75A, transparent: true, opacity: .18, side: THREE.DoubleSide, depthWrite: false })); glow.position.y = 1.2; auraG.add(glow); }
