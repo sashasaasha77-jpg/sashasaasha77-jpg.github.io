@@ -77,7 +77,11 @@ export function claim(s, what, day) {
 export const SKIN_LIST = [
   { k: 'diamond', n: 'Алмазный мечник', c: '#7ad8ff', e: '💎' }, { k: 'samurai', n: 'Самурай', c: '#e0503a', e: '⛩' }, { k: 'ninja', n: 'Ниндзя', c: '#3a3a44', e: '🥷' },
   { k: 'viking', n: 'Викинг', c: '#c8742a', e: '🪓' }, { k: 'cossack', n: 'Казак', c: '#3a4a9a', e: '🐎' }, { k: 'tsar', n: 'Царь', c: '#e8b931', e: '👑' },
-  { k: 'vampire', n: 'Вампир', c: '#8a1020', e: '🧛' }, { k: 'robot', n: 'Робот', c: '#5a8aa4', e: '🤖' }, { k: 'ogre', n: 'Зелёный огр', c: '#6ab04a', e: '👹' }, { k: 'darklord', n: 'Тёмный лорд', c: '#5a3a9a', e: '😈' }];
+  { k: 'vampire', n: 'Вампир', c: '#8a1020', e: '🧛' }, { k: 'robot', n: 'Робот', c: '#5a8aa4', e: '🤖' }, { k: 'ogre', n: 'Зелёный огр', c: '#6ab04a', e: '👹' }, { k: 'darklord', n: 'Тёмный лорд', c: '#5a3a9a', e: '😈' },
+  { k: 'pharaoh', n: 'Фараон', c: '#e8c04a', e: '🏺' }, { k: 'mummy', n: 'Мумия', c: '#c8bc98', e: '🧟' }, { k: 'zombie', n: 'Зомби', c: '#7a9a4a', e: '🧟‍♂️' },
+  { k: 'knight', n: 'Рыцарь', c: '#8ab0e0', e: '🛡' }, { k: 'pumpkin', n: 'Тыквоголовый', c: '#ff8a1a', e: '🎃' }, { k: 'highlander', n: 'Горец', c: '#3aa06a', e: '🗡' },
+  { k: 'legionary', n: 'Легионер', c: '#d84030', e: '🏛' }, { k: 'plague', n: 'Чумной доктор', c: '#5a5a66', e: '🐦‍⬛' }, { k: 'farmer', n: 'Фермер', c: '#c8a24a', e: '🌾' },
+  { k: 'mageking', n: 'Король магов', c: '#7a6aff', e: '🔮' }];
 export const SKIN_ADS = 5, SKIN_ADS_DAY = 15;
 export function skinAd(s, k, day) {
   s.skins = s.skins || []; s.skinAds = s.skinAds || {}; if (!s.skAd || s.skAd.day !== day) s.skAd = { day, n: 0 };

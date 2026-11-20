@@ -467,7 +467,7 @@ function renderLeagues() {
 }
 function renderSkins() {
   if (!PGm || !S || !S.skins) return; const L = PGm.SKIN_LIST, need = PGm.SKIN_ADS;
-  $('skins').innerHTML = `<div class="skh">🎨 Скины героев<small>Посмотри ${need} реклам — образ твой навсегда, а над героем загорится его титул. Сегодня осталось: ${S.skinAdsLeft}</small></div><div class="skg">` + L.map(x => {
+  $('skins').innerHTML = `<div class="skh">🎨 Скины героев · Обычные<small>Посмотри ${need} реклам — образ твой навсегда, а над героем загорится его титул. Сегодня осталось: ${S.skinAdsLeft}</small></div><div class="skg">` + L.map(x => {
     const own = S.skins.includes(x.k), on = S.skin === x.k, n = Math.min(need, (S.skinAds || {})[x.k] || 0);
     return `<div class="sk ${on ? 'on' : ''}"><div class="sw" style="--c:${x.c};${own ? '' : 'filter:grayscale(.6) brightness(.8)'}">${x.e || ''}${own ? (on ? '<i style="position:absolute;margin:30px 0 0 34px;font-size:13px;font-style:normal">✅</i>' : '') : '<i style="position:absolute;margin:30px 0 0 34px;font-size:13px;font-style:normal">🔒</i>'}</div><b>${x.n}</b>${own ? '<small>Открыт</small>' : `<div class="pb"><i style="width:${n / need * 100}%"></i></div><small>📺 ${n} / ${need}</small>`}
       ${own ? `<button class="btn ${on ? '' : 'g'}" data-skinset="${on ? '' : x.k}">${on ? 'Снять' : 'Надеть'}</button>` : `<button class="btn" data-skinad="${x.k}" ${S.skinAdsLeft > 0 ? '' : 'disabled'}>📺 Смотреть</button>`}</div>`; }).join('') + '</div>';

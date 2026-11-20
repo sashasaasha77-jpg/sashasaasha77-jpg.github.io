@@ -320,7 +320,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 const start = FKEYS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'lions';
-window.ZN = { camT, showCamp }; BUILT = DEMO_BUILT; showCamp(start); Object.assign(camS, camT); $('load').style.display = 'none'; requestAnimationFrame(frame); load().finally(loadGlory);
+window.ZN = { camT, camS, showCamp, get PEOPLE() { return PEOPLE; }, addWarrior(w) { ROSTER.push(w); buildPeople(); }, cam }; BUILT = DEMO_BUILT; showCamp(start); Object.assign(camS, camT); $('load').style.display = 'none'; requestAnimationFrame(frame); load().finally(loadGlory);
 </script>
 </body>
 </html>

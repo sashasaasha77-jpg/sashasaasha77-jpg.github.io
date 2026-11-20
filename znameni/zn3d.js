@@ -90,6 +90,45 @@ export const CHAR = {
         const hn = new THREE.Mesh(new THREE.ConeGeometry(.05, .34, 5), new THREE.MeshToonMaterial({ color: 0x15121E, gradientMap: grad })); hn.position.set(s * .18, .5, -.02); hn.rotation.z = s * -.35; h.add(hn);
         const sp = new THREE.Mesh(new THREE.ConeGeometry(.06, .22, 5), new THREE.MeshToonMaterial({ color: 0x15121E, gradientMap: grad })); sp.position.set(s * .38, .72, 0); sp.rotation.z = s * -.6; P.torso.add(sp); }
       const l = new THREE.PointLight(0x9A5AFF, 2.2, 3); l.position.y = .5; P.torso.add(l); swapWeapon(P, hd => blade(hd, .95, 0x9A5AFF, true)); } },
+  pharaoh: { cape: 0xF2EEE0, title: 'ФАРАОН', c: '#e8c04a', noHelm: true, pal: { metal: 0xF6F2E6, metalD: 0xD8D0BC, trim: 0xE8B931, pants: 0xF2EEE0, boots: 0x6A4424, skin: 0xC8946A, hair: 0x111111 },
+    extra(P, S) { const h = P.head; box(h, .42, .3, .4, 0xE8B931, 0, .34, -.03); for (let i = 0; i < 3; i++) box(h, .43, .03, .41, 0x2A4AB0, 0, .24 + i * .1, -.03); for (const s of [-1, 1]) box(h, .1, .32, .2, 0xE8B931, s * .22, .06, -.04);
+      box(P.torso, .5, .06, .36, 0x2A4AB0, 0, .2, 0); box(P.torso, .56, .1, .38, 0xE8B931, 0, .6, 0);
+      swapWeapon(P, hd => { const w = new THREE.Group(); w.rotation.x = -.6; hd.add(w); cyl(w, .03, .03, 1.2, 0xE8B931, 0, 0, .3).rotation.x = Math.PI / 2; const b = new THREE.Mesh(new THREE.SphereGeometry(.07, 8, 6), glowM(0x2A5AFF)); b.position.z = .92; w.add(b); return w; }); } },
+  mummy: { cape: 0xE6DCC0, title: 'МУМИЯ', c: '#d8cca8', noHelm: true, pal: { metal: 0xE6DCC0, metalD: 0xCFC3A2, trim: 0xBFB290, pants: 0xE6DCC0, boots: 0xCFC3A2, skin: 0xE6DCC0, hair: 0xE6DCC0 },
+    extra(P, S) { const h = P.head; box(h, .4, .4, .38, 0xE6DCC0, 0, .2, 0); for (let i = 0; i < 4; i++) box(h, .41, .03, .39, 0xC8BC98, 0, .06 + i * .1, 0).rotation.z = (i % 2 ? .08 : -.08);
+      box(h, .06, .04, .02, 0x1A1A10, .08, .22, .2); for (let i = 0; i < 5; i++) box(P.torso, .5, .03, .34, 0xC8BC98, 0, .1 + i * .12, 0).rotation.z = (i % 2 ? .1 : -.1); if (P.cape) P.cape.visible = false; } },
+  zombie: { cape: 0x4A5A3A, title: 'ЗОМБИ', c: '#7a9a4a', noHelm: true, pal: { metal: 0x6A7A4A, metalD: 0x4A5A3A, trim: 0x8A6A4A, pants: 0x3A4A6A, boots: 0x3A3020, skin: 0x8AAA6A, hair: 0x3A3A2A },
+    extra(P, S) { const h = P.head; box(h, .4, .38, .38, 0x8AAA6A, 0, .19, 0); box(h, .42, .08, .4, 0x3A3A2A, 0, .38, 0); box(h, .07, .07, .02, 0x111111, -.08, .22, .2); box(h, .07, .03, .02, 0x111111, .08, .2, .2); box(h, .18, .04, .02, 0x4A2A2A, 0, .08, .2);
+      box(P.torso, .12, .12, .02, 0x5A3A2A, .1, .3, .17); box(P.torso, .1, .08, .02, 0x5A3A2A, -.12, .48, .17); if (P.cape) P.cape.visible = false; } },
+  knight: { cape: 0x2A4AA0, title: 'РЫЦАРЬ', c: '#8ab0e0', noHelm: true, pal: { metal: 0xB8C0CC, metalD: 0x7A8494, trim: 0xE8B931, pants: 0x2A3A6A, boots: 0x3A2A1A, hair: 0x6A4424 },
+    extra(P, S) { const h = P.head; box(h, .42, .44, .4, 0xB8C0CC, 0, .2, 0); box(h, .3, .03, .02, 0x15151A, 0, .22, .21); box(h, .03, .14, .02, 0x15151A, 0, .14, .21); box(h, .06, .16, .3, 0xC8302A, 0, .5, -.04);
+      box(P.torso, .5, .5, .02, 0x2A4AA0, 0, .32, .19); box(P.torso, .06, .3, .02, 0xE8B931, 0, .34, .2); box(P.torso, .22, .06, .02, 0xE8B931, 0, .38, .2);
+      swapWeapon(P, hd => blade(hd, .9, 0xE0E4EA)); } },
+  pumpkin: { cape: 0x3A2A4A, title: 'ТЫКВОГОЛОВЫЙ', c: '#ff8a1a', noHelm: true, pal: { metal: 0x3A2A4A, metalD: 0x241A30, trim: 0xFF8A1A, pants: 0x241A30, boots: 0x15101A, hair: 0xFF8A1A },
+    extra(P, S) { const h = P.head; box(h, .5, .44, .48, 0xFF8A1A, 0, .2, 0); for (const x of [-.18, 0, .18]) box(h, .04, .44, .49, 0xE0701A, x, .2, 0); box(h, .08, .12, .08, 0x3A6A2A, 0, .48, 0);
+      for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.BoxGeometry(.09, .07, .02), glowM(0xFFE03A)); e.position.set(s * .1, .26, .25); h.add(e); } const m = new THREE.Mesh(new THREE.BoxGeometry(.26, .05, .02), glowM(0xFFE03A)); m.position.set(0, .1, .25); h.add(m);
+      const l = new THREE.PointLight(0xFF9A2A, 1.6, 2.5); l.position.set(0, .2, .4); h.add(l); swapWeapon(P, hd => blade(hd, .8, 0x8A8A92)); } },
+  highlander: { cape: 0x1E5A3A, title: 'ГОРЕЦ', c: '#3aa06a', noHelm: true, pal: { metal: 0x1E5A3A, metalD: 0x144028, trim: 0xC8302A, pants: 0x1E5A3A, boots: 0x3A2414, hair: 0xC8742A },
+    extra(P, S) { const h = P.head; box(h, .36, .1, .36, 0x1E3A6A, 0, .36, 0); const b = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), M(0xC8302A)); b.position.y = .44; h.add(b); box(h, .3, .16, .06, 0xC8742A, 0, .02, .17);
+      for (let i = 0; i < 3; i++) box(P.torso, .52, .03, .36, 0xC8302A, 0, .1 + i * .08, 0); box(P.torso, .08, .7, .38, 0x1E3A6A, .12, .4, 0).rotation.z = .6;
+      swapWeapon(P, hd => blade(hd, 1.05, 0xDCE0E8)); } },
+  legionary: { cape: 0xB0201A, title: 'ЛЕГИОНЕР', c: '#d84030', noHelm: true, pal: { metal: 0xC8A24A, metalD: 0x9A7A2A, trim: 0xB0201A, pants: 0xB0201A, boots: 0x6A4424, hair: 0x3A2414 },
+    extra(P, S) { const h = P.head; box(h, .4, .2, .4, 0xC8A24A, 0, .36, 0); for (const s of [-1, 1]) box(h, .04, .2, .14, 0xC8A24A, s * .2, .14, .1); box(h, .08, .14, .44, 0xB0201A, 0, .52, 0);
+      for (let i = 0; i < 4; i++) box(P.torso, .52, .04, .36, 0x9A7A2A, 0, .2 + i * .1, 0);
+      if (P.handL) { const sh = box(P.handL, .08, .5, .36, 0xB0201A, -.08, 0, .05); box(sh, .09, .1, .1, 0xC8A24A, 0, 0, 0); } swapWeapon(P, hd => blade(hd, .6, 0xDCE0E8)); } },
+  plague: { cape: 0x1A1A1E, title: 'ЧУМНОЙ ДОКТОР', c: '#5a5a66', noHelm: true, pal: { metal: 0x1A1A1E, metalD: 0x111114, trim: 0x6A4424, pants: 0x1A1A1E, boots: 0x111111, hair: 0x111111 },
+    extra(P, S) { const h = P.head; box(h, .4, .38, .38, 0x1A1A1E, 0, .2, 0); box(h, .6, .04, .58, 0x1A1A1E, 0, .38, 0); box(h, .36, .14, .34, 0x1A1A1E, 0, .46, 0);
+      const bk = new THREE.Mesh(new THREE.ConeGeometry(.08, .36, 6), M(0xE6DCC0)); bk.rotation.x = Math.PI / 2; bk.position.set(0, .12, .36); h.add(bk); for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .02, 10), glowM(0xC8E0E8)); e.rotation.x = Math.PI / 2; e.position.set(s * .09, .24, .2); h.add(e); }
+      swapWeapon(P, hd => { const w = new THREE.Group(); w.rotation.x = -.5; hd.add(w); cyl(w, .025, .025, 1.1, 0x6A4424, 0, 0, .3).rotation.x = Math.PI / 2; return w; }); } },
+  farmer: { cape: 0x6A8A3A, title: 'ФЕРМЕР', c: '#c8a24a', noHelm: true, pal: { metal: 0x3A5AA0, metalD: 0x2A4A80, trim: 0xC8302A, pants: 0x3A5AA0, boots: 0x5A3A1A, hair: 0x8A5A2A },
+    extra(P, S) { const h = P.head; box(h, .64, .04, .6, 0xE8C86A, 0, .34, 0); box(h, .38, .16, .36, 0xE8C86A, 0, .44, 0); box(h, .39, .04, .37, 0xC8302A, 0, .38, 0);
+      for (const s of [-1, 1]) box(P.torso, .06, .6, .02, 0x2A4A80, s * .14, .4, .17); if (P.cape) P.cape.visible = false;
+      swapWeapon(P, hd => { const w = new THREE.Group(); w.rotation.x = -.9; hd.add(w); box(w, .05, .05, 1.1, 0x8A6A3A, 0, 0, .4); for (let i = -1; i <= 1; i++) box(w, .03, .03, .22, 0x9A9AA2, i * .07, 0, 1.02); box(w, .2, .04, .04, 0x9A9AA2, 0, 0, .92); return w; }); } },
+  mageking: { cape: 0x3A2A8A, title: 'КОРОЛЬ МАГОВ', c: '#7a6aff', noHelm: true, pal: { metal: 0x3A2A8A, metalD: 0x2A1A6A, trim: 0xE8B931, pants: 0x2A1A6A, boots: 0x1A1430, hair: 0xE8E8F0 },
+    extra(P, S) { const h = P.head; box(h, .36, .1, .36, 0xE8B931, 0, .38, 0); for (const [x, z] of [[-.13, 0], [.13, 0], [0, .13], [0, -.13]]) box(h, .06, .14, .06, 0xE8B931, x, .48, z);
+      box(h, .32, .26, .08, 0xE8E8F0, 0, -.04, .17); box(h, .2, .14, .06, 0xE8E8F0, 0, -.22, .17);
+      swapWeapon(P, hd => { const w = new THREE.Group(); w.rotation.x = -.6; hd.add(w); cyl(w, .03, .03, 1.3, 0x6A4424, 0, 0, .35).rotation.x = Math.PI / 2; const o = new THREE.Mesh(new THREE.OctahedronGeometry(.1), glowM(0x9A8AFF)); o.position.z = 1.04; w.add(o); return w; });
+      const l = new THREE.PointLight(0x8A7AFF, 2, 3); l.position.y = .5; P.torso.add(l); } },
 };
 function buildCapy(o) { // капибара на 4 лапах, без доспехов: платок знамени и мандарин
   const fur = 0x9A6A40, furD = 0x7A5030, furL = 0xB07E50, fc = o.fc;
