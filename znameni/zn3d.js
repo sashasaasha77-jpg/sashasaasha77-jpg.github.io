@@ -3,8 +3,8 @@ import * as THREE from '../three.module.js';
 
 const FC = { lions: 0xE8B33A, wolves: 0x3F6FC4, dragons: 0xD8302A, ravens: 0x7A4AC8 };
 const EMB = { lions: '🦁', wolves: '🐺', dragons: '🐉', ravens: '🪶' };
-// где на картинке фона стоит герой и где мишень чучела (доли ширины/высоты картинки)
-export const BG = { w: 768, h: 1376, hero: [0.38, 0.735], dummyBase: [0.835, 0.755], dummyTop: [0.83, 0.576], target: [0.81, 0.668] };
+// Точки постановки в кадре лагеря, в долях видимой области.
+const CAMP_FRAME = { hero: [0.34, 0.708], dummyBase: [0.70, 0.722], dummyTop: [0.70, 0.474] };
 const HERO_H = 1.95, HERO_K = 1.2, HERO_THIN = 0.78; // герой на голову выше чучела и стройнее
 
 let R, scene, cam, clock, grad, el = null, ready = false;
@@ -216,9 +216,14 @@ function buildDummy() {
   const tg = new THREE.Mesh(new THREE.CylinderGeometry(.17, .17, .04, 24), [M(0xd8302a), new THREE.MeshToonMaterial({ map: targetTex(), gradientMap: grad }), M(0xd8302a)]);
   tg.rotation.x = Math.PI / 2; tg.position.set(-.04, .7, .18); tg.castShadow = true; body.add(tg); root.userData.target = tg;
   return root;
-}function bgRay(fx_, fy_) { const W = el.clientWidth, H = el.clientHeight, s = Math.max(W / BG.w, H / BG.h), dw = BG.w * s, dh = BG.h * s, x = (W - dw) / 2 + fx_ * dw, y = (H - dh) / 2 + fy_ * dh;
-  ray.setFromCamera(new THREE.Vector2(x / W * 2 - 1, -(y / H) * 2 + 1), cam); return ray.ray; }
-function onGround(p) { const o = new THREE.Vector3(); bgRay(...p).intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), o); return o; }
+}
+function frameRay(x, y) {
+  const width = el.clientWidth, height = el.clientHeight;
+  const frameWidth = Math.min(width, height * .72);
+  ray.setFromCamera(new THREE.Vector2((x * 2 - 1) * frameWidth / width, 1 - y * 2), cam);
+  return ray.ray;
+}
+function onGround(p) { const o = new THREE.Vector3(); frameRay(...p).intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), o); return o; }
 
 // ---------- бойцы (герой и враг) ----------
 function makeActor(o) {
@@ -229,9 +234,9 @@ function actorScale(A) { const k = DH * HERO_K / HERO_H * A.scaleK; A.P.g.scale.
 const chestOf = A => A.P.g.position.clone().add(new THREE.Vector3(0, (A.P.capy ? .7 : 1.3) * A.P.g.scale.y, 0));
 function place() {
   if (!el || !el.clientWidth) return;
-  HERO_P.copy(onGround(BG.hero)); BASE.copy(onGround(BG.dummyBase));
+  HERO_P.copy(onGround(CAMP_FRAME.hero)); BASE.copy(onGround(CAMP_FRAME.dummyBase));
   const n = new THREE.Vector3().subVectors(cam.position, BASE).setY(0).normalize();
-  const top = new THREE.Vector3(); bgRay(...BG.dummyTop).intersectPlane(new THREE.Plane().setFromNormalAndCoplanarPoint(n, BASE), top); DH = Math.max(.5, top.y - BASE.y);
+  const top = new THREE.Vector3(); frameRay(...CAMP_FRAME.dummyTop).intersectPlane(new THREE.Plane().setFromNormalAndCoplanarPoint(n, BASE), top); DH = Math.max(.5, top.y - BASE.y);
   if (!dummy) { dummy = buildDummy(); scene.add(dummy); }
   dummy.position.copy(BASE); { const k = DH / 1.18; dummy.scale.set(k * .72, k * .88, k * .72); }
   const toHero = Math.atan2(HERO_P.x - BASE.x, HERO_P.z - BASE.z), toCam = Math.atan2(cam.position.x - BASE.x, cam.position.z - BASE.z);
@@ -361,7 +366,7 @@ export async function init(container) {
   R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.outputColorSpace = THREE.SRGBColorSpace;
   el.innerHTML = ''; el.appendChild(R.domElement); R.domElement.style.cssText = 'width:100%;height:100%;display:block';
   scene = new THREE.Scene(); grad = toonGrad(); clock = new THREE.Clock();
-  cam = new THREE.PerspectiveCamera(30, 1, .1, 200); cam.position.set(0, 9, 17); cam.lookAt(0, .5, 0);
+  cam = new THREE.PerspectiveCamera(34, 1, .1, 200); cam.position.set(0, 4.5, 12); cam.lookAt(0, 1.45, 0); cam.updateMatrixWorld();
   scene.add(new THREE.HemisphereLight(0xffffff, 0xb8c4e8, 1.8));
   const key = new THREE.DirectionalLight(0xfff0d8, 2.0); key.position.set(-3, 6, 5); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); Object.assign(key.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6 }); scene.add(key);
   const rim = new THREE.DirectionalLight(0xffb070, 1.8); rim.position.set(-5, 3, -4); scene.add(rim);

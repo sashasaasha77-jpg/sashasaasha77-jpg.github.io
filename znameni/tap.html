@@ -9,7 +9,7 @@
 :root{--pn:#13204a;--pn2:#1d3170;--gold:#ffc83a;--gold2:#e8a21e;--gl:#ffe7a0;--txt:#fff6e0;--mut:#b9c6ec;--fc:#e8b33a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;background:#0c1430;color:var(--txt);font:15px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
-#scene{position:fixed;inset:0;z-index:0;background:#3a4a8a url(bg/dragons.jpg) center/cover no-repeat}
+#scene{position:fixed;inset:0;z-index:0;background:#3a4a8a url(bg/dragons-courtyard-v2.webp) center/cover no-repeat}
 #scene.shk{animation:shk .16s linear}@keyframes shk{25%{transform:translate(3px,-2px)}50%{transform:translate(-3px,2px)}75%{transform:translate(2px,1px)}}
 #king{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;background:transparent;cursor:pointer;touch-action:manipulation}
 #king svg{width:100%;height:100%;display:block}
@@ -139,7 +139,7 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .uc .lockt{font-size:12px;color:var(--mut)}
 .sech{display:flex;align-items:center;gap:8px;margin:14px 0 8px;font-weight:900;font-size:17px}.sech:after{content:'';flex:1;height:2px;background:linear-gradient(90deg,var(--gold2),transparent)}
 .nextc{border-radius:18px;border:2px solid var(--gold2);overflow:hidden;position:relative;background:linear-gradient(180deg,#3a2a50,#1a1a3a)}
-.nextc .art{height:120px;background:url(bg/dragons.jpg) center 62%/cover;position:relative;display:flex;align-items:flex-end;justify-content:flex-end;padding:8px 14px;font-size:58px}
+.nextc .art{height:120px;background:url(bg/dragons-courtyard-v2.webp) center 62%/cover;position:relative;display:flex;align-items:flex-end;justify-content:flex-end;padding:8px 14px;font-size:58px}
 .nextc .art:before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,#0000 30%,#121c42)}.nextc .art span{position:relative;filter:drop-shadow(0 4px 6px #000)}
 .nextc .bd{padding:0 12px 12px;margin-top:-26px;position:relative}
 .nextc .chip{display:inline-block;background:#0a1230cc;border:1px solid var(--gold2);border-radius:8px;padding:2px 9px;font-size:12px;font-weight:800;color:var(--gl)}
@@ -319,7 +319,7 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
           <span class="eic" aria-hidden="true">⚡</span>
           <div class="ew"><div class="l1"><b><span id="en">0</span> <small>/ <span id="enm">0</span> сил</small></b><em id="enr">+6 в минуту</em></div><div class="bar"><i id="enb"></i></div></div>
         </div>
-        <button class="btn ad" id="adbtn" style="display:none">📺 Реклама · восстановить силы (<span id="adn">5</span>)</button>
+        <button class="btn ad" id="adbtn" style="display:none">📺 Реклама · +150 сил (<span id="adn">5</span>)</button>
       </div>
     </div>
   </div>
@@ -532,7 +532,7 @@ function apply(d) {
   if (S.auto > now) bd.push(`<span class="bdg">🛡 ${Math.ceil((S.auto - now) / 36e5)} ч</span>`);
   if (h && h.banner) bd.push('<span class="bdg">🚩</span>');
   $('bdg').innerHTML = bd.join('');
-  const BGS = { dragons: 'bg/dragons.jpg', lions: 'bg/lions.jpg', wolves: 'bg/wolves.jpg', ravens: 'bg/ravens.jpg' }, myF = (h && h.f) || S.fac; $('scene').style.backgroundImage = `url(${BGS[myF] || BGS.dragons})`;
+  const BGS = { dragons: 'bg/dragons-courtyard-v2.webp', lions: 'bg/lions-courtyard-v2.webp', wolves: 'bg/wolves-courtyard-v2.webp', ravens: 'bg/ravens-courtyard-v2.webp' }, myF = (h && h.f) || S.fac; $('scene').style.backgroundImage = `url(${BGS[myF] || BGS.dragons})`;
   { const art = document.querySelector('.nextc .art'); if (art) art.style.backgroundImage = `url(${BGS[myF] || BGS.dragons})`; }
   const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); window.ZN3D.setSkin(S.skin || ''); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
@@ -1191,9 +1191,21 @@ async function showSkinAd(k) {
   try { await go(); }
   catch (e) { toast(e && e.message && !/adsgram|done|error/i.test(e.message) ? e.message : 'Реклама недоступна, попробуй позже'); }
 }
+let energyAdBusy = false;
 async function showAd() {
-  if (!ADS_BLOCK || !window.Adsgram) return;
-  try { await window.Adsgram.init({ blockId: ADS_BLOCK }).show(); apply(await api('ad')); hap('ok'); toast('⚡ Выносливость восстановлена!'); } catch (e) { toast('Реклама недоступна, попробуй позже'); }
+  if (energyAdBusy || !S) return;
+  if (!ADS_BLOCK || !window.Adsgram) { toast('AdsGram не загрузился. Переоткрой игру.'); return; }
+  if (draw() >= S.maxE) { toast('Силы уже на максимуме.'); return; }
+  energyAdBusy = true;
+  $('adbtn').disabled = true;
+  try {
+    await window.Adsgram.init({ blockId: ADS_BLOCK }).show();
+    const reward = await api('ad');
+    apply(reward);
+    hap('ok');
+    toast(`⚡ +${reward.adEnergyGain} сил`);
+  } catch (e) { toast(adFailureText(e)); }
+  finally { energyAdBusy = false; $('adbtn').disabled = false; }
 }
 if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://sad.adsgram.ai/js/sad.min.js'; document.head.appendChild(sc); }
 
@@ -1209,7 +1221,7 @@ if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://
 </script>
 <script type="module">
 // 3D-лагерь на весь экран (если телефон не тянет WebGL — остаётся плоская картинка)
-import * as Z from './zn3d.js';
+import * as Z from './zn3d.js?v=courtyard-2';
 try { const c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) throw 0;
   window.ZN3D = Z; window.ZN3D_ON = true; Z.init(document.getElementById('king')).catch(e => console.warn('3D', e));
   if (window.S && S.hero) Z.setHero(S.hero.f, S.hero.r, S.hero.banner); else Z.setHero('lions', 'warrior', false); try { if (typeof S !== 'undefined' && S && S.skin) Z.setSkin(S.skin); } catch (e) { }
