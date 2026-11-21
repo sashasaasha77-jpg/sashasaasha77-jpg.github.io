@@ -79,6 +79,44 @@ function dragonArmor(P, scaleColor, hornColor, light) {
   wings(P.torso, scaleColor, hornColor);
 }
 export const CHAR = {
+  black_rider: {
+    cape: 0x732538, title: 'ВСАДНИК НА ЧЁРНОМ КОНЕ', c: '#eead70', noHelm: true,
+    pal: { metal: 0x535361, metalD: 0x343442, trim: 0xD59A60, pants: 0x292934, boots: 0x252530, skin: 0x3A3640, hair: 0x24242D },
+    extra(P) {
+      const coat = 0x292831, mane = 0x16151C, tack = 0x744234, brass = 0xD59A60;
+      const horse = new THREE.Group();
+      P.g.add(horse);
+      box(horse, .61, .50, 1.23, coat, 0, .83, -.11);
+      box(horse, .52, .46, .44, 0x33313B, 0, .86, .41);
+      box(horse, .34, .63, .37, coat, 0, 1.13, .50).rotation.x = -.36;
+      box(horse, .38, .28, .49, coat, 0, 1.47, .69).rotation.x = .26;
+      box(horse, .33, .19, .33, 0x3B3944, 0, 1.35, .90).rotation.x = .26;
+      box(horse, .13, .54, .21, mane, 0, 1.19, .37).rotation.x = -.46;
+      box(horse, .15, .53, .15, mane, 0, .65, -.77).rotation.x = .38;
+      box(horse, .70, .08, .59, tack, 0, 1.105, -.13);
+      for (const side of [-1, 1]) {
+        box(horse, .085, .17, .09, coat, side * .12, 1.66, .58).rotation.z = side * -.18;
+        box(horse, .02, .052, .048, glowM(0xEAB077), side * .197, 1.49, .75);
+        box(horse, .046, .30, .47, 0x782C42, side * .313, .96, -.15);
+        box(horse, .047, .035, .47, brass, side * .338, .82, -.15);
+        for (const z of [-.54, .42]) {
+          box(horse, .16, .55, .18, coat, side * .205, .37, z).rotation.x = z < 0 ? .22 : -.08;
+          box(horse, .17, .15, .20, mane, side * .205, .075, z + .034);
+        }
+      }
+      box(horse, .352, .045, .055, tack, 0, 1.40, .88);
+      const seat = new THREE.Group();
+      seat.position.y = .58;
+      seat.scale.setScalar(.69);
+      P.g.add(seat);
+      seat.add(P.body);
+      P.legL.rotation.z = -.51;
+      P.legR.rotation.z = .51;
+      box(P.head, .39, .26, .35, 0x393741, 0, .32, 0);
+      box(P.head, .34, .06, .034, brass, 0, .255, .18);
+    }
+  },
+
   ice_dragon: { cape: 0x3C82B4, title: 'ЛЕДЯНОЙ ДРАКОН', c: '#80dfff', noHelm: true,
     pal: { metal: 0x91C4DC, metalD: 0x457DA8, trim: 0xCEEFFF, pants: 0x35577B, boots: 0x244565, skin: 0x82C9DE, hair: 0x4A9ABF },
     extra(P) { dragonArmor(P, 0x65AACA, 0xD6F4FF, 0x91F6FF); } },
