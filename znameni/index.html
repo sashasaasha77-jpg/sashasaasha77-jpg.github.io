@@ -74,20 +74,12 @@ import { soldierGeo } from './army3d.mjs';
 import { buildCamp, buildFireCamp, KINDS, BIOME } from './town3d.mjs';
 // Пока лагерь каждого знамени — поляна с одним костром (как в начале у Wargram). Город включается: FIRE_MODE = false.
 const FIRE_MODE = true;
-import { UPG_BY, pickOptions } from './glory.mjs';
+import { UPG_BY } from './glory.mjs';
 const $ = id => document.getElementById(id);
 const API = 'https://otgwiroxifqtktbipbsu.supabase.co/functions/v1/znameni/api/', INSTA = '4znameni';
 
 // ---------- жители ----------
-const SYL = ['ka', 'ri', 'mo', 'na', 'lex', 'vi', 'to', 'sha', 'dim', 'ar', 'ten', 'ola', 'zu', 'kir', 'ma', 'sa', 'ny', 'gor', 'lia', 'vla', 'den', 'po', 'ra', 'ksu'];
-function demoRoster(n = 400) { const R = rng(7), out = [];
-  for (let i = 0; i < n; i++) { const nick = SYL[R() * 24 | 0] + SYL[R() * 24 | 0] + (R() < .5 ? '_' + (R() * 99 | 0) : (R() < .5 ? '.' + SYL[R() * 24 | 0] : '')); out.push({ nick, f: FKEYS[i % 4], r: RKEYS[R() * 4 | 0], lv: R() < .1 ? 10 + (R() * 20 | 0) : R() * 9 | 0, skin: R() < .03 ? 'gold' : '' }); }
-  return out; }
-// Основатель стоит у каждого костра; демо-жителей больше нет.
-const FOUNDER = INSTA, FOUNDER_ROLE = { lions: 'warrior', wolves: 'guard', dragons: 'mage', ravens: 'archer' };
-const founders = () => FKEYS.map(f => ({ nick: FOUNDER, f, r: FOUNDER_ROLE[f], lv: 30, skin: 'gold', founder: true }));
-const withFounder = army => founders().concat(army.filter(w => w.nick !== FOUNDER));
-let ROSTER = withFounder([]), DEMO = false, ST = null;
+let ROSTER = [], ST = null;
 
 // ---------- сцена ----------
 const R3 = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' }); R3.setPixelRatio(Math.min(2, devicePixelRatio || 1));
@@ -112,7 +104,7 @@ function showCamp(f, fly = true) {
   $('biome').textContent = `${FACTIONS[f].icon} Лагерь знамени «${FACTIONS[f].name}» · ${P.name}`; $('biome').style.opacity = 1; clearTimeout(showCamp.t); showCamp.t = setTimeout(() => $('biome').style.opacity = 0, 3500);
   renderTabs(); try { history.replaceState(null, '', '#' + f); } catch (e) { }
 }
-function renderTabs() { $('pop').innerHTML = FKEYS.map(f => `<button class="glass ${f === cur ? 'on' : ''}" data-f="${f}" style="--c:${FACTIONS[f].color}">${FACTIONS[f].icon} ${FACTIONS[f].name} <small>${ROSTER.filter(w => w.f === f && !w.founder).length}</small></button>`).join('') + ''; }
+function renderTabs() { $('pop').innerHTML = FKEYS.map(f => `<button class="glass ${f === cur ? 'on' : ''}" data-f="${f}" style="--c:${FACTIONS[f].color}">${FACTIONS[f].icon} ${FACTIONS[f].name} <small>${ROSTER.filter(w => w.f === f).length}</small></button>`).join('') + ''; }
 $('pop').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) showCamp(b.dataset.f); });
 
 // ---------- жители ходят по улицам: кольца × лучи ----------
@@ -134,7 +126,7 @@ function buildPeople() {
   else PEOPLE = ROSTER.filter(w => w.f === cur).map((w, i) => { const p = { ...w, i, ri: R() * RN | 0, k: R() * KN | 0, off: (R() - .5) * 1.8, wait: R() * 4, ph: R() * 9, yaw: 0, x: 0, z: 0 }; SLOT[i] = [w.r, cnt[w.r]++]; nextNode(p); p.t = R(); return p; });
   for (const r of RKEYS) { const [gn, gt] = soldierGeo(r), N = Math.max(1, cnt[r]), mn = new THREE.InstancedMesh(gn, MAT, N), mt = new THREE.InstancedMesh(gt, MAT, N); mn.count = mt.count = cnt[r];
     for (const m of [mn, mt]) { m.castShadow = true; m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); } MESH[r] = [mn, mt]; }
-  const c = new THREE.Color(); PEOPLE.forEach((w, i) => { const [r, k] = SLOT[i]; MESH[r][0].setColorAt(k, c.set(w.skin === 'gold' ? 0xffe08a : 0xffffff)); MESH[r][1].setColorAt(k, c.set(w.skin === 'gold' ? 0xffd75a : FACTIONS[w.f].color)); });
+  const c = new THREE.Color(); PEOPLE.forEach((w, i) => { const [r, k] = SLOT[i]; MESH[r][0].setColorAt(k, c.set(w.skin === 'gold' ? 0xffe08a : (w.look?.armor || 0xffffff))); MESH[r][1].setColorAt(k, c.set(w.skin === 'gold' ? 0xffd75a : (w.look?.cloth || FACTIONS[w.f].color))); });
   for (const r of RKEYS) MESH[r].forEach(m => { if (m.instanceColor) m.instanceColor.needsUpdate = true; });
   me = meNick ? PEOPLE.findIndex(p => p.nick === meNick) : -1;
   // жители ходят в постройки, построенные за «Славу»
@@ -214,7 +206,7 @@ function pick(x, y) {
 function show(html) { $('infobox').innerHTML = html; $('info').classList.add('on'); }
 const CLOSE = '<button class="btn g" data-close="1">Закрыть</button>';
 function person(i) { const p = PEOPLE[i], F = FACTIONS[p.f], Ro = ROLES[p.r]; followI = i; Object.assign(camT, { dist: 17, pitch: .72 });
-  show(`<div style="font-size:42px">${F.icon}</div><h2>${p.founder ? '👑 ' : ''}@${p.nick}${i === me ? ' — это ты' : ''}</h2>${p.founder ? '<p><b>Основатель «Четырёх знамён»</b> — стоит у костра каждого знамени.</p>' : ''}<p>${Ro.icon} ${Ro.name} знамени «${F.name}» · уровень ${p.lv || 0}${p.skin === 'gold' ? ' · ✨ Золотое знамя' : ''}</p>${p.mode === 'stay' && p.act ? `<p><b>${UPG_BY[p.job.key].icon} ${p.act}</b></p>` : ''}
+  show(`<div style="font-size:42px">${F.icon}</div><h2>${p.founder ? '👑 ' : ''}<a href="https://www.instagram.com/${encodeURIComponent(p.nick)}/" target="_blank" rel="noopener noreferrer" style="color:inherit">@${p.nick}</a>${i === me ? ' — это ты' : ''}</h2>${p.founder ? '<p><b>Основатель «Четырёх знамён»</b> — стоит у костра каждого знамени.</p>' : ''}<p>${Ro.icon} ${Ro.name} знамени «${F.name}» · уровень ${p.lv || 0}${p.skin === 'gold' ? ' · ✨ Золотое знамя' : ''}${p.look?.title ? ' · ' + p.look.title : ''}</p>${p.mode === 'stay' && p.act ? `<p><b>${UPG_BY[p.job.key].icon} ${p.act}</b></p>` : ''}
     <div class="col"><a class="btn" href="https://instagram.com/${encodeURIComponent(p.nick)}" target="_blank">Профиль в Instagram</a>${CLOSE}</div>`); }
 const HOUSE_TXT = { cottage: 'Уютный домик воинов: здесь отдыхают после битвы.', townhouse: 'Городской дом с лавкой на первом этаже.', corner: 'Дом с башенкой — с неё видно весь район.', manor: 'Усадьба знатного воина знамени.', farmhouse: 'Хутор: отсюда в лагерь везут хлеб и молоко.',
   rowhouse: 'Дома в ряд — здесь живут целыми семьями.', barracks: 'Казарма: здесь тренируются новобранцы.', temple: 'Храм знамени: воины молятся о победе перед битвой.', warehouse: 'Склад припасов на случай долгой осады.', markethall: 'Торговые ряды: фрукты, ткани и трофеи.',
@@ -261,17 +253,16 @@ function labels() {
 
 // ---------- слава лагерей ----------
 const VOTER = (() => { try { let v = localStorage.getItem('zn.voter'); if (!v) { v = 'v' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('zn.voter', v); } return v; } catch (e) { return 'v' + Math.random().toString(36).slice(2, 14) + 'tmp'; } })();
-const DEMO_BUILT = { lions: ['brewery', 'windmill', 'statue', 'banners'], wolves: ['fishpond', 'bathhouse', 'lanterns', 'watchtower', 'stone_walls'], dragons: ['armory', 'arena', 'stone_walls', 'lanterns'], ravens: ['library', 'shrine', 'music_hall'] };
 let GL = null;
 const plural = (n, a, b, c) => { const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c; };
 const hm = ts => new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 const nextTs = () => (ST && ST.nextBattle) || (() => { const a = new Date(), b = new Date(a); b.setHours(20, 0, 0, 0); if (b <= a) b.setDate(b.getDate() + 1); return +b; })();
-function demoGlory() { const fac = 'wolves', opts = pickOptions(DEMO_BUILT[fac], 'demo'); let mine = null; try { mine = localStorage.getItem('zn.demo.vote'); } catch (e) { }
-  const pop = f => ROSTER.filter(w => w.f === f).length, W = { wolves: [5, 2], lions: [3, 0], ravens: [3, 0], dragons: [2, 0] };
-  return { demo: true, built: DEMO_BUILT, last: { fac: 'wolves', key: 'stone_walls' }, vote: { fac, options: opts, counts: Object.fromEntries(opts.map((k, i) => [k, [12, 3, 6, 8][i] + (mine === k ? 1 : 0)])), closes: nextTs(), mine },
-    standings: Object.keys(W).map(f => ({ fac: f, wins: W[f][0], battles: 13, streak: W[f][1], upgrades: DEMO_BUILT[f].length, population: pop(f) })), best: 'wolves' }; }
-async function loadGlory() { if (!DEMO) { try { const r = await fetch(API + 'glory', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voter: VOTER }) }); if (r.ok) { GL = await r.json(); setBuilt(GL.built); gbtn(); return; } } catch (e) { } }
-  GL = demoGlory(); setBuilt(GL.built); gbtn(); }
+async function loadGlory() {
+  try { const response = await fetch(API + 'glory', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voter: VOTER }) });
+    if (response.ok) { GL = await response.json(); setBuilt(GL.built); }
+  } catch {}
+  gbtn();
+}
 function gbtn() { const b = $('gbtn'), v = GL && GL.vote; b.classList.toggle('voting', !!(v && !v.mine)); b.textContent = v && !v.mine ? '🗳 Голосование' : GL && GL.best ? '👑 ' + FACTIONS[GL.best].name : '🏆 Слава'; }
 function gloryHtml() { const g = GL; if (!g) return '<p>Загружаем…</p>' + CLOSE; const v = g.vote;
   let h = `<div class="gl"><div style="text-align:center;font-size:40px">🏆</div><h2 style="text-align:center">Слава лагерей</h2><p>Победа в битве — это +100 золота каждому воину знамени и голосование: что построить в своём лагере.</p>`;
@@ -285,8 +276,8 @@ function gloryHtml() { const g = GL; if (!g) return '<p>Загружаем…</p
   if (g.demo) h += '<p style="font-size:11px;color:var(--mut)">Демо-режим: настоящие голоса начнут считаться после запуска сервера.</p>';
   return h + '<div class="col" style="margin-top:12px">' + CLOSE + '</div></div>'; }
 async function voteFor(k) { if (!GL || !GL.vote || GL.vote.mine) return;
-  if (GL.demo) { try { localStorage.setItem('zn.demo.vote', k); } catch (e) { } GL = demoGlory(); }
-  else { try { const r = await fetch(API + 'glory_vote', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voter: VOTER, key: k }) }), j = await r.json(); if (!r.ok) { alertBox(j.message || 'Не удалось проголосовать'); return; } GL = j; } catch (e) { alertBox('Не удалось проголосовать — проверь интернет'); return; } }
+  if (!GL) return;
+  { try { const r = await fetch(API + 'glory_vote', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ voter: VOTER, key: k }) }), j = await r.json(); if (!r.ok) { alertBox(j.message || 'Не удалось проголосовать'); return; } GL = j; } catch (e) { alertBox('Не удалось проголосовать — проверь интернет'); return; } }
   gbtn(); show(gloryHtml()); }
 const alertBox = m => show(`<div style="font-size:38px">⚠️</div><p>${m}</p><div class="col">${CLOSE}</div>`);
 $('gbtn').onclick = () => show(gloryHtml()); if (FIRE_MODE) $('gbtn').style.display = 'none';
@@ -295,7 +286,7 @@ document.addEventListener('click', e => { const v = e.target.closest('[data-vote
 // ---------- данные ----------
 async function load() {
   try { const r = await fetch(API + 'state', { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } }); ST = await r.json();
-    if (ST && Array.isArray(ST.army) && ST.army.length) { ROSTER = withFounder(ST.army); buildPeople(); renderTabs(); }
+    if (ST && Array.isArray(ST.army)) { ROSTER = ST.army; buildPeople(); renderTabs(); }
     if (ST && ST.built) setBuilt(ST.built);
     const Bt = ST && ST.battle; if (Bt && Date.now() - Bt.at >= 0 && Date.now() - Bt.at < ((Bt.result && Bt.result.time) || 240) * 1000 + 5000) $('live').style.display = 'flex'; } catch (e) { }
 }
@@ -320,7 +311,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 const start = FKEYS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'lions';
-window.ZN = { camT, camS, showCamp, get PEOPLE() { return PEOPLE; }, addWarrior(w) { ROSTER.push(w); buildPeople(); }, cam }; BUILT = DEMO_BUILT; showCamp(start); Object.assign(camS, camT); $('load').style.display = 'none'; requestAnimationFrame(frame); load().finally(loadGlory);
+window.ZN = { camT, camS, showCamp, get PEOPLE() { return PEOPLE; }, cam }; BUILT = {}; showCamp(start); Object.assign(camS, camT); $('load').style.display = 'none'; requestAnimationFrame(frame); load().finally(loadGlory);
 </script>
 </body>
 </html>

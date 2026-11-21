@@ -66,17 +66,18 @@ const $ = id => document.getElementById(id);
 const SC = 1 / 20, WX = x => (x - FIELD.w / 2) * SC, WZ = y => (y - FIELD.h / 2) * SC;
 
 // ---------- воины (демо — вымышленные ники; на сайте — подписчики из Instagram) ----------
-const SYL = ['ka', 'ri', 'mo', 'na', 'lex', 'vi', 'to', 'sha', 'dim', 'ar', 'ten', 'ola', 'zu', 'kir', 'ma', 'sa', 'ny', 'gor', 'lia', 'vla', 'den', 'po', 'ra', 'ksu'];
-function demoRoster(n = 400) { const R = rng(7), out = [];
-  for (let i = 0; i < n; i++) { const nick = SYL[R() * 24 | 0] + SYL[R() * 24 | 0] + (R() < .5 ? '_' + (R() * 99 | 0) : (R() < .5 ? '.' + SYL[R() * 24 | 0] : '')); out.push({ nick, f: FKEYS[i % 4], r: RKEYS[R() * 4 | 0], lv: R() < .1 ? 10 + (R() * 20 | 0) : R() * 9 | 0, skin: R() < .03 ? 'gold' : '' }); }
-  return out; }
 const API = 'https://otgwiroxifqtktbipbsu.supabase.co/functions/v1/znameni/api/';
-let ROSTER = demoRoster(), LIVE = null, DEMO = true, NEXT = 0;
+let ROSTER = [], LIVE = null, NEXT = 0;
 async function loadState() {
   try { const r = await fetch(API + 'state', { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } }); const d = await r.json();
-    if (d && Array.isArray(d.army) && d.army.length) { ROSTER = d.army; DEMO = false; } LIVE = d.battle || null; NEXT = d.nextBattle || 0; }
+    if (Array.isArray(d?.army)) ROSTER = d.army;
+    const approved = new Set(ROSTER.map(w => w.nick));
+    LIVE = d?.battle?.warriors?.every(w => approved.has(w.nick)) ? d.battle : null;
+    NEXT = d?.nextBattle || 0;
+  }
   catch (e) { }
-  $('cnt').textContent = ROSTER.length + (DEMO ? ' (демо)' : '');
+  $('cnt').textContent = ROSTER.length;
+  $('play').disabled = !LIVE && new Set(ROSTER.map(w => w.f)).size < 2;
 }
 
 // ---------- сцена ----------
@@ -139,7 +140,7 @@ function buildArmy(list) {
     const mn = new THREE.InstancedMesh(gn, MAT, N), mt = new THREE.InstancedMesh(gt, MAT, N); mn.count = mt.count = cnt[r];
     for (const m of [mn, mt]) { m.castShadow = true; m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); }
     MESH[r] = [mn, mt]; }
-  const c = new THREE.Color(); list.forEach((w, i) => { const [r, k] = SLOT[i]; MESH[r][0].setColorAt(k, c.set(w.skin === 'gold' ? 0xffe08a : 0xffffff)); MESH[r][1].setColorAt(k, c.set(w.skin === 'gold' ? 0xffd75a : FACTIONS[w.f].color)); });
+  const c = new THREE.Color(); list.forEach((w, i) => { const [r, k] = SLOT[i]; MESH[r][0].setColorAt(k, c.set(w.skin === 'gold' ? 0xffe08a : (w.look?.armor || 0xffffff))); MESH[r][1].setColorAt(k, c.set(w.skin === 'gold' ? 0xffd75a : (w.look?.cloth || FACTIONS[w.f].color))); });
   for (const r of RKEYS) MESH[r].forEach(m => { if (m.instanceColor) m.instanceColor.needsUpdate = true; });
 }
 
@@ -275,6 +276,7 @@ function startBattle(warriors, seed, skipSec = 0, live = false) {
   $('tl').style.display = ''; $('play').style.display = 'none'; $('seek').max = TOTAL; renderFacs(); if (camMode === 'free' && follow < 0) setCam('dir');
 }
 function playBattle() {
+  if (!LIVE && new Set(ROSTER.map(w => w.f)).size < 2) return;
   if (LIVE) { TOTAL = LIVE.result ? LIVE.result.time : 240; startBattle(LIVE.warriors, LIVE.seed, 0); }
   else { const seed = (Date.now() / 864e5 | 0); TOTAL = runToEnd(ROSTER, seed).time; startBattle(ROSTER, seed); }
 }

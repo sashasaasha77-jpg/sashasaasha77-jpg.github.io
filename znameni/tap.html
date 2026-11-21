@@ -380,6 +380,9 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .modal .gp{background:radial-gradient(ellipse at 30% 0,#7059a2,#3b355f 79%);border-color:#e3c28eb8;color:#fff7eb}
 .modal h3{font-weight:950;color:#ffe39c;text-shadow:0 2px #3d2d5e;font-size:22px}
 @media(max-width:350px){.nav{gap:2px;padding-inline:3px}.nb,.nb.on{height:52px;grid-template-rows:27px 10px}.nb::before{width:27px;height:27px}.nb .camp-icon{width:20px;height:20px}.nb b,.nb.on b{font-size:8px}}
+.camp-feedback{margin:1px 4px 3px;padding:4px 8px;border:1px solid #ffd67f84;border-radius:8px;background:linear-gradient(145deg,#7d4fa1,#44356e);color:#fff3c7;text-align:center;font-size:clamp(10px,3vw,13px);font-weight:850;line-height:1.2;text-shadow:0 1px #422447;animation:camp-enter .16s ease-out both}
+.camp-feedback[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){.camp-feedback{animation:none}}
 </style>
 </head>
 <body>
@@ -418,7 +421,8 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
           <span class="eic" aria-hidden="true">⚡</span>
           <div class="ew"><div class="l1"><b><span id="en">0</span> <small>/ <span id="enm">0</span> сил</small></b><em id="enr">+6 в минуту</em></div><div class="bar"><i id="enb"></i></div></div>
         </div>
-        <button class="btn ad" id="adbtn" style="display:none">📺 Реклама · +150 сил (<span id="adn">5</span>)</button>
+        <div class="camp-feedback" id="camp-feedback" role="status" hidden></div>
+        <button class="btn ad" id="adbtn" style="display:none">📺 Реклама · +150 сил (<span id="adn">100</span>)</button>
       </div>
     </div>
   </div>
@@ -644,7 +648,7 @@ function apply(d) {
   if (h && h.banner) bd.push('<span class="bdg">🚩</span>');
   $('bdg').innerHTML = bd.join('');
   $('scene').style.backgroundImage = `url(${campBackground((h && h.f) || S.fac)})`;
-  const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); window.ZN3D.setSkin(S.skin || ''); apply.k = key; }
+  const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); window.ZN3D.setSkin(S.skin || h?.look || ''); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
   renderCampChests(); draw(); renderUps(); renderShop(); renderMe(); renderTasks(); renderLeagues(); renderMap(); renderFac(); renderWar(); renderTip();
@@ -808,7 +812,19 @@ async function chatSend() {
 $('cin').addEventListener('keydown', e => { if (e.key === 'Enter') chatSend(); });
 // ---------- знамя без Instagram и гильдии ----------
 function renderFac() {
-  if (S.linked) { $('facbox').innerHTML = ''; return; }
+  if (S.linked) {
+    const f = F[S.hero?.f], role = RL[S.hero?.r], credits = S.identityAds || 0;
+    if (!f || !role) { $('facbox').innerHTML = '<p class="sub">Героя пока нет в действующем составе сайта.</p>'; return; }
+    const options = (kind, current, data, label) => '<label>' + label + '<select id="identity-' + kind + '" aria-label="' + label + '">' +
+      Object.entries(data).filter(([k]) => k !== current).map(([k, v]) => '<option value="' + k + '">' + esc(v[0]) + '</option>').join('') + '</select></label>' +
+      '<button class="btn g" data-identity-kind="' + kind + '"' + (credits < 5 ? ' disabled' : '') + '>Сменить</button>';
+    $('facbox').innerHTML = '<div class="card" style="display:grid;gap:8px"><b>' + f[1] + ' ' + esc(f[0]) + ' · ' + esc(role[0]) + '</b>' +
+      '<small>Для одной смены знамени или класса нужно 5 подтверждённых просмотров. При смене знамени герой покидает прежнюю гильдию.</small>' +
+      '<button class="btn" data-frontier-ad="identity"' + (credits >= 5 || !S.frontierAdBlock ? ' disabled' : '') + '>Смотреть · ' + credits + ' / 5</button>' +
+      '<div style="display:grid;grid-template-columns:1fr auto;gap:7px">' +
+      options('f', S.hero.f, F, 'Знамя') + options('r', S.hero.r, RL, 'Класс') + '</div></div>';
+    return;
+  }
   $('facbox').innerHTML = `<div class="card" style="flex-direction:column;align-items:stretch"><b>${S.fac ? 'Твоё знамя: ' + F[S.fac][1] + ' ' + F[S.fac][0] : 'Нет Instagram? Выбери знамя'}</b>
     <small style="color:var(--mut)">Знамя нужно для чата своих и гильдий. В вечерней битве герой появится, когда ты вступишь через Instagram.</small>
     <div class="fpick">${Object.entries(F).map(([k, v]) => `<button data-fac="${k}" class="${S.fac === k ? 'on' : ''}">${v[1]} ${v[0]}</button>`).join('')}</div></div>`;
@@ -1109,9 +1125,16 @@ function tap(ev) {
 
 $('lgm').addEventListener('click', e => { if (e.target.id === 'lgm') $('lgm').classList.remove('on'); });
 $('king').addEventListener('pointerdown', e => { e.preventDefault(); tap(e); });
+function campFeedback(message) {
+  const el = $('camp-feedback');
+  el.textContent = message;
+  el.hidden = false;
+  clearTimeout(campFeedback.timer);
+  campFeedback.timer = setTimeout(() => { el.hidden = true; }, 1850);
+}
 async function sync() {
   if (syncing || !pending || !S) return; syncing = true; const n = pending, lv0 = S.hero ? S.hero.lv : 0;
-  try { const d = await api('sync', { taps: n }); pending -= n; apply(d); if (d.hero && d.hero.lv > lv0) { hap('ok'); toast(`⬆️ Герой достиг ${d.hero.lv} уровня!`); } else if (d.surges) toast('🔥 Боевой азарт: +50% золота на 20 ударов', 2000); else if (d.criticals) toast(`🎯 Критических ударов: ${d.criticals}`, 1300); }
+  try { const d = await api('sync', { taps: n }); pending -= n; apply(d); if (d.hero && d.hero.lv > lv0) { hap('ok'); toast(`⬆️ Герой достиг ${d.hero.lv} уровня!`); } else if (d.surges) campFeedback('🔥 Азарт · +50% золота на 20 ударов'); else if (d.criticals) campFeedback(`🎯 Критические удары · ${d.criticals}`); }
   catch (e) { pending = 0; toast(e.message); } finally { syncing = false; }
 }
 setInterval(sync, 1500); document.addEventListener('visibilitychange', () => document.hidden && sync());
@@ -1233,7 +1256,7 @@ document.addEventListener('click', async e => {
           apply(d);
           if (kind === 'chest') renderChests(selectedChest);
           else if (kind === 'skin') { renderSkins(); hap('ok'); }
-          else $('stm').classList.remove('on');
+          else if (kind === 'offline') $('stm').classList.remove('on');
           toast(d.frontierAdMessage);
           return;
         }
@@ -1321,6 +1344,19 @@ document.addEventListener('click', async e => {
   if (t.id === 'chatbtn' || t.dataset.gchat) { if (t.dataset.gchat) { CH.ch = 'guild'; document.querySelectorAll('[data-ch]').forEach(b => b.classList.toggle('on', b.dataset.ch === 'guild')); } openChat(); return; }
   if (t.dataset.ch) { CH.ch = t.dataset.ch; document.querySelectorAll('[data-ch]').forEach(b => b.classList.toggle('on', b === t)); chatLoad(true); return; }
   if (t.id === 'csend') { chatSend(); return; }
+  if (t.dataset.identityKind) {
+    const kind = t.dataset.identityKind, target = $('identity-' + kind).value;
+    if (!confirm(kind === 'f' ? 'Сменить знамя за 5 просмотров? Герой покинет прежнюю гильдию.' : 'Сменить класс за 5 просмотров?')) return;
+    t.disabled = true;
+    try {
+      apply(await api('identity_change', { kind, target }));
+      await renderGuild();
+      hap('ok');
+      toast(kind === 'f' ? 'Знамя изменено.' : 'Класс изменён.');
+    } catch (e) { toast(e.message); }
+    finally { t.disabled = false; }
+    return;
+  }
   if (t.dataset.fac) { try { apply(await api('pick_faction', { f: t.dataset.fac })); hap('ok'); renderGuild(); } catch (er) { toast(er.message); } return; }
   if (t.dataset.gcreate || t.dataset.gjoin || t.dataset.gleave) { await sync();
     try { const d = t.dataset.gcreate ? await api('guild_create', { name: $('gname').value }) : t.dataset.gjoin ? await api('guild_join', { id: t.dataset.gjoin }) : await api('guild_leave');
@@ -1393,10 +1429,10 @@ if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://
 </script>
 <script type="module">
 // 3D-лагерь на весь экран (если телефон не тянет WebGL — остаётся плоская картинка)
-import * as Z from './zn3d.js?v=courtyard-2';
+import * as Z from './zn3d.js?v=followers-1';
 try { const c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) throw 0;
   window.ZN3D = Z; window.ZN3D_ON = true; Z.init(document.getElementById('king')).catch(e => console.warn('3D', e));
-  if (window.S && S.hero) Z.setHero(S.hero.f, S.hero.r, S.hero.banner); else Z.setHero('lions', 'warrior', false); try { if (typeof S !== 'undefined' && S && S.skin) Z.setSkin(S.skin); } catch (e) { }
+  if (window.S && S.hero) Z.setHero(S.hero.f, S.hero.r, S.hero.banner); else Z.setHero('lions', 'warrior', false); try { if (typeof S !== 'undefined' && S) Z.setSkin(S.skin || S.hero?.look || ''); } catch (e) { }
 } catch (e) { window.ZN3D_ON = false; }
 </script>
 </body>

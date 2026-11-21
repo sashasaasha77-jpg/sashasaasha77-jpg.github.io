@@ -49,7 +49,56 @@ const glowM = c => new THREE.MeshBasicMaterial({ color: c });
 function blade(hand, len, col, glow) { const w = new THREE.Group(); w.rotation.x = -.9; hand.add(w); box(w, .05, .05, .22, 0x2a2a30, 0, 0, 0); box(w, .2, .05, .06, 0xC8A24A, 0, 0, .12);
   const b = new THREE.Mesh(new THREE.BoxGeometry(.07, .03, len), glow ? glowM(col) : new THREE.MeshToonMaterial({ color: col, gradientMap: grad })); b.position.z = .15 + len / 2; w.add(b); return w; }
 function swapWeapon(P, make) { if (P.wR) P.wR.visible = false; if (P.handR) P.wR2 = make(P.handR); }
+function wings(torso, color, light) {
+  for (const direction of [-1, 1]) {
+    const wing = new THREE.Shape();
+    wing.moveTo(0, 0); wing.lineTo(.22, .50); wing.lineTo(.66, .57);
+    wing.lineTo(.56, .30); wing.lineTo(.79, .15); wing.lineTo(.52, .15);
+    wing.lineTo(.45, -.05); wing.lineTo(.27, .02); wing.lineTo(.10, -.18);
+    wing.closePath();
+    const mesh = new THREE.Mesh(new THREE.ExtrudeGeometry(wing, { depth: .045, bevelEnabled: false }), M(color));
+    mesh.position.set(direction * .18, .30, -.21);
+    mesh.scale.x = direction;
+    mesh.rotation.y = direction * .17;
+    torso.add(mesh);
+    box(torso, .15, .12, .16, light, direction * .34, .62, -.035).rotation.z = direction * .24;
+  }
+}
+function dragonArmor(P, scaleColor, hornColor, light) {
+  const head = P.head;
+  box(head, .43, .34, .38, scaleColor, 0, .20, .02);
+  box(head, .36, .19, .23, scaleColor, 0, .10, .23);
+  box(head, .28, .045, .20, hornColor, 0, .035, .29);
+  for (const direction of [-1, 1]) {
+    box(head, .10, .06, .024, glowM(light), direction * .115, .235, .224);
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(.065, .27, 5), M(hornColor));
+    horn.position.set(direction * .155, .43, -.035);
+    horn.rotation.z = -direction * .28;
+    head.add(horn);
+  }
+  wings(P.torso, scaleColor, hornColor);
+}
 export const CHAR = {
+  ice_dragon: { cape: 0x3C82B4, title: 'ЛЕДЯНОЙ ДРАКОН', c: '#80dfff', noHelm: true,
+    pal: { metal: 0x91C4DC, metalD: 0x457DA8, trim: 0xCEEFFF, pants: 0x35577B, boots: 0x244565, skin: 0x82C9DE, hair: 0x4A9ABF },
+    extra(P) { dragonArmor(P, 0x65AACA, 0xD6F4FF, 0x91F6FF); } },
+  dusk_dragon: { cape: 0x5A3479, title: 'ДРАКОН СУМЕРЕК', c: '#bb8cff', noHelm: true,
+    pal: { metal: 0x6F567D, metalD: 0x3E2E55, trim: 0xAD69EB, pants: 0x2F294A, boots: 0x1D1631, skin: 0x775989, hair: 0x342244 },
+    extra(P) { dragonArmor(P, 0x534067, 0xA88AC8, 0xDC8CFF); } },
+  raven_warden: { cape: 0x312541, title: 'ВОРОН СМЕРТИ', c: '#a79bd5', noHelm: true,
+    pal: { metal: 0x655D81, metalD: 0x323048, trim: 0xBDC1DC, pants: 0x342C45, boots: 0x231F35, skin: 0x483D58, hair: 0x292337 },
+    extra(P) {
+      box(P.head, .36, .37, .38, 0x352940, 0, .22, .025);
+      const beak = new THREE.Mesh(new THREE.ConeGeometry(.12, .31, 4), M(0x615778));
+      beak.rotation.x = Math.PI / 2;
+      beak.position.set(0, .135, .26);
+      P.head.add(beak);
+      for (const dir of [-1, 1]) {
+        box(P.head, .08, .04, .025, glowM(0xE2BAFF), dir * .11, .24, .225);
+        for (let i = 0; i < 3; i++) box(P.torso, .09, .25, .08, 0x514365, dir * (.36 + i * .06), .51 - i * .06, -.06).rotation.z = dir * .48;
+      }
+      wings(P.torso, 0x2C233C, 0x74668C);
+    } },
   diamond: { cape: 0x5AB8E8, title: 'АЛМАЗНЫЙ МЕЧНИК', c: '#7ad8ff', pal: { metal: 0xBFEFFF, metalD: 0x6FC8F0, trim: 0xFFFFFF, pants: 0x2A5A8A, boots: 0x3A6A9A, hair: 0xE8F8FF },
     extra(P, S) { swapWeapon(P, h => blade(h, .9, 0x9AF0FF, true)); for (const s of [-1, 1]) { const c = new THREE.Mesh(new THREE.OctahedronGeometry(.1), glowM(0xBFF6FF)); c.position.set(s * .36, .62, 0); c.scale.y = 1.6; P.torso.add(c); }
       const cr = new THREE.Mesh(new THREE.OctahedronGeometry(.08), glowM(0xBFF6FF)); cr.position.set(0, .66, 0); cr.scale.y = 1.8; P.head.add(cr); const l = new THREE.PointLight(0x9AF0FF, 2, 3); l.position.y = .4; P.torso.add(l); } },
