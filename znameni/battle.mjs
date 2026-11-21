@@ -28,7 +28,7 @@ export function createBattle(warriors, seed) {
     const [cx, cy] = F.camp, a = R() * Math.PI * 2, d = 20 + R() * 120;
     const hp = Math.round(ro.hp * m * F.hp);
     return { i, nick: w.nick, f: w.f, r: w.r, lv: w.lv || 0, skin: w.skin || '', x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d * 0.8,
-      hp, maxHp: hp, atk: ro.atk * m * F.atk, range: ro.range, cd: ro.cd, spd: ro.spd * F.spd, armor: ro.armor, crit: ro.crit + F.crit, splash: ro.splash || 0,
+      hp, maxHp: hp, atk: ro.atk * m * F.atk * (w.attackBonus || 1), range: ro.range, cd: ro.cd, spd: ro.spd * F.spd, armor: ro.armor, crit: ro.crit + F.crit, splash: ro.splash || 0,
       t: R() * ro.cd, target: -1, dead: false, kills: 0, dmg: 0, face: 1 };
   });
   return { units, R, time: 0, events: [], over: false, winner: null, seed, fx: [] };

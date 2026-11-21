@@ -38,7 +38,7 @@ export function ensure(s, t, day) {
 }
 // доход построек: копится не дольше 3 часов, пока игрок не заходил
 export function accrue(s, t) {
-  const from = Math.max(s.blAt || t, t - CAP_HOURS * 3600e3), g = perHour(s) * Math.max(0, t - from) / 3600e3;
+  const from = Math.max(s.blAt || t, t - (CAP_HOURS + (s.frontier?.legacy?.talents.camp || 0)) * 3600e3), g = perHour(s) * Math.max(0, t - from) / 3600e3;
   s.blAt = t; if (g > 0) { s.coins += g; s.total += g; } return g;
 }
 // новые лиги: награда сразу на счёт (в «всего» не идёт, чтобы не перескакивать лиги)
@@ -134,7 +134,9 @@ export const CAMP = [
 ];
 export const STAGES = CAMP.length * 10, BATTLE_SEC = 30, BATTLE_COST = 50, MAX_TPS = 18;
 export function heroStats(s, heroLv = 0) {
-  const L = s.lv || { power: 0, energy: 0, regen: 0 }, k = 1 + .03 * heroLv;
+  const L = s.lv || { power: 0, energy: 0, regen: 0 };
+  const legacy = s.frontier?.legacy;
+  const k = (1 + .03 * heroLv) * (1 + .02 * (legacy?.mastery || 0) + .03 * (legacy?.talents.battle || 0) + .05 * (legacy?.seals || 0));
   const dmg = Math.round(8 * Math.pow(1.12, L.power) * k), hp = Math.round((800 * Math.pow(1.1, L.energy) + 60 * L.regen) * k);
   return { dmg, hp, power: Math.round(Math.sqrt(dmg * 7 * hp) / 2) };
 }

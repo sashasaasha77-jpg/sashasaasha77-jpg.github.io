@@ -396,7 +396,17 @@ async function demoApi(action, b) {
 
 // ---------- отрисовка ----------
 function apply(d) {
-  S = { ...S, ...d }; if (d.shop) shop = d.shop; eLocal = d.energy; eT = performance.now();
+  S = { ...S, ...d };
+  const scene = $('king'), display = S.frontier?.collection || [];
+  scene.style.filter = display.some(x => x.equipped && x.slot === 'aura') ? 'drop-shadow(0 0 10px #9ecfff)' : '';
+  let companion = $('zn-companion');
+  if (!companion && scene.parentElement) {
+    companion = document.createElement('span');
+    companion.id = 'zn-companion';
+    companion.style.cssText = 'position:absolute;left:20%;bottom:21%;font-size:28px;pointer-events:none';
+    scene.parentElement.append(companion);
+  }
+  if (companion) companion.textContent = display.find(x => x.equipped && x.slot === 'pet')?.icon || ''; if (d.shop) shop = d.shop; eLocal = d.energy; eT = performance.now();
   const h = S.hero, fc = h && F[h.f] ? F[h.f] : null;
   document.documentElement.style.setProperty('--fc', fc ? fc[2] : '#8a6a3a');
   $('nm').textContent = S.name || 'Игрок'; $('ava').textContent = fc ? fc[1] : ((S.name || '?').trim()[0] || '?');
@@ -526,9 +536,17 @@ function renderWar() {
     <div class="ln" style="text-align:right;margin:-2px 0 8px">⭐ ${C.total} / ${PG.STAGES * 3}</div>
     <div class="row2"><button class="bigfight" data-fight="${n}">⚔️ В бой <small>⚡ ${PG.BATTLE_COST}</small></button><button class="mapb" data-mapopen="1" title="Карта похода">🗺</button></div></div></div>`;
   $('fights').innerHTML = `<button class="fc ok" data-mapopen="1"><span class="fi" style="background:#c8803a">🗺</span><b>Поход</b><small>10 глав, боссы и звёзды</small><span class="ft">⭐ ${C.total} из ${PG.STAGES * 3}</span></button>
-    <button class="fc" data-soon="Дуэли с друзьями онлайн"><span class="fi" style="background:#8a5ad8">🤝</span><b>Дуэль с другом</b><small>Онлайн 1 на 1</small><span class="ft">скоро</span></button>
-    <button class="fc soon" data-soon="Бесконечная башня"><span class="fi" style="background:#5a7ab8">🗼</span><b>Башня</b><small>Бесконечные этажи</small><span class="ft">после 1-й главы</span></button>
-    <button class="fc soon" data-soon="Испытание дня"><span class="fi" style="background:#3a9a6a">🗿</span><b>Испытание дня</b><small>Особый враг раз в день</small><span class="ft">после 3-го этапа</span></button>`;
+    <button class="fc" data-duels="1"><span class="fi" style="background:#8a5ad8">🤝</span><b>Дуэль с другом</b><small>Онлайн 1 на 1</small><span class="ft">Позвать друга</span></button>
+    <button class="fc" data-frontier="tower"><span class="fi" style="background:#5a7ab8">🗼</span><b>Башня</b><small>Бесконечные этажи</small><span class="ft">после 1-й главы</span></button>
+    <button class="fc" data-frontier="trial"><span class="fi" style="background:#3a9a6a">🗿</span><b>Испытание дня</b><small>Особый враг раз в день</small><span class="ft">после 3-го этапа</span></button>
+    <button class="fc" data-ranked="1"><span class="fi">🏆</span><b>Рейтинговый бой</b><small>Соперники твоей силы</small><span class="ft">${S.frontier?.cups || 0} кубков</span></button>
+    <button class="fc" data-boss="raid"><span class="fi">🚩</span><b>Рейд знамени</b><small>Общий враг для своего знамени</small></button>
+    <button class="fc" data-boss="world"><span class="fi">🐉</span><b>Мировой босс</b><small>Весь лагерь сражается вместе</small></button>
+    <button class="fc" data-race="1"><span class="fi">🏁</span><b>Состязания</b><small>Гонка знамён и война гильдий</small></button>
+    <button class="fc" data-chronicle-open="1"><span class="fi">📜</span><b>Летопись</b><small>Неделя, сезон и наследие</small></button>
+    <button class="fc" data-market="view"><span class="fi">⚖️</span><b>Рынок</b><small>Обмен за золото</small></button>
+    <button class="fc" data-collection-open="1"><span class="fi">✨</span><b>Коллекция</b><small>Спутники и ауры из ларцов</small></button>
+    <button class="fc" data-chest-open="1"><span class="fi">🎁</span><b>Ларцы</b><small>Награды за победы</small><span class="ft">${S.frontier?.chests.length || 0}</span></button>`;
   cnt('c-war', S.energy >= PG.BATTLE_COST ? 1 : 0);
 }
 // ---------- чат ----------
@@ -610,10 +628,77 @@ function openStage(n) {
   $('stm').classList.add('on');
 }
 let BT = null;
-async function fight(n) {
-  await sync(); let d; try { d = await api('battle_start', { n }); } catch (e) { toast(e.message); return; }
+async function openBoss(key, claim = false) {
+  try {
+    const d = await api('boss', { mode: key, claim });
+    apply(d);
+    const mode = d.frontier.modes.find(m => m.key === key), boss = d.bossStatus;
+    const ready = S.camp.max >= mode.unlock && mode.left > 0;
+    const status = '<p class="sub">Здоровье: ' + fmt(boss.remaining) + ' / ' + fmt(boss.max) +
+      ' · попыток: ' + mode.left + ' · открывается после этапа ' + mode.unlock + '</p>';
+    const button = boss.remaining > 0
+      ? '<button class="btn" data-frontier="' + key + '"' + (ready ? '' : ' disabled') + '>В бой</button>'
+      : '<button class="btn" data-boss-claim="' + key + '">Забрать награду участника</button>';
+    $('stbox').innerHTML = '<h3>' + esc(mode.title) + '</h3>' + status + button +
+      ' <button class="btn" data-close="stm">Назад</button>';
+    $('stm').classList.add('on');
+    if (boss.message) toast(boss.message);
+  } catch (e) { toast(e.message); }
+}
+function renderChronicle() {
+  const f = S.frontier;
+  if (!f) { toast('Летопись доступна в Telegram после обновления сервера.'); return; }
+  const button = (kind, target, label, enabled) => `<button class="btn" data-chronicle="${kind}" data-target="${target}" ${enabled ? '' : 'disabled'}>${label}</button>`;
+  const card = (label, controls) => `<div class="card"><div class="t"><b>${label}</b></div>${controls}</div>`;
+  const l = f.legacy, progress = Math.max(0, S.total - l.baseline);
+  const points = l.seals - Object.values(l.talents).reduce((a, b) => a + b, 0);
+  $('stbox').innerHTML = '<h3>Летопись</h3>' +
+    (S.temper ? card('Закалка · у героя ' + fmt(S.temper.heroGold || 0) + ' золота · сегодня +' + S.temper.xp + ' опыта и ' + S.temper.gold + ' золота', button('temper', '', 'Передать герою', S.temper.xp > 0 && !S.temper.claimed)) : '') +
+    card('Неделя · победы ' + f.week.wins + '/10', button('weekly', '', '3 000 золота', f.week.wins >= 10 && !f.week.claimed)) +
+    '<h4>Сезон · ' + f.season.points + ' очков</h4>' +
+    [50, 150, 300].map(n => card(n + ' очков', button('season', n, 'Забрать ларец', f.season.points >= n && !f.season.claimed.includes(n)))).join('') +
+    '<h4>Достижения</h4>' +
+    [10, 50, 100].map(n => card(f.wins + '/' + n + ' побед', button('achievement', n, 'Забрать', f.wins >= n && !l.achievements.includes(n)))).join('') +
+    '<h4>Наследие · печатей ' + l.seals + '</h4><p class="sub">Новый цикл сбросит золото, постройки и улучшения снаряжения.</p>' +
+    card(fmt(progress) + '/250 000 золота за цикл', button('legacy', '', 'Начать цикл', progress >= 250000)) +
+    card('Мастерство ' + l.mastery + ' · ' + fmt(25000 * (l.mastery + 1)) + ' золота', button('mastery', '', 'Улучшить', Object.values(S.costs).every(c => c == null) && S.coins >= 25000 * (l.mastery + 1))) +
+    '<h4>Таланты · свободных очков ' + points + '</h4>' +
+    Object.entries({ key: 'Взломщик ларцов', camp: 'Хранитель лагеря', battle: 'Закалённый боец' }).map(([key, title]) =>
+      card(title + ' · ' + l.talents[key] + '/5', button('talent', key, 'Улучшить', points > 0 && l.talents[key] < 5))).join('') +
+    '<button class="btn" data-close="stm">Назад</button>';
+  $('stm').classList.add('on');
+}
+function showCollection() {
+  const items = S.frontier?.collection;
+  if (!items) { toast('Коллекция доступна в Telegram после обновления сервера.'); return; }
+  $('stbox').innerHTML = '<h3>Коллекция</h3>' + items.map(x =>
+    '<div class="card"><div class="t"><b>' + x.icon + ' ' + esc(x.title) + '</b><small>' + (x.slot === 'pet' ? 'Спутник' : 'Аура') +
+    '</small></div><button class="btn" data-equip="' + esc(x.id) + '"' + (x.owned ? '' : ' disabled') + '>' +
+    (x.owned ? (x.equipped ? 'Снять' : 'Применить') : 'Выпадает из ларца') + '</button></div>').join('') +
+    '<button class="btn" data-close="stm">Назад</button>';
+  $('stm').classList.add('on');
+}
+function showOfflineBonus(offer) {
+  $('stbox').innerHTML = '<h3>Постройки принесли золото</h3><p>На счёт зачислено ' + fmt(offer.gold) +
+    '. За просмотр начислим ещё столько же.</p><button class="btn" data-frontier-ad="offline" data-target="' +
+    esc(offer.id) + '">Смотреть · +' + fmt(offer.gold) + '</button> <button class="btn" data-close="stm">Продолжить</button>';
+  $('stm').classList.add('on');
+}
+function renderChests() {
+  const t = Date.now();
+  $('stbox').innerHTML = '<h3>Ларцы</h3>' + ((S.frontier?.chests || []).map(c => {
+    const minutes = c.ready == null ? 0 : Math.ceil((c.ready - t) / 60000);
+    const label = c.ready == null ? 'Начать открытие' : minutes > 0 ? `Осталось ${minutes} мин` : 'Забрать';
+    const ad = minutes > 0 && S.frontierAdBlock ? `<button class="btn g" data-frontier-ad="chest" data-target="${esc(c.id)}">Смотреть · −60 мин</button>` : '';
+    return `<div class="card"><div class="t"><b>${esc(c.title)}</b></div>${ad}<button class="btn" data-chest="${esc(c.id)}" ${minutes > 0 ? 'disabled' : ''}>${label}</button></div>`;
+  }).join('') || '<div class="sub">Зарабатывай ларцы в боях.</div>') +
+    '<button class="btn" data-close="stm">Назад</button>';
+  $('stm').classList.add('on');
+}
+async function fight(n, mode, duelId, sector) {
+  await sync(); let d; try { d = await api('battle_start', { n, mode, duelId, sector }); } catch (e) { toast(e.message); return; }
   apply(d); const b = d.battle; $('stm').classList.remove('on');
-  BT = { n, b, hp: b.heroHp, ehp: b.hp, taps: 0, t0: 0, over: false, every: b.role === 'archer' || b.role === 'mage' ? 1.4 : 1.1 };
+  BT = { n, b, mode, hp: b.heroHp, ehp: b.hp, taps: 0, t0: 0, over: false, every: b.role === 'archer' || b.role === 'mage' ? 1.4 : 1.1 };
   $('app').classList.add('hide'); document.querySelectorAll('.side').forEach(x => x.classList.add('hide')); $('bhud').classList.add('on');
   $('ename').textContent = (b.boss ? '👑 ' : '') + b.name; $('binfo').innerHTML = `🗡 ${fmt(b.heroDmg)} за удар · 💀 ${fmt(b.dps)} в секунду по тебе`;
   if (window.ZN3D_ON) window.ZN3D.battleStart({ role: b.role, pal: PGm.PAL[b.pal], boss: b.boss });
@@ -641,11 +726,31 @@ function bTap(ev) {
 async function bEnd(win) {
   if (BT.over) return; BT.over = true; const ms = Math.round(performance.now() - BT.t0);
   if (window.ZN3D_ON) win ? window.ZN3D.enemyDie() : window.ZN3D.heroDie();
-  let r = { win: false }; try { const d = await api('battle_finish', { taps: BT.taps, ms }); r = d.result; apply(d); } catch (e) { toast(e.message); }
+  let r = { win: false }; try { const d = await api('battle_finish', { taps: BT.taps, ms, id: BT.b.id }); r = d.result; apply(d); } catch (e) { toast(e.message); }
   setTimeout(() => showResult(r), 900);
 }
 function showResult(r) {
   const n = BT.n, St = BT.b;
+  if (Number.isFinite(r.score)) {
+    $('resbox').innerHTML = '<h3>Результат отправлен</h3><p>Ударов: ' + r.score +
+      '</p><button class="btn" data-leave="1">В меню боя</button>';
+    $('resm').classList.add('on');
+    return;
+  }
+  if (Number.isFinite(r.damage)) {
+    $('resbox').innerHTML = '<h3>Атака завершена</h3><p>Урон общему боссу: ' + fmt(r.damage) +
+      '</p><button class="btn" data-leave="1">В меню боя</button>';
+    $('resm').classList.add('on');
+    return;
+  }
+  if (BT.mode) {
+    $('resbox').innerHTML = `<h3>${r.win ? 'Победа!' : 'Поражение'}</h3>
+      ${r.win ? `<p>+${fmt(r.gold)} золота · новый ларец</p>` : ''}
+      <button class="btn" data-leave="1">В меню боя</button>`;
+    $('resm').classList.add('on');
+    if (r.win) hap('ok');
+    return;
+  }
   $('resbox').innerHTML = r.win ? `<div style="font-size:40px">👑</div><h3 style="font-size:28px">Победа!</h3><div class="sub">${St.name} повержен за ${r.sec} с.</div>
       <div style="font-size:30px;margin:6px 0">${'⭐'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}</div><div style="font-size:22px;font-weight:900">🪙 +${fmt(r.gold)}</div>
       ${n < PGm.STAGES ? `<button class="btn" style="width:100%;margin-top:12px" data-next="${n + 1}">Дальше</button>` : ''}`
@@ -697,6 +802,142 @@ document.addEventListener('click', async e => {
     } catch (er) { toast(er.message); } return;
   }
   if (t.id === 'adbtn') { showAd(); return; }
+  if (t.dataset.boss) { await openBoss(t.dataset.boss); return; }
+  if (t.dataset.bossClaim) { await openBoss(t.dataset.bossClaim, true); return; }
+  if (t.dataset.frontier) {
+    const mode = S.frontier?.modes.find(m => m.key === t.dataset.frontier);
+    if (!mode) { toast('Этот режим доступен в Telegram после обновления сервера.'); return; }
+    if (S.camp.max < mode.unlock) { toast(`Сначала пройди этап ${mode.unlock} похода.`); return; }
+    if (mode.left === 0) { toast('Попытки на сегодня закончились.'); return; }
+    fight(undefined, mode.key); return;
+  }
+  if (t.dataset.duels || t.dataset.duelInvite || t.dataset.duelAccept) {
+    try {
+      const d = await api('duels', { invite: t.dataset.duelInvite, accept: t.dataset.duelAccept });
+      const score = r => {
+        if (!r.mine || !r.rival) return r.mine ? r.mine.score + ' ударов · ждём соперника' : r.waiting ? 'Ждём подтверждения' : '';
+        const delta = r.mine.score - r.rival.score || r.rival.ms - r.mine.ms;
+        return r.mine.score + ':' + r.rival.score + ' · ' + (delta > 0 ? 'победа' : delta < 0 ? 'поражение' : 'ничья');
+      };
+      $('stbox').innerHTML = '<h3>Дуэли</h3><p class="sub">После принятия вызова у обоих две минуты, чтобы начать. Побеждает тот, кто нанесёт больше ударов. При равном счёте решает время.</p>' +
+        d.rows.map(r => '<div class="card"><div class="t"><b>' + esc(r.name) + '</b><small>' + score(r) + '</small></div>' +
+          (r.accept ? '<button class="btn" data-duel-accept="' + esc(r.id) + '">Принять</button>' :
+           r.start ? '<button class="btn" data-duel-start="' + esc(r.id) + '">В бой</button>' : '') + '</div>').join('') +
+        '<h4>Вызвать друга</h4>' + d.friends.map(f => '<button class="btn g" data-duel-invite="' + Number(f.id) + '">' + esc(f.n) + '</button>').join(' ') +
+        '<p><button class="btn" data-duels="1">Обновить</button> <button class="btn" data-close="stm">Назад</button></p>';
+      $('stm').classList.add('on');
+    } catch (e) { toast(e.message); }
+    return;
+  }
+  if (t.dataset.duelStart) { fight(undefined, 'duel', t.dataset.duelStart); return; }
+  if (t.dataset.ranked) {
+    try {
+      const d = await api('ranked');
+      $('stbox').innerHTML = '<h3>Рейтинговый бой</h3><p>Кубки: ' + fmt(d.cups) + ' · место: ' +
+        (d.place || '—') + ' · атак сегодня: ' + d.left + '</p>' +
+        '<button class="btn" data-frontier="ranked"' + (d.left > 0 ? '' : ' disabled') + '>Найти соперника</button>' +
+        '<h4>Лучшие бойцы</h4>' + (d.top.map((p, i) => '<div class="row"><span class="n">' + (i + 1) +
+        '</span><span class="nm">' + esc(p.name) + '</span><b>' + fmt(p.cups) + '</b></div>').join('') || '<p class="sub">Рейтинг пока пуст.</p>') +
+        '<p><button class="btn" data-close="stm">Назад</button></p>';
+      $('stm').classList.add('on');
+    } catch (e) { toast(e.message); }
+    return;
+  }
+  if (t.dataset.warSector) { fight(undefined, 'guildwar', undefined, t.dataset.warSector); return; }
+  if (t.dataset.race) {
+    try {
+      const race = await api('race');
+      const scores = Object.entries(race.factions).sort((a, b) => b[1] - a[1])
+        .map(([f, score]) => '<p>' + esc(F[f][0]) + ' · ' + fmt(score) + ' золота</p>').join('');
+      const war = race.war ? '<p>Соперник: ' + esc(race.war.opponent) + '</p><p>' + fmt(race.war.own) + ' : ' +
+        fmt(race.war.rival) + ' золота</p><p>До ' + esc(new Date(race.war.end).toLocaleString('ru-RU')) + '</p>' +
+          '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-items:end">' + race.war.sectors.map(x =>
+            '<button class="btn g" data-war-sector="' + esc(x.name) + '">' + esc(x.name) + '<br>' + x.own + ':' + x.rival + '</button>').join('') + '</div>'
+        : '<p class="sub">Для матча нужна своя гильдия и соперник.</p>';
+      $('stbox').innerHTML = '<h3>Гонка знамён</h3><p class="sub">Золото из тренировок и боёв. Победителю +10% к урону завтра.</p>' + scores +
+        '<p>Вчера: ' + (race.winner ? esc(F[race.winner][0]) : 'без победителя') +
+        '</p><h3>Война гильдий</h3>' + war + '<button class="btn" data-close="stm">Назад</button>';
+      $('stm').classList.add('on');
+    } catch (e) { toast(e.message); }
+    return;
+  }
+  if (t.dataset.chronicleOpen) { renderChronicle(); return; }
+  if (t.dataset.chronicle) {
+    const kind = t.dataset.chronicle;
+    if (kind === 'legacy' && !confirm('Начать новый цикл и сбросить золото, постройки и снаряжение?')) return;
+    t.disabled = true;
+    try {
+      const target = ['season', 'achievement'].includes(kind) ? Number(t.dataset.target) : t.dataset.target;
+      const d = await api(kind === 'temper' ? 'temper' : 'chronicle', { kind, target });
+      apply(d); renderChronicle(); toast(d.temperMessage || d.chronicleMessage);
+    } catch (e) { t.disabled = false; toast(e.message); }
+    return;
+  }
+  if (t.dataset.frontierAd) {
+    if (!S.frontierAdBlock || !window.Adsgram) { toast('Реклама сейчас недоступна.'); return; }
+    t.disabled = true;
+    try {
+      const kind = t.dataset.frontierAd;
+      const intent = await api('frontier_ad', { kind, id: t.dataset.target });
+      try { await window.Adsgram.init({ blockId: intent.block }).show(); }
+      catch (e) { await api('frontier_ad_cancel', { id: intent.id }).catch(() => {}); throw e; }
+      for (let i = 0; i < 12; i++) {
+        const d = await api('frontier_ad', { check: intent.id });
+        if (!d.pending) {
+          apply(d);
+          if (kind === 'chest') renderChests(); else $('stm').classList.remove('on');
+          toast(d.frontierAdMessage);
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 750));
+      }
+      toast('Подтверждение ещё в пути. Обнови игру через несколько секунд.');
+    } catch (e) { toast(e.message || 'Реклама сейчас недоступна.'); }
+    finally { t.disabled = false; }
+    return;
+  }
+  if (t.dataset.market) {
+    t.disabled = true;
+    try {
+      const operation = t.dataset.market;
+      const item = operation === 'sell' ? $('market-item').value : t.dataset.target;
+      const price = operation === 'sell' ? Number($('market-price').value) : null;
+      const d = await api('market', { operation, item, price });
+      if (d.player) apply(d.player);
+      const f = S.frontier;
+      const sell = [
+        ...(S.skins || []).map(key => ['skin:' + key, PGm.SKIN_LIST.find(x => x.k === key)?.n || key]),
+        ...(f?.collection || []).filter(x => x.slot === 'pet' && x.owned).map(x => ['pet:' + x.id, x.title]),
+        ...(f?.chests || []).filter(x => x.ready == null).map(x => ['chest:' + x.id, x.title]),
+      ];
+      const title = x => f?.collection.find(i => i.id === x.asset)?.title || PGm.SKIN_LIST.find(i => i.k === x.asset)?.n ||
+        ({ oak: 'Дубовый ларец', iron: 'Железный ларец', royal: 'Княжеский ларец' })[x.asset] || x.asset;
+      $('stbox').innerHTML = '<h3>Рынок</h3>' + (d.listings.map(x => '<div class="card"><div class="t"><b>' +
+        esc(title(x)) + '</b><small>' + fmt(x.price) + ' золота</small></div><button class="btn" data-market="' +
+        (x.seller === d.owner ? 'cancel' : 'buy') + '" data-target="' + esc(x.id) + '">' +
+        (x.seller === d.owner ? 'Снять' : 'Купить') + '</button></div>').join('') || '<p class="sub">Лотов пока нет.</p>') +
+        (sell.length ? '<h4>Выставить предмет</h4><select id="market-item" aria-label="Предмет">' +
+          sell.map(([value, label]) => '<option value="' + esc(value) + '">' + esc(label) + '</option>').join('') +
+          '</select> <input id="market-price" aria-label="Цена" type="number" min="1" max="1000000000" placeholder="Цена"> <button class="btn" data-market="sell">Выставить</button>' : '') +
+        '<p><button class="btn" data-close="stm">Назад</button></p>';
+      $('stm').classList.add('on');
+    } catch (e) { toast(e.message); } finally { t.disabled = false; }
+    return;
+  }
+  if (t.dataset.collectionOpen) { showCollection(); return; }
+  if (t.dataset.equip) {
+    t.disabled = true;
+    try { apply(await api('collection', { id: t.dataset.equip })); showCollection(); }
+    catch (e) { t.disabled = false; toast(e.message); }
+    return;
+  }
+  if (t.dataset.chestOpen) { renderChests(); return; }
+  if (t.dataset.chest) {
+    t.disabled = true;
+    try { const d = await api('chest', { id: t.dataset.chest }); apply(d); renderChests(); toast(d.chestMessage); }
+    catch (e) { t.disabled = false; toast(e.message); }
+    return;
+  }
   if (t.dataset.skinad) { showSkinAd(t.dataset.skinad); return; }
   if (t.dataset.skinset !== undefined) { try { apply(await api('skin_set', { skin: t.dataset.skinset })); renderSkins(); hap('ok'); } catch (e) { toast(e.message); } return; }
   if (t.dataset.bld) { await sync(); try { apply(await api('build', { kind: t.dataset.bld })); hap('ok'); toast('🏗 Постройка улучшена!'); } catch (er) { toast(er.message); } return; }
@@ -747,6 +988,7 @@ if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://
   if (TG) { try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor('#0c1430'); TG.setBackgroundColor && TG.setBackgroundColor('#0c1430'); TG.disableVerticalSwipes && TG.disableVerticalSwipes(); } catch (e) { } }
   if (DEMO) $('demo').style.display = 'block'; $('instalink').href = 'https://instagram.com/' + INSTA;
   try { const d = await api('login'); apply(d);
+    if (d.frontierAdBlock && d.frontier?.offlineBonus) showOfflineBonus(d.frontier.offlineBonus);
     if (d.won) toast(`🏆 Твоё знамя победило! +${fmt(d.won)} золота`, 4000); else if (d.bldGain > 0) toast(`🏗 Постройки принесли, пока тебя не было: +${fmt(d.bldGain)}`, 3500); else if (d.autoGain) toast(`🛡 Оруженосец натренировал: +${fmt(d.autoGain)}`, 3500); }
   catch (e) { toast(e.message, 5000); }
 })();
