@@ -6,9 +6,13 @@ const EMB = { lions: '🦁', wolves: '🐺', dragons: '🐉', ravens: '🪶' };
 // Точки постановки в кадре лагеря, в долях видимой области.
 const CAMP_FRAME = { hero: [0.34, 0.708], dummyBase: [0.70, 0.722], dummyTop: [0.70, 0.474] };
 const CAMP_GUESTS = [
-  { skin: 'ice_dragon', frame: [.20, .47], turn: -.58, size: .69 },
-  { skin: 'raven_warden', frame: [.50, .44], turn: .48, size: .73 },
-  { skin: 'dusk_dragon', frame: [.80, .47], turn: .59, size: .69 },
+  { skin: 'samurai', frame: [.18, .39], turn: .29, size: .65 },
+  { skin: 'ninja', frame: [.38, .39], turn: -.30, size: .65 },
+  { skin: 'knight', frame: [.61, .39], turn: .34, size: .65 },
+  { skin: 'black_rider', frame: [.82, .39], turn: -.47, size: .68 },
+  { skin: 'ice_dragon', frame: [.20, .50], turn: -.58, size: .69 },
+  { skin: 'raven_warden', frame: [.51, .48], turn: .48, size: .73 },
+  { skin: 'dusk_dragon', frame: [.81, .50], turn: .59, size: .69 },
 ];
 let campGuests = [];
 const HERO_H = 1.95, HERO_K = 1.2, HERO_THIN = 0.78; // герой на голову выше чучела и стройнее
@@ -538,7 +542,7 @@ export async function init(container) {
   const fit = () => { const w = el.clientWidth, h = el.clientHeight; if (!w || !h) return; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); place(); };
   campGuests = CAMP_GUESTS.map(guest => {
     const def = CHAR[guest.skin];
-    const actor = makeActor({ role: 'warrior', fc: def.cape, skin: guest.skin, def });
+    const actor = makeActor({ role: 'warrior', fc: def.cape, skin: guest.skin, def, pal: def.pal, noHelm: def.noHelm });
     return { ...guest, actor };
   });
   new ResizeObserver(fit).observe(el); fit();

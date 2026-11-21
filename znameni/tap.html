@@ -1429,7 +1429,7 @@ if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://
 </script>
 <script type="module">
 // 3D-лагерь на весь экран (если телефон не тянет WebGL — остаётся плоская картинка)
-import * as Z from './zn3d.js?v=camp-guests-1';
+import * as Z from './zn3d.js?v=camp-guests-2';
 try { const c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) throw 0;
   window.ZN3D = Z; window.ZN3D_ON = true; Z.init(document.getElementById('king')).catch(e => console.warn('3D', e));
   if (window.S && S.hero) Z.setHero(S.hero.f, S.hero.r, S.hero.banner); else Z.setHero('lions', 'warrior', false); try { if (typeof S !== 'undefined' && S) Z.setSkin(S.skin || S.hero?.look || ''); } catch (e) { }
