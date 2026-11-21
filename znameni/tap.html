@@ -731,6 +731,11 @@ function renderCampChests() {
     button.classList.toggle('is-ready', chest.ready != null && chest.ready <= now);
   }
 }
+const CHEST_CONTENTS = {
+  oak: [350, 'Фонарник или Искры костра'],
+  iron: [1200, 'Фонарник или Искры костра'],
+  royal: [4500, 'Дозорная сова или Северное сияние'],
+};
 let selectedChest = '';
 setInterval(() => {
   renderCampChests();
@@ -755,7 +760,9 @@ function renderChests(focus = '') {
     const minutes = c.ready == null ? 0 : Math.ceil((c.ready - t) / 60000);
     const label = c.ready == null ? 'Начать открытие' : minutes > 0 ? 'Осталось ' + chestTimer(c, t) : 'Забрать';
     const ad = minutes > 0 && S.frontierAdBlock ? `<button class="btn g" data-frontier-ad="chest" data-target="${esc(c.id)}">Смотреть · −60 мин</button>` : '';
-    return `<div class="card"><div class="t"><b>${esc(c.title)}</b></div>${ad}<button class="btn" data-chest="${esc(c.id)}" ${minutes > 0 ? `data-ready-at="${c.ready}" disabled` : ''}>${label}</button></div>`;
+    const contents = CHEST_CONTENTS[c.kind];
+    const preview = contents ? `<small>${fmt(contents[0])} золота гарантировано · возможная находка: ${contents[1]}</small>` : '';
+    return `<div class="card"><div class="t"><b>${esc(c.title)}</b>${preview}</div>${ad}<button class="btn" data-chest="${esc(c.id)}" ${minutes > 0 ? `data-ready-at="${c.ready}" disabled` : ''}>${label}</button></div>`;
   }).join('') || '<div class="sub">Зарабатывай ларцы в боях.</div>') +
     '<button class="btn" data-close="stm">Назад</button>';
   $('stm').classList.add('on');
@@ -1002,7 +1009,19 @@ document.addEventListener('click', async e => {
   if (t.dataset.chestOpen) { renderChests(); return; }
   if (t.dataset.chest) {
     t.disabled = true;
-    try { const d = await api('chest', { id: t.dataset.chest }); apply(d); renderChests(selectedChest); toast(d.chestMessage); }
+    try {
+      const claimed = S.frontier?.chests.some(c => c.id === t.dataset.chest && c.ready != null);
+      const d = await api('chest', { id: t.dataset.chest });
+      apply(d);
+      if (claimed && d.chestMessage) {
+        $('stbox').innerHTML = '<h3>Награда получена</h3><p>' + esc(d.chestMessage) +
+          '</p><button class="btn" data-close="stm">Продолжить</button>';
+        hap('ok');
+      } else {
+        renderChests(selectedChest);
+        toast(d.chestMessage);
+      }
+    }
     catch (e) { t.disabled = false; toast(e.message); }
     return;
   }
