@@ -241,6 +241,46 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .chest-card .t{grid-column:1/-1;min-width:0}
 .chest-card .btn{min-width:0;white-space:normal;line-height:1.2;padding:8px}
 .chest-card .btn:only-of-type{grid-column:1/-1}
+
+/* Camp composition */
+#app{padding-inline:clamp(7px,2vw,12px)}
+#scene::after{background:linear-gradient(180deg,#15182b66 0%,transparent 27%,transparent 75%,#10162260)}
+.hdr{gap:7px}
+.lvbox,.lgbox,.cpill,.rb{border:1px solid #d8b47f9e;background:linear-gradient(155deg,#41435b 0%,#28283f 46%,#202135 100%);box-shadow:inset 0 1px #fff2,inset 0 -3px #111222a0,0 3px 8px #100b2066}
+.lvbox,.lgbox{min-height:50px;border-radius:15px}
+.lvbox{padding:4px 8px 4px 5px;gap:8px}
+.lvbox .ava{width:39px;height:39px;border-radius:11px;background:linear-gradient(145deg,#6a587879,#342d48);border-color:#e7cb92ad}
+.lvb{left:27px;bottom:0;min-width:16px;height:16px;font-size:9px;border-color:#f9e1b0;background:#56467b}
+.lgbox{padding:0 9px;color:#ffe0a9;font-size:12px;white-space:nowrap}
+.bal{margin-top:1px}
+.cpill{padding:4px 14px 5px 7px;border-radius:22px;gap:8px}
+.cpill .coin{width:29px;height:29px}
+.pills{gap:5px;margin-top:5px}
+.pills span{background:#211e32d9;border:1px solid #ffe0a544;box-shadow:0 2px 4px #08071835}
+.side{gap:7px;top:calc(105px + env(safe-area-inset-top))}
+.rb{width:37px;height:37px;border-radius:13px}
+.rb .camp-icon{width:20px;height:20px}
+.camp-dock{display:grid;gap:5px;min-width:0}
+.camp-chests{margin:0;padding:1px 0 3px}
+.camp-chest-items{gap:5px}
+.camp-chest{flex-basis:48px;min-height:37px;gap:3px;border-radius:9px;border-color:#dbb47b88;background:linear-gradient(165deg,#50415d,#272236 76%);box-shadow:inset 0 1px #fff2,inset 0 -2px #11122294,0 2px 5px #120b20a0}
+.camp-chest-icon{width:21.75px;height:14.25px;isolation:isolate;border:1.5px solid #f5cb8a;border-radius:4px;background:linear-gradient(90deg,transparent 14%,#f4c98e 14% 23%,transparent 23% 77%,#f4c98e 77% 86%,transparent 86%),linear-gradient(180deg,#d89059 0 35%,#734335 36% 49%,#aa663e 50%);box-shadow:0 2px 3px #080516a0,inset 0 1px #fff5}
+.camp-chest-icon::after{top:4px;height:6px;background:#ffe0a6}
+.camp-chest[data-kind="iron"] .camp-chest-icon{border-color:#c4e2f0;background:linear-gradient(90deg,transparent 15%,#afcadd 15% 24%,transparent 24% 76%,#afcadd 76% 85%,transparent 85%),linear-gradient(#809db2 0 42%,#344a63 43% 53%,#596e8d 54%)}
+.camp-chest[data-kind="royal"] .camp-chest-icon{border-color:#fadb82;background:linear-gradient(90deg,transparent 13%,#eec97c 13% 23%,transparent 23% 77%,#eec97c 77% 87%,transparent 87%),linear-gradient(#af82ca 0 42%,#5d3c80 43% 53%,#8954ac 54%)}
+.camp-chest.is-ready{border-color:#ffd36e;color:#ffdf99;box-shadow:inset 0 0 10px #ffd88429,0 2px 6px #100a21}
+.camp-energy{border-radius:15px;padding:5px;background:linear-gradient(145deg,#3d344d,#211e35 75%);border:1px solid #e3bc7d88;box-shadow:inset 0 1px #fff2,0 5px 14px #140b2180}
+.camp-energy .enp{background:transparent;border:0;box-shadow:none;margin:0;padding:3px 4px 5px;min-height:37px}
+.camp-energy .eic{width:31px;height:31px;border-radius:8px;background:linear-gradient(150deg,#b6ce75,#53845f);box-shadow:inset 0 1px #fff4,inset 0 -2px #2d5d52}
+.camp-energy .bar{height:7px;background:#100e22}
+.camp-energy .bar>i{background:linear-gradient(90deg,#6ba879,#d0e892)}
+.camp-energy .btn.ad{width:100%;min-height:32px;margin:2px 0 0;padding:4px 7px;border:1px solid #c0a2d978;border-radius:10px;background:linear-gradient(#715e92,#4a3c6d);box-shadow:inset 0 1px #fff2,inset 0 -2px #2a2149;font-weight:800}
+.nav{background:linear-gradient(150deg,#39334d,#222036 85%);border-color:#d9b67c9c;box-shadow:0 4px 12px #11092282,inset 0 1px #fff2}
+.nb,.nb.on{height:47px;grid-template-rows:21px 11px;border-radius:8px;background:linear-gradient(150deg,color-mix(in srgb,var(--c) 36%,#3f3554),#2a2340);border-color:#ffffff25;box-shadow:inset 0 1px #fff2,inset 0 -2px #11102777;color:#f4eef6}
+.nb .camp-icon{width:21px;height:21px}
+.nb.on{background:linear-gradient(150deg,#ffdea0,#bd8b52);border-color:#fff0ce;color:#342036;box-shadow:inset 0 1px #fff5,inset 0 -2px #80543472}
+.nb.on .camp-icon{background:currentColor}
+@media(max-height:640px){.lvbox,.lgbox{min-height:44px}.lvbox .ava{width:32px;height:32px}.nav{margin-top:5px}.nb,.nb.on{height:42px}.camp-dock{gap:3px}}
 </style>
 </head>
 <body>
@@ -270,13 +310,17 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
     <button class="cta" id="cta" style="display:none"></button>
     <div style="flex:1"></div>
     <div class="tip" id="tip" style="display:none"><span class="tic">📜</span><span id="tipt"></span><button class="tx" id="tipx">✕</button></div>
-    <button class="btn ad" id="adbtn" style="display:none">📺 Смотреть рекламу: полная сила (<span id="adn">5</span>)</button>
-    <section class="camp-chests" id="camp-chests" aria-label="Ларцы лагеря" hidden>
-      <div class="camp-chest-items" id="camp-chest-items"></div>
-    </section>
-    <div class="enp">
-      <span class="eic">⚡</span>
-      <div class="ew"><div class="l1"><b><span id="en">0</span> <small>/ <span id="enm">0</span> сил</small></b><em id="enr">+60 в минуту</em></div><div class="bar"><i id="enb"></i></div></div>
+    <div class="camp-dock">
+      <section class="camp-chests" id="camp-chests" aria-label="Ларцы лагеря" hidden>
+        <div class="camp-chest-items" id="camp-chest-items"></div>
+      </section>
+      <div class="camp-energy">
+        <div class="enp">
+          <span class="eic" aria-hidden="true">⚡</span>
+          <div class="ew"><div class="l1"><b><span id="en">0</span> <small>/ <span id="enm">0</span> сил</small></b><em id="enr">+60 в минуту</em></div><div class="bar"><i id="enb"></i></div></div>
+        </div>
+        <button class="btn ad" id="adbtn" style="display:none">📺 Реклама · восстановить силы (<span id="adn">5</span>)</button>
+      </div>
     </div>
   </div>
 
