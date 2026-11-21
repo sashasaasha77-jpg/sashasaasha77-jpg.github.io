@@ -285,6 +285,49 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .skin-portrait{display:block;width:100%;height:100%;border-radius:inherit;background-image:url(bg/skin-portraits-v1.webp);background-repeat:no-repeat;background-size:500% 400%;background-position:var(--px) var(--py)}
 .skin-state{position:absolute;right:-5px;bottom:-3px;display:grid;place-items:center;width:19px;height:19px;border-radius:7px;background:#172237;border:1px solid #fff8;font:700 10px/1 system-ui;color:#fff}
 .skin-state.equipped{background:#345941;color:#eaffde}
+
+/* Forge surfaces and combat feedback */
+:root{--forge-copper:#edb680;--forge-light:#ffe4b3;--forge-line:#d49c714e;--forge-deep:#1a1426;--forge-slate:#2a2138}
+.page:not(#p-tap) .panel{padding:45px 11px 10px;background:radial-gradient(ellipse at 0 0,#65405268,transparent 47%),linear-gradient(151deg,#2e233c,#151725 78%);border:1px solid var(--forge-line);border-radius:19px;box-shadow:0 16px 34px #070a165e,inset 0 1px #fff2}
+.page .ribbon{left:12px;top:11px;transform:none;padding:0;background:none;border:0;box-shadow:none;color:#ffe3bc;font-size:22px;line-height:1.1;letter-spacing:-.02em}
+.page .px{width:29px;height:29px;border-radius:9px;border:1px solid #f1bd9f3d;background:#5e3d4d;color:#ffe9dc;box-shadow:inset 0 1px #fff2}
+.seg{background:#100f1eb8;border:1px solid #d8a7b725;margin-bottom:10px}
+.seg button,.seg button.on{border:1px solid transparent;line-height:1.15;padding:8px 5px}
+.seg button.on{background:linear-gradient(145deg,#816072,#523c66);border-color:#ffcda371;color:#fff4e4;box-shadow:inset 0 1px #fff2}
+.nextc{background:linear-gradient(146deg,#4b3143,#262036);border-color:#eab78388;box-shadow:0 5px 12px #08071176}
+.nextc .art{height:clamp(128px,22vh,182px);background-position:center 48%}
+.nextc .art::before{background:linear-gradient(180deg,#1b112900 20%,#271e37 98%)}
+.nextc .chip{border-color:#f4bc726b;background:#291c32e8;color:#ffd7a1}
+.nextc h2{font-size:clamp(21px,6vw,28px);letter-spacing:-.02em}
+.bigfight{background:linear-gradient(155deg,#ffe8b7,#e3a464 68%,#cb7d48);color:#392031;box-shadow:0 3px #76453b,inset 0 1px #fff8}
+.bigfight small{background:#6e48372a}
+.mapb{background:linear-gradient(155deg,#775875,#493958);border:1px solid #e6b08879;box-shadow:0 2px #21162c}
+.fc,.uc,.sk{background:radial-gradient(ellipse at 0 0,#b5768f32,transparent 58%),linear-gradient(150deg,#43344e,#26243a 78%);border:1px solid var(--forge-line);box-shadow:0 3px 9px #0a091780,inset 0 1px #ffffff18}
+.fc.ok,.uc.ok{border-color:#b4d3998a}
+.fc .fi,.uc .ti{border:1px solid #ffdda664;background:linear-gradient(155deg,#a0799b,#5a416c);box-shadow:inset 0 1px #fff6,inset 0 -3px #2c17395c,0 3px 5px #120d22}
+.fc .ft,.uc .ch{background:#1c192cd9;color:#e0cedd}
+.fc:active,.uc .buy:active,.skin-preview:active,.bigfight:active,.mapb:active{transform:translateY(1px) scale(.98)}
+.fc:focus-visible,.uc .buy:focus-visible,.skin-preview:focus-visible,.bigfight:focus-visible,.mapb:focus-visible{outline:2px solid #ffdfa4;outline-offset:2px}
+.uc{gap:8px;padding-top:13px}
+.uc .tag{position:static;transform:none;order:-1;align-self:flex-start;margin:-5px 1px -2px;background:#315445;color:#e2ffd7;padding:2px 6px}
+.uc .buy:not(:disabled){background:linear-gradient(155deg,#f9dfaa,#d79d65);color:#3b2534;box-shadow:0 2px #70413d}
+.uc .buy:disabled{background:#4b3e59;color:#e9ddf0;box-shadow:0 2px #22192f}
+.sk.on{border-color:#ffd49a;box-shadow:inset 0 0 12px #f0ac7025}
+.sk .skin-preview{display:block;width:58px;height:58px;margin:2px auto 5px;padding:0;cursor:pointer;color:inherit}
+.skin-preview-large{width:133px;height:133px;margin:8px auto 12px;border-radius:18px;border:1px solid #f1c99a77;background:radial-gradient(circle at 50% 28%,color-mix(in srgb,var(--c) 77%,#d7d7fd),#282038 76%);box-shadow:0 6px 18px #0a081780}
+.skin-preview-note{text-align:center;color:var(--mut);font-size:13px;margin:0 0 14px}
+.fx{z-index:7;font-size:clamp(19px,5vw,29px);color:#ffe4a2;-webkit-text-stroke:0;text-shadow:0 1px 2px #2d151d,0 3px 7px #211525;animation:forge-number .62s ease-out forwards}
+.fx.hit-damage{color:#ffb19f}
+.fx.hit-boost{color:#ecd0ff}
+.forge-impact,.forge-spark,.forge-reward-spark{position:fixed;z-index:8;pointer-events:none}
+.forge-impact{width:18px;height:18px;border-radius:50%;border:1px solid var(--hit-color,#ffdca4);box-shadow:0 0 12px var(--hit-color,#ffdca4);animation:forge-ring .35s ease-out forwards}
+.forge-spark{width:11px;height:2px;border-radius:4px;background:var(--hit-color,#ffdca4);box-shadow:0 0 7px var(--hit-color,#ffdca4);animation:forge-spark .39s ease-out forwards}
+.forge-reward-spark{z-index:29;width:7px;height:7px;border-radius:2px;background:var(--hit-color,#ffdca4);box-shadow:0 0 9px var(--hit-color,#ffdca4);animation:forge-spark .68s ease-out forwards}
+.reward-emblem{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 8px;border-radius:17px;border:1px solid #ffdfaa90;background:radial-gradient(at 45% 25%,#88618a,#49374e 75%);box-shadow:0 0 18px #feb86c38;font-size:31px}
+@keyframes forge-number{from{opacity:1;transform:translate(-50%,-28%) scale(.86)}22%{transform:translate(-50%,-50%) scale(1.12)}to{opacity:0;transform:translate(-50%,-195%) scale(.94)}}
+@keyframes forge-ring{from{opacity:.85;transform:translate(-50%,-50%) scale(.5)}to{opacity:0;transform:translate(-50%,-50%) scale(2.5)}}
+@keyframes forge-spark{from{opacity:.92;transform:translate(-50%,-50%) rotate(var(--turn)) scale(1)}to{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--turn)) scale(.45)}}
+@media(prefers-reduced-motion:reduce){.forge-impact,.forge-spark,.forge-reward-spark{display:none}.fx{animation:none}}
 </style>
 </head>
 <body>
@@ -521,6 +564,8 @@ async function demoApi(action, b) {
 }
 
 // ---------- отрисовка ----------
+const CAMP_BACKGROUNDS = { dragons: 'bg/dragons-courtyard-v2.webp', lions: 'bg/lions-courtyard-v2.webp', wolves: 'bg/wolves-courtyard-v2.webp', ravens: 'bg/ravens-courtyard-v2.webp' };
+const campBackground = f => Object.hasOwn(CAMP_BACKGROUNDS, f) ? CAMP_BACKGROUNDS[f] : CAMP_BACKGROUNDS.dragons;
 function apply(d) {
   S = { ...S, ...d };
   const scene = $('king'), display = S.frontier?.collection || [];
@@ -546,8 +591,7 @@ function apply(d) {
   if (S.auto > now) bd.push(`<span class="bdg">🛡 ${Math.ceil((S.auto - now) / 36e5)} ч</span>`);
   if (h && h.banner) bd.push('<span class="bdg">🚩</span>');
   $('bdg').innerHTML = bd.join('');
-  const BGS = { dragons: 'bg/dragons-courtyard-v2.webp', lions: 'bg/lions-courtyard-v2.webp', wolves: 'bg/wolves-courtyard-v2.webp', ravens: 'bg/ravens-courtyard-v2.webp' }, myF = (h && h.f) || S.fac; $('scene').style.backgroundImage = `url(${BGS[myF] || BGS.dragons})`;
-  { const art = document.querySelector('.nextc .art'); if (art) art.style.backgroundImage = `url(${BGS[myF] || BGS.dragons})`; }
+  $('scene').style.backgroundImage = `url(${campBackground((h && h.f) || S.fac)})`;
   const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); window.ZN3D.setSkin(S.skin || ''); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
@@ -614,7 +658,7 @@ function renderSkins() {
   if (!PGm || !S || !S.skins) return; const L = PGm.SKIN_LIST, need = PGm.SKIN_ADS;
   $('skins').innerHTML = `<div class="skh">🎨 Скины героев · Обычные<small>Посмотри ${need} реклам — образ твой навсегда, а над героем загорится его титул. Сегодня осталось: ${S.skinAdsLeft}</small></div><div class="skg">` + L.map(x => {
     const own = S.skins.includes(x.k), on = S.skin === x.k, n = Math.min(need, (S.skinAds || {})[x.k] || 0);
-    return `<div class="sk ${on ? 'on' : ''}"><div class="sw" style="--c:${x.c}">${skinPortrait(x)}${own ? (on ? '<span class="skin-state equipped" aria-label="Надет">✓</span>' : '') : '<span class="skin-state" aria-label="Закрыт">🔒</span>'}</div><b>${x.n}</b>${own ? '<small>Открыт</small>' : `<div class="pb"><i style="width:${n / need * 100}%"></i></div><small>📺 ${n} / ${need}</small>`}
+    return `<div class="sk ${on ? 'on' : ''}"><button type="button" class="sw skin-preview" data-skin-preview="${x.k}" aria-label="Посмотреть облик: ${esc(x.n)}" style="--c:${x.c}">${skinPortrait(x)}${own ? (on ? '<span class="skin-state equipped" aria-label="Надет">✓</span>' : '') : '<span class="skin-state" aria-label="Закрыт">🔒</span>'}</button><b>${x.n}</b>${own ? '<small>Открыт</small>' : `<div class="pb"><i style="width:${n / need * 100}%"></i></div><small>📺 ${n} / ${need}</small>`}
       ${own ? `<button class="btn ${on ? '' : 'g'}" data-skinset="${on ? '' : x.k}">${on ? 'Снять' : 'Надеть'}</button>` : `<button class="btn" data-skinad="${x.k}" ${S.skinAdsLeft > 0 ? '' : 'disabled'}>📺 Смотреть</button>`}</div>`; }).join('') + '</div>';
 }
 function renderShop() {
@@ -670,7 +714,7 @@ function renderTip() {
 function renderWar() {
   if (!PGm || !S || !S.camp) return; const PG = PGm, C = S.camp, n = Math.min(C.max + 1, PG.STAGES), St = PG.stage(n), H = hStats(), ch = St.ch;
   const RI = { warrior: '⚔️', guard: '🛡', mage: '🔮', archer: '🏹' };
-  $('nextcard').innerHTML = `<div class="nextc"><div class="art"><span>${St.boss ? '👑' : ''}${RI[St.role]}</span></div><div class="bd"><span class="chip">Поход · ${St.chName}</span>
+  $('nextcard').innerHTML = `<div class="nextc"><div class="art" style="background-image:url(${campBackground(S.hero?.f || S.fac)})"><span>${St.boss ? '👑' : ''}${RI[St.role]}</span></div><div class="bd"><span class="chip">Поход · ${St.chName}</span>
     <h2>${St.boss ? '👑 ' : ''}${St.name}</h2><div class="ln">Этап ${n} из ${PG.STAGES} · сила врага <b style="color:${H.power >= St.power ? '#7be07b' : '#ff7a5a'}">${fmt(St.power)}</b>, твоя <b>${fmt(H.power)}</b></div>
     <div class="dots">${Array.from({ length: 10 }, (_, i) => { const k = ch * 10 + i + 1; return `<i class="${k <= C.max ? 'd' : k === n ? 'c' : ''}"></i>`; }).join('')}</div>
     <div class="ln" style="text-align:right;margin:-2px 0 8px">⭐ ${C.total} / ${PG.STAGES * 3}</div>
@@ -916,10 +960,50 @@ function bLoop() {
 }
 function bHurt() { if (!BT || BT.over) return; BT.hp -= Math.round(BT.b.dps * BT.every); hap('rigid'); const sc = $('scene'); sc.classList.remove('shk'); void sc.offsetWidth; sc.classList.add('shk'); if (BT.hp <= 0) bEnd(false); }
 document.addEventListener('zn-hurt', bHurt);
+const reduceFx = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+let lastForgeBurst = -Infinity;
+function forgeEffect(className, x, y, ttl, properties = {}) {
+  const el = document.createElement('span');
+  el.className = className;
+  el.setAttribute('aria-hidden', 'true');
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  for (const [key, value] of Object.entries(properties)) el.style.setProperty(key, value);
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), ttl);
+  return el;
+}
+function forgeSparks(x, y, count, distance, color, reward = false) {
+  if (reduceFx?.matches) return;
+  for (let i = 0; i < count; i++) {
+    const angle = i / count * 2 * Math.PI + .18;
+    const length = distance * (.65 + (i % 3) * .19);
+    forgeEffect(reward ? 'forge-reward-spark' : 'forge-spark', x, y, reward ? 700 : 420, {
+      '--dx': Math.cos(angle) * length + 'px', '--dy': Math.sin(angle) * length + 'px',
+      '--turn': angle + 'rad', '--hit-color': color,
+    });
+  }
+}
+function forgeReward(box) {
+  if (reduceFx?.matches) return;
+  const bounds = box.getBoundingClientRect();
+  forgeSparks(bounds.left + bounds.width / 2, bounds.top + 38, 12, 88, '#ffd598', true);
+}
+function hitFeedback(ev, label, kind = '') {
+  const now = performance.now();
+  if (now - lastForgeBurst < 75) return;
+  lastForgeBurst = now;
+  const x = Math.max(32, Math.min(innerWidth - 32, ev?.clientX || innerWidth * .66));
+  const y = Math.max(70, ev?.clientY || innerHeight * .5);
+  forgeEffect('fx' + (kind ? ' hit-' + kind : ''), x, y - 20, reduceFx?.matches ? 290 : 650).textContent = label;
+  if (reduceFx?.matches) return;
+  const color = kind === 'damage' ? '#ffb48d' : kind === 'boost' ? '#e4b2ff' : '#ffd69e';
+  forgeEffect('forge-impact', x, y, 370, { '--hit-color': color });
+  forgeSparks(x, y, 5, 42, color);
+}
 function bTap(ev) {
   if (BT.over) return; BT.taps++; BT.ehp -= BT.b.heroDmg; hap('light'); if (window.ZN3D_ON) window.ZN3D.attack();
-  const x = (ev && ev.clientX || innerWidth * .6) + (Math.random() * 30 - 15), y = (ev && ev.clientY || innerHeight * .5);
-  const f = document.createElement('div'); f.className = 'fx'; f.textContent = '-' + fmt(BT.b.heroDmg); f.style.left = (x - 14) + 'px'; f.style.top = (y - 40) + 'px'; document.body.appendChild(f); setTimeout(() => f.remove(), 900);
+  hitFeedback(ev, '−' + fmt(BT.b.heroDmg), 'damage');
   if (BT.ehp <= 0) bEnd(true); bDraw();
 }
 async function bEnd(win) {
@@ -947,7 +1031,7 @@ function showResult(r) {
       ${r.win ? `<p>+${fmt(r.gold)} золота · новый ларец</p>` : ''}
       <button class="btn" data-leave="1">В меню боя</button>`;
     $('resm').classList.add('on');
-    if (r.win) hap('ok');
+    if (r.win) { hap('ok'); forgeReward($('resbox')); }
     return;
   }
   $('resbox').innerHTML = r.win ? `<div style="font-size:40px">👑</div><h3 style="font-size:28px">Победа!</h3><div class="sub">${St.name} повержен за ${r.sec} с.</div>
@@ -956,7 +1040,7 @@ function showResult(r) {
     : `<div style="font-size:40px">💀</div><h3 style="font-size:28px">Поражение</h3><div class="sub">Прокачай силу удара и выносливость в «Прокачке» и возвращайся.</div>
       <button class="btn" style="width:100%;margin-top:12px" data-retry="${n}">Ещё раз · ⚡ ${PGm.BATTLE_COST}</button>`;
   $('resbox').innerHTML += `<button class="btn" style="width:100%;margin-top:8px;background:#2a3a6a;color:#fff;box-shadow:0 3px 0 #0a1230" data-leave="1">В меню боя</button>`;
-  $('resm').classList.add('on'); if (r.win) hap('ok');
+  $('resm').classList.add('on'); if (r.win) { hap('ok'); forgeReward($('resbox')); }
 }
 function leaveBattle() {
   BT = null; $('resm').classList.remove('on'); $('bhud').classList.remove('on'); $('app').classList.remove('hide'); document.querySelectorAll('.side').forEach(x => x.classList.remove('hide'));
@@ -966,9 +1050,9 @@ function leaveBattle() {
 function tap(ev) {
   if (!S) return; if (BT) return bTap(ev); const e = draw(); if (e < 1) { hap('rigid'); toast('⚡ Выносливость кончилась — отдохни или купи в Лавке'); return; }
   pending++; hap('light'); if (window.ZN3D_ON) window.ZN3D.attack(); else attackFx();
-  const x = (ev && ev.clientX || innerWidth * .6) + (Math.random() * 30 - 15), y = (ev && ev.clientY || innerHeight * .5);
-  const f = document.createElement('div'); f.className = 'fx'; f.textContent = '+' + S.power * mult(); f.style.left = (x - 14) + 'px'; f.style.top = (y - 40) + 'px';
-  document.body.appendChild(f); setTimeout(() => f.remove(), 900); draw();
+  const surge = S.flow?.boost > 0 && Date.now() - (S.now || 0) <= 4000;
+  hitFeedback(ev, '+' + regenFmt.format(S.power * mult()), surge ? 'boost' : '');
+  draw();
 }
 
 $('lgm').addEventListener('click', e => { if (e.target.id === 'lgm') $('lgm').classList.remove('on'); });
@@ -1154,15 +1238,28 @@ document.addEventListener('click', async e => {
       const d = await api('chest', { id: t.dataset.chest });
       apply(d);
       if (claimed && d.chestMessage) {
-        $('stbox').innerHTML = '<h3>Награда получена</h3><p>' + esc(d.chestMessage) +
+        $('stbox').innerHTML = '<div class="reward-emblem" aria-hidden="true">🎁</div><h3>Награда получена</h3><p>' + esc(d.chestMessage) +
           '</p><button class="btn" data-close="stm">Продолжить</button>';
         hap('ok');
+        forgeReward($('stbox'));
       } else {
         renderChests(selectedChest);
         toast(d.chestMessage);
       }
     }
     catch (e) { t.disabled = false; toast(e.message); }
+    return;
+  }
+  if (t.dataset.skinPreview) {
+    const skin = PGm?.SKIN_LIST.find(item => item.k === t.dataset.skinPreview);
+    if (!skin || !S) return;
+    const owned = S.skins.includes(skin.k), equipped = S.skin === skin.k;
+    const state = equipped ? 'Этот облик надет' : owned ? 'Облик открыт' :
+      'Просмотры для открытия: ' + (S.skinAds?.[skin.k] || 0) + ' / ' + PGm.SKIN_ADS;
+    $('stbox').innerHTML = '<h3>' + esc(skin.n) + '</h3><div class="skin-preview-large" style="--c:' + skin.c + '">' +
+      skinPortrait(skin) + '</div><p class="skin-preview-note">' + esc(state) +
+      '</p><button class="btn" data-close="stm">Назад</button>';
+    $('stm').classList.add('on');
     return;
   }
   if (t.dataset.skinad) { showSkinAd(t.dataset.skinad); return; }
