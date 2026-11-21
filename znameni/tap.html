@@ -940,19 +940,21 @@ document.addEventListener('click', async e => {
     } catch (e) { t.disabled = false; toast(e.message); }
     return;
   }
-  if (t.dataset.frontierAd) {
+  if (t.dataset.frontierAd || (t.dataset.skinad && !DEMO)) {
     if (!S.frontierAdBlock || !window.Adsgram) { toast('Реклама сейчас недоступна.'); return; }
     t.disabled = true;
     try {
-      const kind = t.dataset.frontierAd;
-      const intent = await api('frontier_ad', { kind, id: t.dataset.target });
+      const kind = t.dataset.skinad ? 'skin' : t.dataset.frontierAd;
+      const intent = await api('frontier_ad', { kind, id: t.dataset.skinad || t.dataset.target });
       try { await window.Adsgram.init({ blockId: intent.block }).show(); }
       catch (e) { await api('frontier_ad_cancel', { id: intent.id }).catch(() => {}); throw e; }
       for (let i = 0; i < 12; i++) {
         const d = await api('frontier_ad', { check: intent.id });
         if (!d.pending) {
           apply(d);
-          if (kind === 'chest') renderChests(selectedChest); else $('stm').classList.remove('on');
+          if (kind === 'chest') renderChests(selectedChest);
+          else if (kind === 'skin') { renderSkins(); hap('ok'); }
+          else $('stm').classList.remove('on');
           toast(d.frontierAdMessage);
           return;
         }
@@ -1042,7 +1044,7 @@ document.addEventListener('click', async e => {
 async function showSkinAd(k) {
   const go = async () => { const d = await api('skin_ad', { skin: k }); apply(d); renderSkins(); hap('ok');
     if (d.skinGot) toast('🎉 Новый скин открыт и надет!'); else toast(`📺 ${(d.skinAds || {})[k] || 0} / ${PGm.SKIN_ADS} — ещё немного!`); };
-  try { if (ADS_BLOCK && window.Adsgram && !(S.id === 'demo')) await window.Adsgram.init({ blockId: ADS_BLOCK }).show(); await go(); }
+  try { await go(); }
   catch (e) { toast(e && e.message && !/adsgram|done|error/i.test(e.message) ? e.message : 'Реклама недоступна, попробуй позже'); }
 }
 async function showAd() {
