@@ -648,7 +648,7 @@ function apply(d) {
   if (h && h.banner) bd.push('<span class="bdg">🚩</span>');
   $('bdg').innerHTML = bd.join('');
   $('scene').style.backgroundImage = `url(${campBackground((h && h.f) || S.fac)})`;
-  const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); window.ZN3D.setSkin(S.skin || h?.look || ''); apply.k = key; }
+  const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); window.ZN3D.setSkin(S.skin || ''); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
   renderCampChests(); draw(); renderUps(); renderShop(); renderMe(); renderTasks(); renderLeagues(); renderMap(); renderFac(); renderWar(); renderTip();
@@ -1379,7 +1379,7 @@ document.addEventListener('click', async e => {
 });
 (function skTitleLoop() {
   const el = $('sktitle'); let last = '';
-  (function f() { try { const Z = window.ZN3D, skin = S?.skin || S?.hero?.look, on = window.ZN3D_ON && Z && skin && document.querySelector('#p-tap.on'), T = on && Z.skinTitle(skin), p = T && Z.heroHeadScreen();
+  (function f() { try { const Z = window.ZN3D, skin = S?.skin, on = window.ZN3D_ON && Z && skin && document.querySelector('#p-tap.on'), T = on && Z.skinTitle(skin), p = T && Z.heroHeadScreen();
       if (p) { if (last !== S.skin) { el.textContent = T.title; el.style.setProperty('--c', T.c); last = S.skin; } el.style.display = 'block'; el.style.left = p[0] + 'px'; el.style.top = p[1] + 'px'; } else el.style.display = 'none'; } catch (e) { }
     requestAnimationFrame(f); })();
 })();
@@ -1429,10 +1429,10 @@ if (ADS_BLOCK) { const sc = document.createElement('script'); sc.src = 'https://
 </script>
 <script type="module">
 // 3D-лагерь на весь экран (если телефон не тянет WebGL — остаётся плоская картинка)
-import * as Z from './zn3d.js?v=camp-guests-2';
+import * as Z from './zn3d.js?v=camp-solo-1';
 try { const c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) throw 0;
   window.ZN3D = Z; window.ZN3D_ON = true; Z.init(document.getElementById('king')).catch(e => console.warn('3D', e));
-  if (window.S && S.hero) Z.setHero(S.hero.f, S.hero.r, S.hero.banner); else Z.setHero('lions', 'warrior', false); try { if (typeof S !== 'undefined' && S) Z.setSkin(S.skin || S.hero?.look || ''); } catch (e) { }
+  if (window.S && S.hero) Z.setHero(S.hero.f, S.hero.r, S.hero.banner); else Z.setHero('lions', 'warrior', false); try { if (typeof S !== 'undefined' && S) Z.setSkin(S.skin || ''); } catch (e) { }
 } catch (e) { window.ZN3D_ON = false; }
 </script>
 </body>

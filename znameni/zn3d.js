@@ -5,16 +5,6 @@ const FC = { lions: 0xE8B33A, wolves: 0x3F6FC4, dragons: 0xD8302A, ravens: 0x7A4
 const EMB = { lions: '🦁', wolves: '🐺', dragons: '🐉', ravens: '🪶' };
 // Точки постановки в кадре лагеря, в долях видимой области.
 const CAMP_FRAME = { hero: [0.34, 0.708], dummyBase: [0.70, 0.722], dummyTop: [0.70, 0.474] };
-const CAMP_GUESTS = [
-  { skin: 'samurai', frame: [.18, .39], turn: .29, size: .65 },
-  { skin: 'ninja', frame: [.38, .39], turn: -.30, size: .65 },
-  { skin: 'knight', frame: [.61, .39], turn: .34, size: .65 },
-  { skin: 'black_rider', frame: [.82, .39], turn: -.47, size: .68 },
-  { skin: 'ice_dragon', frame: [.20, .50], turn: -.58, size: .69 },
-  { skin: 'raven_warden', frame: [.51, .48], turn: .48, size: .73 },
-  { skin: 'dusk_dragon', frame: [.81, .50], turn: .59, size: .69 },
-];
-let campGuests = [];
 const HERO_H = 1.95, HERO_K = 1.2, HERO_THIN = 0.78; // герой на голову выше чучела и стройнее
 
 let R, scene, cam, clock, grad, el = null, ready = false;
@@ -395,13 +385,6 @@ function place() {
     g.rotation.y = hero.P.capy ? Math.PI + (yd - Math.PI) * .85 : Math.PI + (yd - Math.PI) * (hero.role === 'archer' ? .75 : .5);
     if (faceCam) g.rotation.y = Math.atan2(cam.position.x - HERO_P.x, cam.position.z - HERO_P.z) - .35; actorScale(hero); }
   if (enemy) { const g = enemy.P.g; g.position.copy(BASE); g.rotation.y = toHero * .75 + toCam * .25; actorScale(enemy); }
-  const guestSize = onGround([.34, .56]).distanceTo(onGround([.66, .56]));
-  for (const { actor, frame, turn, size } of campGuests) {
-    const model = actor.P.g;
-    model.position.copy(onGround(frame));
-    model.rotation.y = turn;
-    model.scale.setScalar(Math.min(DH * .55, guestSize * .43) * size);
-  }
   if (auraG) auraG.position.copy(HERO_P);
 }
 function makeHero() {
@@ -515,7 +498,6 @@ export function battleStart(e) {
   battleEnd(); if (!ready) return;
   const pal = e.pal || {}; enemy = makeActor({ role: e.role || 'warrior', fc: pal.cloth ?? 0x5A2A2A, emb: '', gold: false, skin: e.skin || '', pal, boss: e.boss });
   enemy.scaleK = e.boss ? 1.25 : 1; enemy.onStrike = () => strikeHero(); enemy.shotTo = () => chestOf(hero);
-  for (const { actor } of campGuests) actor.P.g.visible = false;
   if (dummy) dummy.visible = false; if (hero) { hero.dead = 0; hero.hurt = 0; } place();
 }
 export function enemyAttack() { startAttack(enemy); }
@@ -523,7 +505,6 @@ export function enemyDie() { if (enemy && !enemy.dead) enemy.dead = .001; }
 export function heroDie() { if (hero && !hero.dead) hero.dead = .001; }
 export function battleEnd() {
   if (enemy) { scene.remove(enemy.P.g); enemy = null; } if (dummy) dummy.visible = true;
-  for (const { actor } of campGuests) actor.P.g.visible = true;
   if (hero) { hero.dead = 0; hero.hurt = 0; hero.P.body.rotation.set(0, 0, 0); hero.P.body.position.y = 0; }
 }
 
@@ -540,17 +521,11 @@ export async function init(container) {
   const fill = new THREE.DirectionalLight(0xa8c8ff, .9); fill.position.set(5, 2, -2); scene.add(fill);
   const sp = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: .32 })); sp.rotation.x = -Math.PI / 2; sp.receiveShadow = true; scene.add(sp);
   const fit = () => { const w = el.clientWidth, h = el.clientHeight; if (!w || !h) return; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); place(); };
-  campGuests = CAMP_GUESTS.map(guest => {
-    const def = CHAR[guest.skin];
-    const actor = makeActor({ role: 'warrior', fc: def.cape, skin: guest.skin, def, pal: def.pal, noHelm: def.noHelm });
-    return { ...guest, actor };
-  });
   new ResizeObserver(fit).observe(el); fit();
   ready = true; makeHero();
   R.setAnimationLoop(() => {
     const dt = Math.min(.05, clock.getDelta()), t = clock.elapsedTime;
     if (hero) animActor(hero, t, dt); if (enemy) animActor(enemy, t, dt);
-    if (!enemy) campGuests.forEach(({ actor }, i) => animActor(actor, t + i, dt));
     if (dummy) { wob.vx += (-wob.x * 70 - wob.vx * 7) * dt; wob.x += wob.vx * dt; wob.vz += (-wob.z * 70 - wob.vz * 7) * dt; wob.z += wob.vz * dt;
       const b = dummy.userData.body; b.rotation.x = wob.x * .15; b.rotation.z = wob.z * .15; }
     if (auraG) auraG.rotation.y += dt * 1.5;
@@ -568,3 +543,10 @@ const _hv = new THREE.Vector3();
 export function heroHeadScreen() { if (!ready || !hero || !cam || !el) return null; hero.P.head.getWorldPosition(_hv); _hv.y += .75 * (hero.P.g.scale.y || 1); _hv.project(cam);
   const r = el.getBoundingClientRect(); return [r.left + (_hv.x + 1) / 2 * r.width, r.top + (1 - _hv.y) / 2 * r.height]; }
 export function skinTitle(k) { const D = CHAR[k]; return D ? { title: D.title, c: D.c } : null; }
+
+export function buildCampAppearance(skin, role, faction) {
+  const def = CHAR[skin];
+  if (!def) return null;
+  if (!grad) grad = toonGrad();
+  return buildHero({ skin, def, role, fc: def.cape, emb: EMB[faction], pal: def.pal, noHelm: def.noHelm });
+}
