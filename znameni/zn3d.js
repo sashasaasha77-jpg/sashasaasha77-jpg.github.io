@@ -49,35 +49,103 @@ const glowM = c => new THREE.MeshBasicMaterial({ color: c });
 function blade(hand, len, col, glow) { const w = new THREE.Group(); w.rotation.x = -.9; hand.add(w); box(w, .05, .05, .22, 0x2a2a30, 0, 0, 0); box(w, .2, .05, .06, 0xC8A24A, 0, 0, .12);
   const b = new THREE.Mesh(new THREE.BoxGeometry(.07, .03, len), glow ? glowM(col) : new THREE.MeshToonMaterial({ color: col, gradientMap: grad })); b.position.z = .15 + len / 2; w.add(b); return w; }
 function swapWeapon(P, make) { if (P.wR) P.wR.visible = false; if (P.handR) P.wR2 = make(P.handR); }
-function wings(torso, color, light) {
-  for (const direction of [-1, 1]) {
-    const wing = new THREE.Shape();
-    wing.moveTo(0, 0); wing.lineTo(.22, .50); wing.lineTo(.66, .57);
-    wing.lineTo(.56, .30); wing.lineTo(.79, .15); wing.lineTo(.52, .15);
-    wing.lineTo(.45, -.05); wing.lineTo(.27, .02); wing.lineTo(.10, -.18);
-    wing.closePath();
-    const mesh = new THREE.Mesh(new THREE.ExtrudeGeometry(wing, { depth: .045, bevelEnabled: false }), M(color));
-    mesh.position.set(direction * .18, .30, -.21);
-    mesh.scale.x = direction;
-    mesh.rotation.y = direction * .17;
-    torso.add(mesh);
-    box(torso, .15, .12, .16, light, direction * .34, .62, -.035).rotation.z = direction * .24;
+function animalBody(P) {
+  const body = new THREE.Group();
+  for (const part of P.body.children) part.visible = false;
+  P.body.add(body);
+  P.animal = body;
+  P.muzzle = new THREE.Object3D();
+  body.add(P.muzzle);
+  return body;
+}
+function facet(parent, color, x, y, z, width, height, depth) {
+  const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), M(color));
+  mesh.scale.set(width, height, depth);
+  mesh.position.set(x, y, z);
+  parent.add(mesh);
+  return mesh;
+}
+function spike(parent, color, x, y, z, radius, height) {
+  const mesh = new THREE.Mesh(new THREE.ConeGeometry(radius, height, 5), M(color));
+  mesh.position.set(x, y, z);
+  parent.add(mesh);
+  return mesh;
+}
+function dragon(P, scales, belly, membrane, horn, eye) {
+  const body = animalBody(P);
+  P.muzzle.position.set(0, 1, 1.06);
+  facet(body, scales, 0, .65, -.09, .40, .34, .68);
+  facet(body, belly, 0, .55, .16, .32, .25, .48);
+  facet(body, scales, 0, .88, .42, .23, .41, .27).rotation.x = -.46;
+  facet(body, scales, 0, 1.13, .60, .29, .25, .33);
+  box(body, .43, .16, .39, scales, 0, 1.045, .84);
+  box(body, .32, .054, .30, belly, 0, .934, .84);
+  for (let i = 0; i < 4; i++) {
+    const size = .20 - i * .038;
+    facet(body, scales, i * i * .029, .62 - i * .112, -.68 - i * .23, size, size, .23).rotation.y = -.19 * i;
+    spike(body, horn, 0, .98 - i * .035, .24 - i * .27, .092 - .009 * i, .21 - i * .029).rotation.x = -.32;
+  }
+  P.animalWings = [];
+  for (const side of [-1, 1]) {
+    for (const z of [-.49, .29]) {
+      facet(body, scales, side * .29, .46, z, .21, .22, .25);
+      box(body, .20, .35, .21, scales, side * .42, .235, z).rotation.z = side * .19;
+      box(body, .25, .11, .29, belly, side * .46, .075, z + .07);
+      for (const x of [-.075, 0, .075]) box(body, .041, .059, .10, horn, side * .46 + x, .068, z + .22);
+    }
+    spike(body, horn, side * .17, 1.39, .46, .07, .31).rotation.set(-.42, 0, -side * .22);
+    box(body, .025, .063, .113, glowM(eye), side * .249, 1.17, .71);
+    spike(body, horn, side * .16, .937, .91, .031, .087).rotation.z = Math.PI;
+    const wing = new THREE.Group();
+    wing.position.set(side * .23, .84, -.04);
+    wing.scale.x = side;
+    body.add(wing);
+    P.animalWings.push(wing);
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0); shape.lineTo(.49, .58); shape.lineTo(1.14, .49);
+    shape.quadraticCurveTo(.90, .28, .98, .10);
+    shape.quadraticCurveTo(.68, .23, .71, -.10);
+    shape.quadraticCurveTo(.37, .12, .34, -.14);
+    shape.closePath();
+    const cloth = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshToonMaterial({ color: membrane, gradientMap: grad, side: THREE.DoubleSide }));
+    cloth.rotation.x = .32;
+    wing.add(cloth);
+    box(wing, .73, .06, .068, scales, .24, .29, .09).rotation.z = .86;
+    box(wing, .67, .046, .052, scales, .81, .535, .17).rotation.z = -.14;
   }
 }
-function dragonArmor(P, scaleColor, hornColor, light) {
-  const head = P.head;
-  box(head, .43, .34, .38, scaleColor, 0, .20, .02);
-  box(head, .36, .19, .23, scaleColor, 0, .10, .23);
-  box(head, .28, .045, .20, hornColor, 0, .035, .29);
-  for (const direction of [-1, 1]) {
-    box(head, .10, .06, .024, glowM(light), direction * .115, .235, .224);
-    const horn = new THREE.Mesh(new THREE.ConeGeometry(.065, .27, 5), M(hornColor));
-    horn.position.set(direction * .155, .43, -.035);
-    horn.rotation.z = -direction * .28;
-    head.add(horn);
+function deathRaven(P) {
+  const body = animalBody(P);
+  P.muzzle.position.set(0, 1.03, .95);
+  const plumage = 0x242332, crown = 0x39364E, feather = 0x4E4666, bill = 0x67617C;
+  facet(body, plumage, 0, .62, -.10, .30, .36, .46).rotation.x = -.34;
+  facet(body, crown, 0, .87, .20, .24, .31, .24);
+  facet(body, plumage, 0, 1.11, .31, .25, .24, .26);
+  const beak = spike(body, bill, 0, 1.06, .67, .123, .48);
+  beak.scale.z = .76;
+  beak.rotation.x = Math.PI / 2 + .24;
+  P.animalWings = [];
+  for (const side of [-1, 1]) {
+    box(body, .023, .061, .078, glowM(0xED8CFF), side * .224, 1.15, .39);
+    box(body, .062, .27, .062, bill, side * .125, .18, .015).rotation.x = -.23;
+    for (const toe of [-1, 0, 1]) box(body, .036, .036, .19, bill, side * .125 + toe * .035, .04, .103).rotation.y = toe * .25;
+    const wing = new THREE.Group();
+    wing.position.set(side * .21, .82, -.09);
+    wing.scale.x = side;
+    body.add(wing);
+    P.animalWings.push(wing);
+    facet(wing, crown, .31, .01, -.05, .40, .12, .29).rotation.z = .20;
+    for (let i = 0; i < 7; i++) {
+      const flightFeather = box(wing, .095, .05, .53 - i * .031, i % 2 ? feather : plumage, .22 + i * .102, .011 + i * .015, -.26 - i * .025);
+      flightFeather.rotation.y = -.15 - i * .125;
+      flightFeather.rotation.z = .17;
+    }
   }
-  wings(P.torso, scaleColor, hornColor);
+  for (let i = -2; i <= 2; i++) {
+    box(body, .10, .042, .50, i % 2 ? crown : plumage, i * .073, .47, -.57).rotation.set(-.31, -i * .13, 0);
+  }
 }
+
 export const CHAR = {
   black_rider: {
     cape: 0x732538, title: 'ВСАДНИК НА ЧЁРНОМ КОНЕ', c: '#eead70', noHelm: true,
@@ -117,26 +185,11 @@ export const CHAR = {
     }
   },
 
-  ice_dragon: { cape: 0x3C82B4, title: 'ЛЕДЯНОЙ ДРАКОН', c: '#80dfff', noHelm: true,
-    pal: { metal: 0x91C4DC, metalD: 0x457DA8, trim: 0xCEEFFF, pants: 0x35577B, boots: 0x244565, skin: 0x82C9DE, hair: 0x4A9ABF },
-    extra(P) { dragonArmor(P, 0x65AACA, 0xD6F4FF, 0x91F6FF); } },
-  dusk_dragon: { cape: 0x5A3479, title: 'ДРАКОН СУМЕРЕК', c: '#bb8cff', noHelm: true,
-    pal: { metal: 0x6F567D, metalD: 0x3E2E55, trim: 0xAD69EB, pants: 0x2F294A, boots: 0x1D1631, skin: 0x775989, hair: 0x342244 },
-    extra(P) { dragonArmor(P, 0x534067, 0xA88AC8, 0xDC8CFF); } },
-  raven_warden: { cape: 0x312541, title: 'ВОРОН СМЕРТИ', c: '#a79bd5', noHelm: true,
-    pal: { metal: 0x655D81, metalD: 0x323048, trim: 0xBDC1DC, pants: 0x342C45, boots: 0x231F35, skin: 0x483D58, hair: 0x292337 },
-    extra(P) {
-      box(P.head, .36, .37, .38, 0x352940, 0, .22, .025);
-      const beak = new THREE.Mesh(new THREE.ConeGeometry(.12, .31, 4), M(0x615778));
-      beak.rotation.x = Math.PI / 2;
-      beak.position.set(0, .135, .26);
-      P.head.add(beak);
-      for (const dir of [-1, 1]) {
-        box(P.head, .08, .04, .025, glowM(0xE2BAFF), dir * .11, .24, .225);
-        for (let i = 0; i < 3; i++) box(P.torso, .09, .25, .08, 0x514365, dir * (.36 + i * .06), .51 - i * .06, -.06).rotation.z = dir * .48;
-      }
-      wings(P.torso, 0x2C233C, 0x74668C);
-    } },
+  ice_dragon: { cape: 0x3C82B4, title: 'ЛЕДЯНОЙ ДРАКОН', c: '#80dfff',
+    extra(P) { dragon(P, 0x70B9DC, 0xBBEAF9, 0x9CDDF6, 0xE6F9FF, 0x85F7FF); } },
+  dusk_dragon: { cape: 0x5A3479, title: 'ДРАКОН СУМЕРЕК', c: '#bb8cff',
+    extra(P) { dragon(P, 0x40315F, 0x785787, 0x9F61CA, 0xC191DE, 0xF29CFF); } },
+  raven_warden: { cape: 0x312541, title: 'ВОРОН СМЕРТИ', c: '#a79bd5', extra: deathRaven },
   diamond: { cape: 0x5AB8E8, title: 'АЛМАЗНЫЙ МЕЧНИК', c: '#7ad8ff', pal: { metal: 0xBFEFFF, metalD: 0x6FC8F0, trim: 0xFFFFFF, pants: 0x2A5A8A, boots: 0x3A6A9A, hair: 0xE8F8FF },
     extra(P, S) { swapWeapon(P, h => blade(h, .9, 0x9AF0FF, true)); for (const s of [-1, 1]) { const c = new THREE.Mesh(new THREE.OctahedronGeometry(.1), glowM(0xBFF6FF)); c.position.set(s * .36, .62, 0); c.scale.y = 1.6; P.torso.add(c); }
       const cr = new THREE.Mesh(new THREE.OctahedronGeometry(.08), glowM(0xBFF6FF)); cr.position.set(0, .66, 0); cr.scale.y = 1.8; P.head.add(cr); const l = new THREE.PointLight(0x9AF0FF, 2, 3); l.position.y = .4; P.torso.add(l); } },
@@ -393,6 +446,14 @@ function animActor(A, t, dt) {
     }
     if (p >= 1) A.atk = null;
   }
+  if (P.animal) {
+    const strike = A.atk ? Math.sin(Math.PI * Math.min(1, A.atk.t / A.atk.dur)) : 0;
+    P.animal.position.z = strike * .27 - A.hurt * .10;
+    P.animal.position.y = A.dead ? 0 : Math.max(0, br * .015 + strike * .04);
+    P.animalWings.forEach((wing, index) => {
+      wing.rotation.z = (index ? 1 : -1) * (br * .09 + strike * .42);
+    });
+  }
   lean -= .35 * A.hurt;
   P.armR.rotation.set(armRx + br * .03, 0, armRz); P.armL.rotation.set(armLx - br * .03, 0, armLz);
   P.torso.rotation.set(lean, torY, 0); P.torso.position.y = .8 + br * .012 - crouch; P.head.rotation.x = -lean * .6;
@@ -411,7 +472,7 @@ function burst(pos, cols, n = 10, flash = true) {
   fl.position.copy(pos); scene.add(fl); fx.push({ m: fl, flash: true, life: .18 });
 }
 function projectile(A) {
-  const to = A.shotTo(), start = A.P.g.position, dir = to.clone().sub(start).setY(0).normalize(), from = start.clone().addScaledVector(dir, .55).add(new THREE.Vector3(0, 1.35 * A.P.g.scale.y, 0));
+  const to = A.shotTo(), start = A.P.g.position, dir = to.clone().sub(start).setY(0).normalize(), from = A.P.muzzle ? A.P.muzzle.getWorldPosition(new THREE.Vector3()) : start.clone().addScaledVector(dir, .55).add(new THREE.Vector3(0, 1.35 * A.P.g.scale.y, 0));
   const fire = A.role === 'mage', m = fire ? new THREE.Mesh(new THREE.SphereGeometry(.17, 12, 8), new THREE.MeshBasicMaterial({ color: A === enemy ? 0xB8FF7A : 0xFFD27A })) : new THREE.Mesh(new THREE.BoxGeometry(.04, .04, .7), M(0xE8E8E8));
   if (fire) { m.add(new THREE.Mesh(new THREE.SphereGeometry(.32, 12, 8), new THREE.MeshBasicMaterial({ color: A === enemy ? 0x4ACB2A : 0xFF7A20, transparent: true, opacity: .45 }))); m.add(new THREE.PointLight(A === enemy ? 0x7aff40 : 0xffa040, 5, 3)); }
   m.position.copy(from); m.lookAt(to); scene.add(m);
