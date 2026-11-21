@@ -237,6 +237,10 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
   .nav{gap:1px;padding-inline:2px}.nb,.nb.on{height:48px;grid-template-rows:21px 11px}.camp-icon{width:21px;height:21px}
   .nb b,.nb.on b{font-size:8px}.rb{width:34px;height:34px}
 }
+.chest-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:stretch}
+.chest-card .t{grid-column:1/-1;min-width:0}
+.chest-card .btn{min-width:0;white-space:normal;line-height:1.2;padding:8px}
+.chest-card .btn:only-of-type{grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -817,7 +821,7 @@ function renderChests(focus = '') {
     const ad = minutes > 0 && S.frontierAdBlock ? `<button class="btn g" data-frontier-ad="chest" data-target="${esc(c.id)}">Смотреть · −60 мин</button>` : '';
     const contents = CHEST_CONTENTS[c.kind];
     const preview = contents ? `<small>${fmt(contents[0])} золота гарантировано · возможная находка: ${contents[1]}</small>` : '';
-    return `<div class="card"><div class="t"><b>${esc(c.title)}</b>${preview}</div>${ad}<button class="btn" data-chest="${esc(c.id)}" ${minutes > 0 ? `data-ready-at="${c.ready}" disabled` : ''}>${label}</button></div>`;
+    return `<div class="card chest-card"><div class="t"><b>${esc(c.title)}</b>${preview}</div>${ad}<button class="btn" data-chest="${esc(c.id)}" ${minutes > 0 ? `data-ready-at="${c.ready}" disabled` : ''}>${label}</button></div>`;
   }).join('') || '<div class="sub">Зарабатывай ларцы в боях.</div>') +
     '<button class="btn" data-close="stm">Назад</button>';
   $('stm').classList.add('on');
@@ -1001,15 +1005,26 @@ document.addEventListener('click', async e => {
     return;
   }
   if (t.dataset.frontierAd || (t.dataset.skinad && !DEMO)) {
-    if (!S.frontierAdBlock || !window.Adsgram) { toast('Реклама сейчас недоступна.'); return; }
+    if (!S.frontierAdBlock) { toast('Рекламный блок не настроен.'); return; }
+    if (!window.Adsgram) { toast('AdsGram не загрузился. Переоткрой игру и попробуй ещё раз.'); return; }
     t.disabled = true;
     try {
       const kind = t.dataset.skinad ? 'skin' : t.dataset.frontierAd;
       const intent = await api('frontier_ad', { kind, id: t.dataset.skinad || t.dataset.target });
+      let adError;
       try { await window.Adsgram.init({ blockId: intent.block }).show(); }
-      catch (e) { await api('frontier_ad_cancel', { id: intent.id }).catch(() => {}); throw e; }
-      for (let i = 0; i < 12; i++) {
-        const d = await api('frontier_ad', { check: intent.id });
+      catch (e) { adError = e || new Error(); }
+      const quickFailure = adError && (adError.state === 'load' || adError.error === false);
+      if (!adError) toast('Ролик завершён. Ждём подтверждение AdsGram…', 3500);
+      const checks = quickFailure ? 2 : adError ? 5 : 20;
+      for (let i = 0; i < checks; i++) {
+        let d;
+        try { d = await api('frontier_ad', { check: intent.id }); }
+        catch (e) {
+          if (i === checks - 1) throw e;
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          continue;
+        }
         if (!d.pending) {
           apply(d);
           if (kind === 'chest') renderChests(selectedChest);
@@ -1018,10 +1033,12 @@ document.addEventListener('click', async e => {
           toast(d.frontierAdMessage);
           return;
         }
-        await new Promise(resolve => setTimeout(resolve, 750));
+        if (i < checks - 1) await new Promise(resolve => setTimeout(resolve, 1500));
       }
-      toast('Подтверждение ещё в пути. Обнови игру через несколько секунд.');
-    } catch (e) { toast(e.message || 'Реклама сейчас недоступна.'); }
+      if (quickFailure) await api('frontier_ad_cancel', { id: intent.id }).catch(() => {});
+      if (adError) toast(adFailureText(adError), 4200);
+      else toast('AdsGram пока не подтвердил просмотр. Если подтверждение придёт позже, награда сохранится.', 5500);
+    } catch (e) { toast(e.message || 'Реклама сейчас недоступна.', 4200); }
     finally { t.disabled = false; }
     return;
   }
@@ -1113,6 +1130,16 @@ document.addEventListener('click', async e => {
       if (p) { if (last !== S.skin) { el.textContent = T.title; el.style.setProperty('--c', T.c); last = S.skin; } el.style.display = 'block'; el.style.left = p[0] + 'px'; el.style.top = p[1] + 'px'; } else el.style.display = 'none'; } catch (e) { }
     requestAnimationFrame(f); })();
 })();
+function adFailureText(error) {
+  const details = String(error?.description || error?.message || '');
+  if (error?.error === false && error.done === false) return 'Ролик закрыт раньше конца. Просмотр не засчитан.';
+  if (/platform app url|blockid.*not equal|wrong referrer/i.test(details)) return 'AdsGram отклонил адрес площадки. Ролик не запустился.';
+  if (/banner.*not found|no ads?|no (available )?banner|no fill/i.test(details)) return 'AdsGram сейчас не нашёл ролик. Попробуй чуть позже.';
+  if (/non.?stop|too many|rate.limit/i.test(details)) return 'AdsGram просит сделать паузу между просмотрами.';
+  if (error?.state === 'load') return 'AdsGram не загрузил ролик. Просмотр не засчитан.';
+  if (error?.state === 'render' || error?.state === 'playing') return 'Не удалось воспроизвести ролик до конца.';
+  return details || 'Реклама сейчас недоступна. Просмотр не засчитан.';
+}
 async function showSkinAd(k) {
   const go = async () => { const d = await api('skin_ad', { skin: k }); apply(d); renderSkins(); hap('ok');
     if (d.skinGot) toast('🎉 Новый скин открыт и надет!'); else toast(`📺 ${(d.skinAds || {})[k] || 0} / ${PGm.SKIN_ADS} — ещё немного!`); };
