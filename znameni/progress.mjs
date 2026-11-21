@@ -21,11 +21,15 @@ export const TASKS = [
   { k: 'taps', n: 1000, r: 350, t: 'Нанеси 1 000 ударов' },
   { k: 'build', n: 1, r: 150, t: 'Улучши любую постройку' },
   { k: 'ad', n: 1, r: 150, t: 'Посмотри 1 ролик' },
-  { k: 'win', n: 1, r: 200, t: 'Победи в походе' },
+  { k: 'win', n: 1, r: 200, t: 'Одержи победу в бою' },
+  { k: 'critical', n: 30, r: 1500, t: 'Нанеси 30 критических ударов на тренировке' },
+  { k: 'rage', n: 2, r: 1000, t: 'Дважды войди в боевой азарт' },
+  { k: 'duel', n: 1, r: 2500, t: 'Заверши дуэль с другом' },
 ];
 export const CHEST = 500;
 export const LOGIN = [50, 100, 150, 250, 400, 600, 800, 1200, 1600, 2500];
 
+const dailyTasks = s => s.demo ? TASKS.slice(0, -1) : TASKS;
 const prevDay = day => new Date(Date.parse(day + 'T00:00:00Z') - 864e5).toISOString().slice(0, 10);
 export const buildCost = (b, lv) => Math.round(b.cost * Math.pow(BUILD_MULT, lv));
 export const perHour = s => BUILD.reduce((a, b) => a + b.inc * ((s.bl || {})[b.k] || 0), 0);
@@ -49,6 +53,28 @@ export function leagueUp(s) {
 }
 export const countTaps = (s, n) => { s.d.taps += n; };
 export const countAd = s => { s.d.ad++; };
+export const trainingFlow = (s, t) => s.flow && t - s.flow.at <= 4000 ? s.flow : { streak: 0, boost: 0 };
+export function countTraining(s, hits, critChance, t) {
+  const { streak, boost } = trainingFlow(s, t);
+  if (!hits) return { criticals: 0, surges: 0, weighted: 0 };
+  const flow = { at: t, streak, boost };
+  let criticals = 0, surges = 0, weighted = 0;
+  for (let i = 0; i < hits; i++) {
+    const critical = Math.random() * 100 < critChance;
+    if (critical) criticals++;
+    weighted += (critical ? 2 : 1) * (flow.boost > 0 ? 1.5 : 1);
+    if (flow.boost > 0) flow.boost--;
+    else if (++flow.streak >= 40) {
+      flow.streak = 0;
+      flow.boost = 20;
+      surges++;
+    }
+  }
+  s.flow = flow;
+  s.d.critical = (s.d.critical || 0) + criticals;
+  s.d.rage = (s.d.rage || 0) + surges;
+  return { criticals, surges, weighted };
+}
 export function build(s, k) {
   const b = BUILD.find(x => x.k === k); if (!b) return { err: 'Нет такой постройки.' };
   if (s.league < b.league) return { err: `Откроется в лиге «${LEAGUES[b.league].name}».` };
@@ -64,13 +90,13 @@ export function claim(s, what, day) {
   }
   if (what === 'chest') {
     if (s.d.chest) return { err: 'Сундук уже открыт.' };
-    if (s.d.got.length < TASKS.length) return { err: 'Сначала выполни все задания дня.' };
+    if (s.d.got.length < dailyTasks(s).length) return { err: 'Сначала выполни все задания дня.' };
     s.d.chest = true; s.coins += CHEST; return { ok: true, r: CHEST };
   }
-  const i = Number(String(what).replace('task:', '')), T = TASKS[i];
+  const i = Number(String(what).replace('task:', '')), T = dailyTasks(s)[i];
   if (!T || !Number.isInteger(i)) return { err: 'Нет такого задания.' };
   if (s.d.got.includes(i)) return { err: 'Награда уже получена.' };
-  if (s.d[T.k] < T.n) return { err: 'Задание ещё не выполнено.' };
+  if ((s.d[T.k] || 0) < T.n) return { err: 'Задание ещё не выполнено.' };
   s.d.got.push(i); s.coins += T.r; return { ok: true, r: T.r };
 }
 // ---------- скины за рекламу ----------
@@ -101,7 +127,7 @@ export function progressView(s, day) {
     perHour: perHour(s), capHours: CAP_HOURS,
     blds: BUILD.map(b => { const lv = s.bl[b.k] || 0; return { k: b.k, title: b.title, ic: b.ic, lv, inc: b.inc, cost: lv >= BUILD_MAX ? null : buildCost(b, lv), locked: s.league < b.league ? LEAGUES[b.league].name : '', payback: Math.round(buildCost(b, lv) / b.inc) }; }),
     league: { i: L, name: LEAGUES[L].name, next: next ? { name: next.name, need: next.need, prize: next.prize } : null, list: LEAGUES },
-    daily: { tasks: TASKS.map((T, i) => ({ t: T.t, n: T.n, p: Math.min(T.n, s.d[T.k] || 0), r: T.r, got: s.d.got.includes(i) })), chest: { r: CHEST, ready: s.d.got.length >= TASKS.length, got: s.d.chest } },
+    daily: { tasks: dailyTasks(s).map((T, i) => ({ t: T.t, n: T.n, p: Math.min(T.n, s.d[T.k] || 0), r: T.r, got: s.d.got.includes(i) })), chest: { r: CHEST, ready: s.d.got.length >= dailyTasks(s).length, got: s.d.chest } },
     login: { day: streak, can: canLogin, list: LOGIN },
     camp: campView(s),
   };

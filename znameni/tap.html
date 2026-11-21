@@ -480,6 +480,7 @@ async function demoApi(action, b) {
   }
   const k = 'zn-tap-demo', now = Date.now(), day = new Date(now + 4 * 36e5).toISOString().slice(0, 10); let s; try { s = JSON.parse(localStorage.getItem(k)); } catch (e) { }
   s = s || { coins: 0, total: 0, xp: 0, lv: { power: 0, energy: 0, regen: 0 }, e: 500, eAt: now };
+  s.demo = true;
   PG.ensure(s, now, day); const bldGain = PG.accrue(s, now); let newL = PG.leagueUp(s), claimed = 0;
   if (action === 'build') { const r = PG.build(s, b.kind); if (r.err) throw new Error(r.err); }
   if (action === 'claim') { const r = PG.claim(s, b.what, day); if (r.err) throw new Error(r.err); claimed = r.r; }
@@ -496,7 +497,12 @@ async function demoApi(action, b) {
   let extra = {};
   if (action === 'battle_start') { const e = eN(); if (e < PG.BATTLE_COST) throw new Error('Нужно 50 выносливости.'); const r = PG.battleStart(s, b.n, Math.floor(Math.sqrt(s.xp / 100)), now); if (r.err) throw new Error(r.err); s.e = e - PG.BATTLE_COST; s.eAt = now; extra.battle = r.battle; }
   if (action === 'battle_finish') { const r = PG.battleFinish(s, b.taps, b.ms, now); if (r.err) throw new Error(r.err); if (r.win) s.xp += r.gold; newL = newL.concat(PG.leagueUp(s)); extra.result = r; }
-  if (action === 'sync') { const n = Math.min(b.taps | 0, Math.floor(eN())); s.e = eN() - n; s.eAt = now; s.coins += n * st().power; s.total += n * st().power; s.xp += n * st().power; PG.countTaps(s, n); newL = newL.concat(PG.leagueUp(s)); }
+  if (action === 'sync') {
+    const n = Math.max(0, Math.min(b.taps | 0, Math.floor(eN())));
+    const training = PG.countTraining(s, n, st().critChance, now), gold = training.weighted * st().power;
+    s.e = eN() - n; s.eAt = now; s.coins += gold; s.total += gold; s.xp += gold;
+    PG.countTaps(s, n); newL = newL.concat(PG.leagueUp(s)); extra = training;
+  }
   if (action === 'upgrade') { const c = cost(b.kind); if (c == null) throw new Error('Уже максимум.'); s.lv[b.kind] ??= 0; if (s.coins < c) throw new Error(`Нужно ${c} золота.`); s.e = eN(); s.eAt = now; s.coins -= c; s.lv[b.kind]++; }
   if (action === 'invoice') throw new Error('Покупки за ⭐ работают только в Telegram.');
   if (action === 'top') return { list: [{ n: '@kirill_77', v: 18400, f: 'dragons' }, { n: '@masha.k', v: 9100, f: 'lions' }, { n: 'Ты', v: Math.floor(s.total), f: 'wolves' }].sort((a, b) => b.v - a.v), me: null, factions: { lions: 9100, wolves: Math.floor(s.total), dragons: 18400, ravens: 3000 } };
@@ -506,7 +512,7 @@ async function demoApi(action, b) {
   return { id: 'demo', fac: s.fac, linked: false, guild: s.guild || '', name: 'Гость', coins: s.coins, total: s.total, lv: s.lv, ...st(), energy: Math.floor(eN()), x2: 0, auto: 0, nick: 'demo_voin', code: '',
     hero: { f: new URLSearchParams(location.search).get('f') || 'wolves', r: new URLSearchParams(location.search).get('r') || 'archer', lv, xp: s.xp, cur: lv * lv * 100, next: (lv + 1) * (lv + 1) * 100, banner: false },
     costs: Object.fromEntries(Object.keys(C).map(k => [k, cost(k)])), adsLeft: 0, nextBattle: +nb, now,
-    ...PG.progressView(s, day), skinGot, newLeagues: newL, bldGain: Math.floor(bldGain), claimed, ...extra,
+    ...PG.progressView(s, day), flow: PG.trainingFlow(s, now), skinGot, newLeagues: newL, bldGain: Math.floor(bldGain), claimed, ...extra,
     shop: { energy: { title: 'Полная энергия', desc: 'Энергия сразу до максимума', stars: 10 }, squire: { title: 'Оруженосец на 24 часа', desc: 'Тренирует героя, даже когда ты не в игре', stars: 50 }, x2: { title: 'Двойная тренировка на 7 дней', desc: 'Каждый удар приносит в 2 раза больше', stars: 100 }, banner: { title: 'Золотое знамя', desc: 'Золотая аура героя в битве навсегда + 👑 в рейтинге', stars: 250 } } };
 }
 
@@ -553,6 +559,8 @@ function draw() {
   const now = Date.now(), pl = [`<span><em>+${S.power * mult()}</em> удар${mult() > 1 ? ' ×2' : ''}</span>`];
   pl.push(`<span>⏳ <em>+${fmt(S.perHour || 0)}</em> в час</span>`);
   if (S.auto > now) pl.push(`<span>🛡 <em>${Math.ceil((S.auto - now) / 36e5)} ч</em></span>`);
+  const flow = S.flow;
+  if (flow?.boost && Date.now() - (S.now || 0) <= 4000) pl.push(`<span>🔥 <em>Азарт ×1,5</em> · ${flow.boost}</span>`);
   const ph = pl.join(''); if (draw.ph !== ph) { $('pills').innerHTML = ph; draw.ph = ph; }
   return e;
 }
@@ -727,7 +735,7 @@ async function renderFriends(d) {
     ${d.top.length ? '<div class="sec">🏆 Лучшие вербовщики</div>' + d.top.map((x, i) => `<div class="row"><span class="n">${i + 1}</span><span class="nm">${esc(x.n)}</span><b>${x.c}</b></div>`).join('') : ''}`;
 }
 // ---------- поход ----------
-let PGm = null; const getPG = async () => PGm || (PGm = await import('./progress.mjs'));
+let PGm = null; const getPG = async () => PGm || (PGm = await import('./progress.mjs?v=training-2'));
 getPG().then(() => S && renderMap());
 const hStats = () => PGm.heroStats(S, S.hero ? S.hero.lv : 0);
 function renderMap() {
@@ -956,7 +964,7 @@ $('lgm').addEventListener('click', e => { if (e.target.id === 'lgm') $('lgm').cl
 $('king').addEventListener('pointerdown', e => { e.preventDefault(); tap(e); });
 async function sync() {
   if (syncing || !pending || !S) return; syncing = true; const n = pending, lv0 = S.hero ? S.hero.lv : 0;
-  try { const d = await api('sync', { taps: n }); pending -= n; apply(d); if (d.hero && d.hero.lv > lv0) { hap('ok'); toast(`⬆️ Герой достиг ${d.hero.lv} уровня!`); } else if (d.criticals) toast(`🎯 Критических ударов: ${d.criticals}`, 1300); }
+  try { const d = await api('sync', { taps: n }); pending -= n; apply(d); if (d.hero && d.hero.lv > lv0) { hap('ok'); toast(`⬆️ Герой достиг ${d.hero.lv} уровня!`); } else if (d.surges) toast('🔥 Боевой азарт: +50% золота на 20 ударов', 2000); else if (d.criticals) toast(`🎯 Критических ударов: ${d.criticals}`, 1300); }
   catch (e) { pending = 0; toast(e.message); } finally { syncing = false; }
 }
 setInterval(sync, 1500); document.addEventListener('visibilitychange', () => document.hidden && sync());
