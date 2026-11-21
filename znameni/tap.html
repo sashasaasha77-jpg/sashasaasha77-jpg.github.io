@@ -187,18 +187,68 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .camp-chest[data-kind="iron"] .camp-chest-icon{border-color:#a9d4e4;background:linear-gradient(#607d96 0 45%,#334b64 46% 100%)}
 .camp-chest[data-kind="royal"] .camp-chest-icon{border-color:#f1d365;background:linear-gradient(#9967a7 0 45%,#623d77 46% 100%)}
 .camp-chest.is-ready{border-color:#8bdc9b;color:#b4f4bd}
+
+/* Camp interface */
+:root{--pn:#202832;--pn2:#303b46;--gold:#f3d29a;--gold2:#a98a5d;--gl:#fff0ce;--txt:#f9f2e7;--mut:#c9d1d8;--camp-stroke:#d7bc872f;--camp-panel:#18212e}
+#scene::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#10162266,transparent 30%,transparent 63%,#101622b0)}
+#king{z-index:1}
+.hdr,.side,.cpill,.pills,.cta,.btn.ad,.enp,.nav,.tip{zoom:1}
+.hdr{gap:7px}
+.lvbox,.lgbox,.cpill,.enp,.tip,.rb,.gp,.panel{border:1px solid var(--camp-stroke);background:linear-gradient(160deg,#303c4bed,#18212ef5);box-shadow:0 7px 22px #090d175c,inset 0 1px #ffffff12}
+.lvbox,.lgbox{min-height:49px}
+.lvbox .ava{box-shadow:none;border:1px solid #f3d29a64}
+.cpill{padding:5px 13px;font-variant-numeric:tabular-nums}
+.cpill .coin{width:25px;height:25px}
+.side{gap:7px}
+.rb{width:38px;height:38px;border-radius:12px;color:#f6ddac}
+.camp-icon{display:block;width:23px;height:23px;flex:none;background:currentColor;mask:var(--camp-icon) center/contain no-repeat;-webkit-mask:var(--camp-icon) center/contain no-repeat}
+.nav{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;background:#171f2bf5;border:1px solid #f3d29a42;border-radius:16px;padding:4px;margin-top:8px;box-shadow:0 8px 26px #080c16a6}
+.nb,.nb.on{height:52px;min-width:0;display:grid;grid-template-rows:23px 12px;gap:3px;justify-items:center;align-content:center;color:#d2dbe2;background:transparent;filter:none;box-shadow:none;border:1px solid transparent;border-radius:11px;transition:background-color .16s ease,color .16s ease,border-color .16s ease,transform .16s ease}
+.nb b,.nb.on b{display:block;font-size:clamp(8px,2.35vw,11px);line-height:1;font-weight:750;white-space:nowrap}
+.nb.on{color:#ffdda3;background:#6e512b70;border-color:#f2cf8651}
+.nb.on .camp-icon{background:#ffd58b}
+.nb .cnt{top:1px;right:1px;min-width:14px;height:14px;font-size:8px;border:1px solid #ffe0bd;color:#fff;background:#aa473f}
+.nb:active,.camp-chest:active,.rb:active,.btn:active{transform:translateY(1px) scale(.97)}
+.nb:focus-visible,.rb:focus-visible,.btn:focus-visible,.camp-chest:focus-visible{outline:2px solid #ffe2a4;outline-offset:2px}
+.panel{padding-inline:12px;border-radius:18px}
+.panel>.list{scrollbar-width:thin;scrollbar-color:#a98a5d77 transparent;overscroll-behavior:contain}
+.ribbon{background:linear-gradient(160deg,#f3d29a,#c89557);border-color:#eac78d;color:#2b221d;text-shadow:none;box-shadow:0 4px 12px #090d1754}
+.card,.fc,.sk,.buildcard,.chap{border-color:var(--camp-stroke);background:linear-gradient(150deg,#323f4e,#23303e);box-shadow:inset 0 1px #ffffff0d}
+.btn:not(.ad){background:linear-gradient(160deg,#ffe5b1,#deb377);color:#2e251f;border-color:#f3d29a90;box-shadow:inset 0 -2px #80592d66;transition:filter .16s ease,transform .16s ease}
+.btn.g,.btn.back{background:#3f4b5e;color:#fff;box-shadow:inset 0 -2px #141d2c80}
+.btn:disabled{filter:saturate(.28);opacity:.65}
+.btn.ad{min-height:34px;margin-top:5px;font-size:12px;background:linear-gradient(145deg,#6d9767,#3a6a55);color:#fff;border:1px solid #a9d59844;box-shadow:inset 0 -2px #1d423980}
+.enp{min-height:43px;padding:5px 8px}
+.enp .bar{height:6px;border-radius:10px}
+.enp .bar>i{background:linear-gradient(90deg,#66a87b,#b7e18f);transition:width .2s linear}
+.tip{font-size:11px;line-height:1.2}
+.camp-chest{background:var(--camp-panel);border-color:#f3d29a55;transition:transform .16s ease,border-color .16s ease}
+.modal{background:#0b101abc}
+.modal .gp{border:1px solid #f3d29a55;border-radius:18px}
+.toast{z-index:30;background:#151e2cf5;border:1px solid #f3d29a66}
+@keyframes camp-enter{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:no-preference){
+  .page.on:not(#p-tap)>.panel,.modal.on>.gp{animation:camp-enter .18s ease-out both}
+}
+@media(prefers-reduced-motion:reduce){
+  .nb,.btn,.camp-chest,.enp .bar>i{transition:none}
+}
+@media(max-width:350px){
+  .nav{gap:1px;padding-inline:2px}.nb,.nb.on{height:48px;grid-template-rows:21px 11px}.camp-icon{width:21px;height:21px}
+  .nb b,.nb.on b{font-size:8px}.rb{width:34px;height:34px}
+}
 </style>
 </head>
 <body>
 <div id="scene"><button id="king" aria-label="Тренировать героя"></button></div>
 <div id="vig"></div>
 <div class="side L">
-  <a class="rb" id="fieldlink" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank" title="Поле битвы">🌐</a>
-  <a class="rb" id="instalink" href="#" target="_blank" title="Instagram">📷</a>
+  <a class="rb" id="fieldlink" href="https://sashasaasha77-jpg.github.io/znameni/" target="_blank" title="Поле битвы"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M22%2012a10%2010%200%201%201-20%200%2010%2010%200%200%201%2020%200ZM2%2012h20M12%202c-5%205-5%2015%200%2020%205-5%205-15%200-20%22%2F%3E%3C%2Fsvg%3E')"></i></a>
+  <a class="rb" id="instalink" href="#" target="_blank" title="Instagram"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M4%207h4l2-3h4l2%203h4v12H4V7Zm11%206a3%203%200%201%201-6%200%203%203%200%200%201%206%200Z%22%2F%3E%3C%2Fsvg%3E')"></i></a>
 </div>
 <div class="side R">
-  <button class="rb" id="lgside" title="Лиги">🏅</button>
-  <button class="rb" id="chatbtn" title="Чат">💬</button>
+  <button class="rb" id="lgside" title="Лиги"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M7%203h10v6a5%205%200%200%201-10%200V3Zm0%202H3v2a4%204%200%200%200%204%204m10-6h4v2a4%204%200%200%201-4%204m-5%203v5m-4%202h8%22%2F%3E%3C%2Fsvg%3E')"></i></button>
+  <button class="rb" id="chatbtn" title="Чат"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M4%204h16v12h-9l-5%204v-4H4V4Zm4%205h8m-8%203h5%22%2F%3E%3C%2Fsvg%3E')"></i></button>
 </div>
 <div id="sktitle"></div>
 <div id="app">
@@ -255,14 +305,14 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
       <div id="mt-fr" class="col" style="display:none"><div id="frbox" class="col"></div></div>
     </div></div></div>
 
-  <nav class="nav">
-    <button class="nb on" data-p="tap" style="--c:#c99a5a"><span>⛺</span><b>Лагерь</b></button>
-    <button class="nb" data-p="guild" style="--c:#6a7a9a"><span>🏰</span><b>Гильдия</b></button>
-    <button class="nb" data-p="up" style="--c:#c07a3a"><span>🔨</span><b>Прокачка</b><i class="cnt" id="c-up"></i></button>
-    <button class="nb" data-p="war" style="--c:#d0503a"><span>⚔️</span><b>В бой</b><i class="cnt" id="c-war"></i></button>
-    <button class="nb" data-p="shop" style="--c:#8a5ac8"><span>🛍</span><b>Лавка</b></button>
-    <button class="nb" data-p="tasks" style="--c:#4a9a5a"><span>📜</span><b>Задания</b><i class="cnt" id="c-tasks"></i></button>
-    <button class="nb" data-p="me" style="--c:#3a8a9a"><span>🛡</span><b>Герой</b></button>
+  <nav class="nav" aria-label="Разделы игры">
+    <button class="nb on" data-p="tap" aria-current="page" style="--c:#c99a5a"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M2%2020h20M5%2020%2012%204l7%2016m-10%200%203-7%203%207M10%204l2%202%202-2%22%2F%3E%3C%2Fsvg%3E')"></i><b>Лагерь</b></button>
+    <button class="nb" data-p="guild" aria-current="false" style="--c:#6a7a9a"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M4%2021V8h4V4h3v4h2V4h3v4h4v13H4Zm6%200v-5a2%202%200%200%201%204%200v5%22%2F%3E%3C%2Fsvg%3E')"></i><b>Гильдия</b></button>
+    <button class="nb" data-p="up" aria-current="false" style="--c:#c07a3a"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m13%204%207%207-3%203-2-2-7%208-3-3%208-7-2-2%202-4Z%22%2F%3E%3C%2Fsvg%3E')"></i><b>Прокачка</b><i class="cnt" id="c-up"></i></button>
+    <button class="nb" data-p="war" aria-current="false" style="--c:#d0503a"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m3%203%204%201%2013%2013m-2-2-4%204m5-1%202%202M21%203l-4%201L4%2017m2-2%204%204m-5-1-2%202%22%2F%3E%3C%2Fsvg%3E')"></i><b>В бой</b><i class="cnt" id="c-war"></i></button>
+    <button class="nb" data-p="shop" aria-current="false" style="--c:#8a5ac8"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M3%209h18l-2-5H5L3%209Zm1%200v11h16V9M9%2020v-6h6v6%22%2F%3E%3C%2Fsvg%3E')"></i><b>Лавка</b></button>
+    <button class="nb" data-p="tasks" aria-current="false" style="--c:#4a9a5a"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M7%204h12v16H5V6a2%202%200%200%201%202-2Zm2%205h6m-6%204h6m-6%204h4%22%2F%3E%3C%2Fsvg%3E')"></i><b>Задания</b><i class="cnt" id="c-tasks"></i></button>
+    <button class="nb" data-p="me" aria-current="false" style="--c:#3a8a9a"><i class="camp-icon" aria-hidden="true" style="--camp-icon:url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.9%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M12%2022s8-4%208-12V5l-8-3-8%203v5c0%208%208%2012%208%2012Zm-3-10%202%202%204-5%22%2F%3E%3C%2Fsvg%3E')"></i><b>Герой</b></button>
   </nav>
   <i id="tdot" style="display:none"></i>
 </div>
@@ -521,7 +571,12 @@ document.addEventListener('zn-hit', () => { const sc = $('scene'); sc.classList.
 // ---------- навигация, счётчики, подсказки ----------
 function cnt(id, n) { const e = $(id); if (!e) return; e.textContent = n > 9 ? '9+' : n; e.classList.toggle('on', n > 0); }
 function go(p) {
-  document.querySelectorAll('.nb').forEach(b => b.classList.toggle('on', b.dataset.p === p)); document.querySelectorAll('.page').forEach(x => x.classList.toggle('on', x.id === 'p-' + p));
+  document.querySelectorAll('.nb').forEach(b => {
+    const active = b.dataset.p === p;
+    b.classList.toggle('on', active);
+    b.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+  document.querySelectorAll('.page').forEach(x => x.classList.toggle('on', x.id === 'p-' + p));
   document.querySelectorAll('.side').forEach(x => x.style.display = p === 'tap' ? '' : 'none');
   if (p === 'war') { renderTop(); renderWar(); } if (p === 'guild') renderGuild();
   if (p === 'me') { const v = document.querySelector('[data-mt].on').dataset.mt; if (v === 'fr') renderFriends(); }
