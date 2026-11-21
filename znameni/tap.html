@@ -177,6 +177,17 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 
 #sktitle{position:fixed;z-index:2;transform:translate(-50%,-100%);pointer-events:none;display:none;font-weight:900;font-size:13px;color:#fff;padding:4px 12px;border-radius:10px;
   background:linear-gradient(180deg,#24305e,#141c3e);border:2px solid var(--c);box-shadow:0 0 12px var(--c),0 0 3px var(--c) inset;text-shadow:0 2px 0 #000;white-space:nowrap;letter-spacing:.3px}
+.camp-chests[hidden]{display:none}
+.camp-chests{display:flex;gap:6px;align-items:stretch;min-width:0;margin:5px 0;padding:4px 0}
+.camp-chest-items{display:flex;flex:1;min-width:0;gap:6px;overflow-x:auto;scrollbar-width:thin;overscroll-behavior-x:contain;touch-action:pan-x}
+.camp-chest,.camp-chest-all{border:1px solid var(--gold2);border-radius:10px;background:var(--pn);color:#fff;cursor:pointer;min-height:48px}
+.camp-chest{display:grid;place-items:center;align-content:center;gap:3px;flex:0 0 64px;padding:4px 2px;font-size:10px;font-weight:800;line-height:1.2;white-space:nowrap}
+.camp-chest-all{flex:0 0 auto;padding:0 7px;font-size:10px;font-weight:800;color:var(--gold)}
+.camp-chest-icon{width:29px;height:19px;position:relative;border:2px solid #e5bb78;border-radius:5px 5px 3px 3px;background:linear-gradient(#965a3e 0 45%,#623c35 46% 100%);box-shadow:0 2px 3px #0009}
+.camp-chest-icon:after{content:'';position:absolute;left:calc(50% - 3px);top:6px;width:6px;height:7px;border-radius:2px;background:#ffd17c;box-shadow:0 1px 2px #0009}
+.camp-chest[data-kind="iron"] .camp-chest-icon{border-color:#a9d4e4;background:linear-gradient(#607d96 0 45%,#334b64 46% 100%)}
+.camp-chest[data-kind="royal"] .camp-chest-icon{border-color:#f1d365;background:linear-gradient(#9967a7 0 45%,#623d77 46% 100%)}
+.camp-chest.is-ready{border-color:#8bdc9b;color:#b4f4bd}
 </style>
 </head>
 <body>
@@ -207,6 +218,10 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
     <div style="flex:1"></div>
     <div class="tip" id="tip" style="display:none"><span class="tic">📜</span><span id="tipt"></span><button class="tx" id="tipx">✕</button></div>
     <button class="btn ad" id="adbtn" style="display:none">📺 Смотреть рекламу: полная сила (<span id="adn">5</span>)</button>
+    <section class="camp-chests" id="camp-chests" aria-label="Ларцы лагеря" hidden>
+      <div class="camp-chest-items" id="camp-chest-items"></div>
+      <button class="camp-chest-all" data-chest-open="1" aria-label="Все ларцы">Ларцы</button>
+    </section>
     <div class="enp">
       <span class="eic">⚡</span>
       <div class="ew"><div class="l1"><b><span id="en">0</span> <small>/ <span id="enm">0</span> сил</small></b><em id="enr">+60 в минуту</em></div><div class="bar"><i id="enb"></i></div></div>
@@ -425,7 +440,7 @@ function apply(d) {
   const key = h ? h.f + h.r + (h.banner ? 'g' : '') : 'none'; if (window.ZN3D_ON) { window.ZN3D.setHero(h && h.f, h && h.r, h && h.banner); window.ZN3D.setSkin(S.skin || ''); apply.k = key; }
   else if (apply.k !== key) { $('king').innerHTML = heroSVG(h && h.f, h && h.r, h && h.banner); apply.k = key; $('king').className = 'r-' + ((h && h.r) || 'warrior'); }
   $('adbtn').style.display = ADS_BLOCK && S.adsLeft > 0 ? 'block' : 'none'; $('adn').textContent = S.adsLeft;
-  draw(); renderUps(); renderShop(); renderMe(); renderTasks(); renderLeagues(); renderMap(); renderFac(); renderWar(); renderTip();
+  renderCampChests(); draw(); renderUps(); renderShop(); renderMe(); renderTasks(); renderLeagues(); renderMap(); renderFac(); renderWar(); renderTip();
   if (d.refGift) toast(`🎁 Ты пришёл по приглашению — держи +${fmt(d.refGift)} золота!`, 4000);
   for (const L of d.newLeagues || []) { hap('ok'); toast(`🏅 Новая лига «${L.name}»! Награда +${fmt(L.prize)} золота`, 4000); }
 }
@@ -684,13 +699,65 @@ function showOfflineBonus(offer) {
     esc(offer.id) + '">Смотреть · +' + fmt(offer.gold) + '</button> <button class="btn" data-close="stm">Продолжить</button>';
   $('stm').classList.add('on');
 }
-function renderChests() {
+function chestTimer(chest, now) {
+  if (chest.ready == null) return 'Закрыт';
+  const minutes = Math.ceil((chest.ready - now) / 60000);
+  if (minutes <= 0) return 'Забрать';
+  const hours = Math.floor(minutes / 60), rest = minutes % 60;
+  return hours ? hours + ' ч' + (rest ? ' ' + rest + ' мин' : '') : minutes + ' мин';
+}
+function renderCampChests() {
+  const chests = S?.frontier?.chests || [];
+  const panel = $('camp-chests'), slots = $('camp-chest-items'), now = Date.now();
+  panel.hidden = chests.length === 0;
+  const signature = JSON.stringify(chests.map(c => [c.id, c.kind, c.title, c.ready]));
+  if (slots.dataset.contents !== signature) {
+    slots.dataset.contents = signature;
+    slots.replaceChildren(...chests.map(chest => {
+      const button = document.createElement('button');
+      button.className = 'camp-chest';
+      button.dataset.kind = chest.kind;
+      button.dataset.campChest = chest.id;
+      const icon = document.createElement('span');
+      icon.className = 'camp-chest-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      button.append(icon, document.createElement('span'));
+      return button;
+    }));
+  }
+  for (const [i, button] of Array.from(slots.children).entries()) {
+    const chest = chests[i], label = chestTimer(chest, now);
+    if (button.lastElementChild.textContent === label) continue;
+    button.lastElementChild.textContent = label;
+    button.setAttribute('aria-label', chest.title + ' · ' + label);
+    button.classList.toggle('is-ready', chest.ready != null && chest.ready <= now);
+  }
+}
+let selectedChest = '';
+setInterval(() => {
+  renderCampChests();
+  const box = $('stbox');
+  if (!$('stm').classList.contains('on') || !box.querySelector('[data-chest-dialog]')) return;
+  const now = Date.now();
+  for (const clock of box.querySelectorAll('[data-ready-at]')) {
+    const chest = S?.frontier?.chests.find(c => c.id === clock.dataset.chest);
+    if (!chest || chest.ready !== Number(clock.dataset.readyAt) || chest.ready <= now) {
+      if (!box.querySelector('[data-frontier-ad]:disabled')) renderChests(selectedChest);
+      return;
+    }
+    clock.textContent = 'Осталось ' + chestTimer({ ready: Number(clock.dataset.readyAt) }, now);
+  }
+}, 1000);
+function renderChests(focus = '') {
   const t = Date.now();
-  $('stbox').innerHTML = '<h3>Ларцы</h3>' + ((S.frontier?.chests || []).map(c => {
+  const chests = S.frontier?.chests || [];
+  selectedChest = chests.some(c => c.id === focus) ? focus : '';
+  const shown = selectedChest ? chests.filter(c => c.id === selectedChest) : chests;
+  $('stbox').innerHTML = '<h3 data-chest-dialog>Ларцы</h3>' + (shown.map(c => {
     const minutes = c.ready == null ? 0 : Math.ceil((c.ready - t) / 60000);
-    const label = c.ready == null ? 'Начать открытие' : minutes > 0 ? `Осталось ${minutes} мин` : 'Забрать';
+    const label = c.ready == null ? 'Начать открытие' : minutes > 0 ? 'Осталось ' + chestTimer(c, t) : 'Забрать';
     const ad = minutes > 0 && S.frontierAdBlock ? `<button class="btn g" data-frontier-ad="chest" data-target="${esc(c.id)}">Смотреть · −60 мин</button>` : '';
-    return `<div class="card"><div class="t"><b>${esc(c.title)}</b></div>${ad}<button class="btn" data-chest="${esc(c.id)}" ${minutes > 0 ? 'disabled' : ''}>${label}</button></div>`;
+    return `<div class="card"><div class="t"><b>${esc(c.title)}</b></div>${ad}<button class="btn" data-chest="${esc(c.id)}" ${minutes > 0 ? `data-ready-at="${c.ready}" disabled` : ''}>${label}</button></div>`;
   }).join('') || '<div class="sub">Зарабатывай ларцы в боях.</div>') +
     '<button class="btn" data-close="stm">Назад</button>';
   $('stm').classList.add('on');
@@ -885,7 +952,7 @@ document.addEventListener('click', async e => {
         const d = await api('frontier_ad', { check: intent.id });
         if (!d.pending) {
           apply(d);
-          if (kind === 'chest') renderChests(); else $('stm').classList.remove('on');
+          if (kind === 'chest') renderChests(selectedChest); else $('stm').classList.remove('on');
           toast(d.frontierAdMessage);
           return;
         }
@@ -931,10 +998,11 @@ document.addEventListener('click', async e => {
     catch (e) { t.disabled = false; toast(e.message); }
     return;
   }
+  if (t.dataset.campChest) { renderChests(t.dataset.campChest); return; }
   if (t.dataset.chestOpen) { renderChests(); return; }
   if (t.dataset.chest) {
     t.disabled = true;
-    try { const d = await api('chest', { id: t.dataset.chest }); apply(d); renderChests(); toast(d.chestMessage); }
+    try { const d = await api('chest', { id: t.dataset.chest }); apply(d); renderChests(selectedChest); toast(d.chestMessage); }
     catch (e) { t.disabled = false; toast(e.message); }
     return;
   }
