@@ -180,11 +180,10 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .camp-chests[hidden]{display:none}
 .camp-chests{display:flex;gap:6px;align-items:stretch;min-width:0;margin:5px 0;padding:4px 0}
 .camp-chest-items{display:flex;flex:1;min-width:0;gap:6px;overflow-x:auto;scrollbar-width:thin;overscroll-behavior-x:contain;touch-action:pan-x}
-.camp-chest,.camp-chest-all{border:1px solid var(--gold2);border-radius:10px;background:var(--pn);color:#fff;cursor:pointer;min-height:48px}
-.camp-chest{display:grid;place-items:center;align-content:center;gap:3px;flex:0 0 64px;padding:4px 2px;font-size:10px;font-weight:800;line-height:1.2;white-space:nowrap}
-.camp-chest-all{flex:0 0 auto;padding:0 7px;font-size:10px;font-weight:800;color:var(--gold)}
-.camp-chest-icon{width:29px;height:19px;position:relative;border:2px solid #e5bb78;border-radius:5px 5px 3px 3px;background:linear-gradient(#965a3e 0 45%,#623c35 46% 100%);box-shadow:0 2px 3px #0009}
-.camp-chest-icon:after{content:'';position:absolute;left:calc(50% - 3px);top:6px;width:6px;height:7px;border-radius:2px;background:#ffd17c;box-shadow:0 1px 2px #0009}
+.camp-chest{border:1px solid var(--gold2);border-radius:10px;background:var(--pn);color:#fff;cursor:pointer;min-height:36px}
+.camp-chest{display:grid;place-items:center;align-content:center;gap:2px;flex:0 0 48px;padding:3px 2px;font-size:10px;font-weight:800;line-height:1.2;white-space:nowrap}
+.camp-chest-icon{width:21.75px;height:14.25px;position:relative;border:1.5px solid #e5bb78;border-radius:5px 5px 3px 3px;background:linear-gradient(#965a3e 0 45%,#623c35 46% 100%);box-shadow:0 2px 3px #0009}
+.camp-chest-icon:after{content:'';position:absolute;left:calc(50% - 2.25px);top:4.5px;width:4.5px;height:5.25px;border-radius:2px;background:#ffd17c;box-shadow:0 1px 2px #0009}
 .camp-chest[data-kind="iron"] .camp-chest-icon{border-color:#a9d4e4;background:linear-gradient(#607d96 0 45%,#334b64 46% 100%)}
 .camp-chest[data-kind="royal"] .camp-chest-icon{border-color:#f1d365;background:linear-gradient(#9967a7 0 45%,#623d77 46% 100%)}
 .camp-chest.is-ready{border-color:#8bdc9b;color:#b4f4bd}
@@ -220,7 +219,6 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
     <button class="btn ad" id="adbtn" style="display:none">📺 Смотреть рекламу: полная сила (<span id="adn">5</span>)</button>
     <section class="camp-chests" id="camp-chests" aria-label="Ларцы лагеря" hidden>
       <div class="camp-chest-items" id="camp-chest-items"></div>
-      <button class="camp-chest-all" data-chest-open="1" aria-label="Все ларцы">Ларцы</button>
     </section>
     <div class="enp">
       <span class="eic">⚡</span>
