@@ -60,11 +60,11 @@ html,body{margin:0;height:100%;background:#0c1024;color:var(--txt);font:14px/1.3
 <div class="joy" id="joy"><i id="knob"></i></div>
 <div class="hgt"><button class="btn g" id="up">▲</button><button class="btn g" id="dn">▼</button></div>
 <div class="hint">Тяни — осмотреться · правая кнопка или Shift — двигать · колесо — высота · WASD — лететь · нажми на костёр или бойца</div>
-<div id="labels"></div><button id="camp-looks" class="btn g" style="position:fixed;left:12px;top:112px;z-index:3">Новые облики</button>
+<div id="labels"></div>
 <div class="modal on" id="hello"><div class="glass"><h2>⛺ Лагерь четырёх знамён</h2>
   <p>Каждый подписчик — воин одного из четырёх знамён: 🦁 Львы, 🐺 Волки, 🐉 Драконы, 🪶 Вороны. У каждого знамени — свой лагерь у костра. Найди своего воина по нику из Instagram.</p>
   <div class="col"><input id="q2" placeholder="Ник в Instagram" style="border:1px solid #ffffff33;border-radius:10px;padding:11px;background:#0a1028;color:#fff;font-size:16px;text-align:center">
-  <button class="btn" id="find">Найти своего воина</button><button class="btn g" id="lookbook">Новые облики</button><button class="btn g" id="justlook">Просто посмотреть лагерь</button></div></div></div>
+  <button class="btn" id="find">Найти своего воина</button><button class="btn g" id="justlook">Просто посмотреть лагерь</button></div></div></div>
 <div class="modal" id="info"><div class="glass" id="infobox"></div></div>
 
 <script type="module">
@@ -282,30 +282,6 @@ function findMe(v) { const s = String(v || '').trim().toLowerCase().replace(/^@/
   if (!w) return false; meNick = w.nick; if (cur !== w.f) showCamp(w.f, false); else me = PEOPLE.findIndex(p => p.nick === meNick); if (me >= 0) person(me); return true; }
 $('find').onclick = () => { if (findMe($('q2').value)) $('hello').classList.remove('on'); else { $('q2').value = ''; $('q2').placeholder = 'Не нашли — проверь ник или вступи в Ратуше'; } };
 $('justlook').onclick = () => $('hello').classList.remove('on');
-function openLookbook() {
-  if (!ROSTER.length) {
-    show('<h2>Новые облики</h2><p>Список героев ещё загружается.</p>' + CLOSE);
-    return;
-  }
-  const buttons = [...SPECIAL_LOOKS].map(([nick, [, title]]) => {
-    const resident = ROSTER.find(p => p.nick === nick);
-    if (!resident) return '';
-    const f = FACTIONS[resident.f];
-    return '<button class="btn g" data-resident="' + nick + '">' + title + ' · @' + nick + ' ' + f.icon + '</button>';
-  }).join('');
-  show('<h2>Новые облики</h2><div class="col">' + buttons + CLOSE + '</div>');
-}
-$('camp-looks').onclick = $('lookbook').onclick = openLookbook;
-$('infobox').addEventListener('click', e => {
-  const nick = e.target.closest('[data-resident]')?.dataset.resident;
-  if (!nick) return;
-  const resident = ROSTER.find(p => p.nick === nick);
-  if (!resident) return;
-  $('hello').classList.remove('on');
-  showCamp(resident.f, false);
-  const index = PEOPLE.findIndex(p => p.nick === nick);
-  if (index >= 0) person(index);
-});
 $('q').addEventListener('change', () => findMe($('q').value));
 
 // ---------- подписи ----------
