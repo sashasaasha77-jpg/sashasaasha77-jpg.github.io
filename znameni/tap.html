@@ -487,13 +487,17 @@ async function demoApi(action, b) {
   let skinGot = '';
   if (action === 'skin_ad') { const r = PG.skinAd(s, b.skin, day); if (r.err) throw new Error(r.err); skinGot = r.unlocked || ''; }
   if (action === 'skin_set') { const r = PG.skinSet(s, b.skin); if (r.err) throw new Error(r.err); }
-  const st = () => ({ power: 1 + s.lv.power, maxE: 500 + 250 * s.lv.energy, regen: .1 + .025 * s.lv.regen, regenStep: .025 }), eN = () => Math.min(st().maxE, s.e + st().regen * (now - s.eAt) / 1000);
-  const C = { power: [100, 1.8], energy: [150, 1.9], regen: [200, 2] }, cost = (kk, l) => Math.round(C[kk][0] * Math.pow(C[kk][1], l));
+  const st = () => ({ power: (12 + 11 * s.lv.power) / 10, powerStep: 1.1, maxE: 500 + 100 * s.lv.energy, energyStep: 100, critChance: 5 + (s.lv.crit || 0), regen: .1 + .025 * s.lv.regen, regenStep: .025 }), eN = () => Math.min(st().maxE, s.e + st().regen * (now - s.eAt) / 1000);
+  const C = { power: [2147, 8, 1.55, 20], energy: [2449, 7, 1.55, 20], regen: [7030, 3, 2.6, 5], crit: [3910, 4, 1.8, 10] };
+  const cost = kind => {
+    const [price, at, multiplier, max] = C[kind], level = s.lv[kind] || 0;
+    return level >= max ? null : Math.round(price * Math.pow(multiplier, level - at));
+  };
   let extra = {};
   if (action === 'battle_start') { const e = eN(); if (e < PG.BATTLE_COST) throw new Error('Нужно 50 выносливости.'); const r = PG.battleStart(s, b.n, Math.floor(Math.sqrt(s.xp / 100)), now); if (r.err) throw new Error(r.err); s.e = e - PG.BATTLE_COST; s.eAt = now; extra.battle = r.battle; }
   if (action === 'battle_finish') { const r = PG.battleFinish(s, b.taps, b.ms, now); if (r.err) throw new Error(r.err); if (r.win) s.xp += r.gold; newL = newL.concat(PG.leagueUp(s)); extra.result = r; }
   if (action === 'sync') { const n = Math.min(b.taps | 0, Math.floor(eN())); s.e = eN() - n; s.eAt = now; s.coins += n * st().power; s.total += n * st().power; s.xp += n * st().power; PG.countTaps(s, n); newL = newL.concat(PG.leagueUp(s)); }
-  if (action === 'upgrade') { const c = cost(b.kind, s.lv[b.kind]); if (s.coins < c) throw new Error(`Нужно ${c} золота.`); s.e = eN(); s.eAt = now; s.coins -= c; s.lv[b.kind]++; }
+  if (action === 'upgrade') { const c = cost(b.kind); if (c == null) throw new Error('Уже максимум.'); s.lv[b.kind] ??= 0; if (s.coins < c) throw new Error(`Нужно ${c} золота.`); s.e = eN(); s.eAt = now; s.coins -= c; s.lv[b.kind]++; }
   if (action === 'invoice') throw new Error('Покупки за ⭐ работают только в Telegram.');
   if (action === 'top') return { list: [{ n: '@kirill_77', v: 18400, f: 'dragons' }, { n: '@masha.k', v: 9100, f: 'lions' }, { n: 'Ты', v: Math.floor(s.total), f: 'wolves' }].sort((a, b) => b.v - a.v), me: null, factions: { lions: 9100, wolves: Math.floor(s.total), dragons: 18400, ravens: 3000 } };
   try { localStorage.setItem(k, JSON.stringify(s)); } catch (e) { }
@@ -501,7 +505,7 @@ async function demoApi(action, b) {
   s.fac = s.pickFac || new URLSearchParams(location.search).get('f') || '';
   return { id: 'demo', fac: s.fac, linked: false, guild: s.guild || '', name: 'Гость', coins: s.coins, total: s.total, lv: s.lv, ...st(), energy: Math.floor(eN()), x2: 0, auto: 0, nick: 'demo_voin', code: '',
     hero: { f: new URLSearchParams(location.search).get('f') || 'wolves', r: new URLSearchParams(location.search).get('r') || 'archer', lv, xp: s.xp, cur: lv * lv * 100, next: (lv + 1) * (lv + 1) * 100, banner: false },
-    costs: { power: cost('power', s.lv.power), energy: cost('energy', s.lv.energy), regen: cost('regen', s.lv.regen) }, adsLeft: 0, nextBattle: +nb, now,
+    costs: Object.fromEntries(Object.keys(C).map(k => [k, cost(k)])), adsLeft: 0, nextBattle: +nb, now,
     ...PG.progressView(s, day), skinGot, newLeagues: newL, bldGain: Math.floor(bldGain), claimed, ...extra,
     shop: { energy: { title: 'Полная энергия', desc: 'Энергия сразу до максимума', stars: 10 }, squire: { title: 'Оруженосец на 24 часа', desc: 'Тренирует героя, даже когда ты не в игре', stars: 50 }, x2: { title: 'Двойная тренировка на 7 дней', desc: 'Каждый удар приносит в 2 раза больше', stars: 100 }, banner: { title: 'Золотое знамя', desc: 'Золотая аура героя в битве навсегда + 👑 в рейтинге', stars: 250 } } };
 }
@@ -553,10 +557,10 @@ function draw() {
   return e;
 }
 setInterval(draw, 250);
-const UPC = { power: ['🗡', 'Сила удара', '#d8483a', (l, S) => [`+${S.power}`, `+${S.power + 1}`, 'за удар']], energy: ['💗', 'Выносливость', '#d84a9a', (l, S) => [fmt(S.maxE), fmt(S.maxE + 250), 'сил']], regen: ['🔥', 'Костёр', '#e08a2a', (l, S) => [`+${regenFmt.format(S.regen * 60)}`, `+${regenFmt.format((S.regen + (S.regenStep ?? .025)) * 60)}`, 'в мин']] };
+const UPC = { power: ['🗡', 'Сила удара', '#d8483a', (l, S) => [`+${regenFmt.format(S.power)}`, `+${regenFmt.format(S.power + (S.powerStep ?? 1.1))}`, 'за удар']], energy: ['💗', 'Выносливость', '#d84a9a', (l, S) => [fmt(S.maxE), fmt(S.maxE + (S.energyStep ?? 100)), 'сил']], crit: ['🎯', 'Меткость', '#a06542', (l, S) => [`${S.critChance ?? 5}%`, `${(S.critChance ?? 5) + 1}%`, 'крит. ударов']], regen: ['🔥', 'Костёр', '#e08a2a', (l, S) => [`+${regenFmt.format(S.regen * 60)}`, `+${regenFmt.format((S.regen + (S.regenStep ?? .025)) * 60)}`, 'в мин']] };
 const BC = { tavern: '#b8783a', forge: '#6a7a9a', stable: '#8a5a3a', range: '#3a8a5a', barracks: '#5a6ad8', tower: '#7a8aa8', temple: '#c8402a' };
 function renderUps() { renderBlds(); const have = S.coins + pending * S.power * mult(); let nAff = 0;
-  $('ups').innerHTML = Object.entries(UPC).map(([k, [ic, nm, col, ds]]) => { const c = S.costs[k], l = S.lv[k], ok = c != null && c <= have; if (ok) nAff++; const [a, b2, u] = ds(l, S);
+  $('ups').innerHTML = Object.entries(UPC).map(([k, [ic, nm, col, ds]]) => { const c = S.costs[k], l = S.lv[k] ?? 0, ok = c != null && c <= have; if (ok) nAff++; const [a, b2, u] = ds(l, S);
     return `<div class="uc ${ok ? 'ok' : ''}">${ok ? '<span class="tag">Хватает!</span>' : ''}<div class="ti" style="background:${col}">${ic}<i>${l}</i></div><b>${nm}</b>
       <span class="ch">${a} » <em>${b2}</em> ${u}</span><button class="buy" data-up="${k}" ${ok ? '' : 'disabled'}>${c == null ? 'MAX' : '🪙 ' + fmt(c)}</button>${c != null && !ok ? `<span class="need">не хватает ${fmt(c - have)}</span>` : ''}</div>`; }).join('');
   nAff += (S.blds || []).filter(b => !b.locked && b.cost != null && b.cost <= have).length; cnt('c-up', nAff);
@@ -566,7 +570,7 @@ function renderBlds() {
   $('blds').innerHTML = (S.blds || []).map(b => { const ok = !b.locked && b.cost != null && b.cost <= have;
     return b.locked ? `<div class="uc lock"><div class="ti" style="background:#3a4470">🔒</div><b>${b.title}</b><span class="lockt">Откроется в лиге «${b.locked}»</span><button class="buy" disabled>Закрыто</button></div>`
     : `<div class="uc ${ok ? 'ok' : ''}">${ok ? '<span class="tag">Хватает!</span>' : ''}<div class="ti" style="background:${BC[b.k] || '#5a6ad8'}">${b.ic}<i>${b.lv}</i></div><b>${b.title}</b>
-      <span class="ch">+${fmt(b.inc * b.lv)} » <em>+${fmt(b.inc * (b.lv + 1))}</em> в час</span><button class="buy" data-bld="${b.k}" ${ok ? '' : 'disabled'}>${b.cost == null ? 'MAX' : '🪙 ' + fmt(b.cost)}</button>
+      <span class="ch">+${regenFmt.format(b.inc * b.lv)} » <em>+${regenFmt.format(b.inc * (b.lv + 1))}</em> в час</span><button class="buy" data-bld="${b.k}" ${ok ? '' : 'disabled'}>${b.cost == null ? 'MAX' : '🪙 ' + fmt(b.cost)}</button>
       ${b.cost != null && !ok ? `<span class="need">не хватает ${fmt(b.cost - have)}</span>` : `<span class="lockt">окупится за ${b.payback} ч</span>`}</div>`; }).join('');
 }
 function renderTasks() {
@@ -952,7 +956,7 @@ $('lgm').addEventListener('click', e => { if (e.target.id === 'lgm') $('lgm').cl
 $('king').addEventListener('pointerdown', e => { e.preventDefault(); tap(e); });
 async function sync() {
   if (syncing || !pending || !S) return; syncing = true; const n = pending, lv0 = S.hero ? S.hero.lv : 0;
-  try { const d = await api('sync', { taps: n }); pending -= n; apply(d); if (d.hero && d.hero.lv > lv0) { hap('ok'); toast(`⬆️ Герой достиг ${d.hero.lv} уровня!`); } }
+  try { const d = await api('sync', { taps: n }); pending -= n; apply(d); if (d.hero && d.hero.lv > lv0) { hap('ok'); toast(`⬆️ Герой достиг ${d.hero.lv} уровня!`); } else if (d.criticals) toast(`🎯 Критических ударов: ${d.criticals}`, 1300); }
   catch (e) { pending = 0; toast(e.message); } finally { syncing = false; }
 }
 setInterval(sync, 1500); document.addEventListener('visibilitychange', () => document.hidden && sync());

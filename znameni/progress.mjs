@@ -2,10 +2,10 @@
 // Чистые функции над состоянием игрока s и временем t. Используются сервером и демо-режимом.
 
 export const BUILD = [
-  { k: 'tavern', title: 'Таверна', ic: '🍺', inc: 2, cost: 30, league: 0 },
-  { k: 'forge', title: 'Кузница', ic: '⚒️', inc: 10, cost: 200, league: 0 },
-  { k: 'stable', title: 'Конюшня', ic: '🐎', inc: 45, cost: 1000, league: 1 },
-  { k: 'range', title: 'Стрельбище', ic: '🎯', inc: 200, cost: 5000, league: 2 },
+  { k: 'tavern', title: 'Таверна', ic: '🍺', inc: 2.22, cost: 30, league: 0 },
+  { k: 'forge', title: 'Кузница', ic: '⚒️', inc: 11.1, cost: 200, league: 0 },
+  { k: 'stable', title: 'Конюшня', ic: '🐎', inc: 44.4, cost: 1000, league: 1 },
+  { k: 'range', title: 'Стрельбище', ic: '🎯', inc: 178, cost: 5000, league: 2 },
   { k: 'barracks', title: 'Казарма', ic: '🛡', inc: 900, cost: 25000, league: 3 },
   { k: 'tower', title: 'Сторожевая башня', ic: '🗼', inc: 5000, cost: 150000, league: 4 },
   { k: 'temple', title: 'Храм войны', ic: '⛩', inc: 30000, cost: 1000000, league: 5 },
