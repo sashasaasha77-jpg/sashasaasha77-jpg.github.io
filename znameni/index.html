@@ -100,7 +100,17 @@ function setBuilt(b) { const old = JSON.stringify(BUILT); BUILT = b; if (cur && 
 function showCamp(f, fly = true) {
   if (cur === f) return; cur = f; C = camp(f); for (const k in CAMPS) CAMPS[k].group.visible = k === f;
   const P = C.biome; scene.background = new THREE.Color(P.sky); scene.fog.color.set(P.fog); hemi.color.set(P.hemi[0]); hemi.groundColor.set(P.hemi[1]); sun.color.set(P.sun); hemi.intensity = 1.6; sun.intensity = 2.3; scene.fog.near = 110; scene.fog.far = 240;
-  if (C.fire) { const dusk = new THREE.Color('#1c2244'); scene.background.lerp(dusk, .55); scene.fog.color.lerp(dusk, .55); scene.fog.near = 40; scene.fog.far = 110; hemi.intensity = .75; sun.intensity = .9; sun.color.set('#ffb070'); }
+  if (C.fire) {
+    scene.background.lerp(new THREE.Color('#d4ebff'), .32);
+    scene.fog.color.copy(scene.background).lerp(new THREE.Color('#fff3d6'), .16);
+    scene.fog.near = 53;
+    scene.fog.far = 138;
+    hemi.color.set('#fff5df');
+    hemi.groundColor.lerp(new THREE.Color('#b8a08f'), .44);
+    hemi.intensity = 1.85;
+    sun.intensity = 2.15;
+    sun.color.set('#ffe2ab');
+  }
   me = PEOPLE_ME(); buildPeople(); followI = -1; if (fly) Object.assign(camT, C.fire ? (innerHeight > innerWidth ? { tx: 0, tz: 0, dist: 52, pitch: .95 } : { tx: 0, tz: 0, dist: 30, pitch: .5 }) : innerHeight > innerWidth ? { tx: 0, tz: 6, dist: 118, pitch: 1.12 } : { tx: 0, tz: 0, dist: 95, pitch: .82 });
   $('biome').textContent = `${FACTIONS[f].icon} Лагерь знамени «${FACTIONS[f].name}» · ${P.name}`; $('biome').style.opacity = 1; clearTimeout(showCamp.t); showCamp.t = setTimeout(() => $('biome').style.opacity = 0, 3500);
   renderTabs(); try { history.replaceState(null, '', '#' + f); } catch (e) { }
@@ -356,7 +366,7 @@ function frame(now) {
   if (followI >= 0 && PEOPLE[followI]) { const p = PEOPLE[followI]; camT.tx = p.x; camT.tz = p.z; }
   else if (!ptr.size && !kx && !kz && !joy.x && !joy.y && $('hello').classList.contains('on')) camT.yaw += dt * .05;
   C.anim.fires.forEach((f, i) => { const s = 1 + Math.sin(t * 13 + i * 1.7) * .15; f.scale.set(1 / s, s, 1 / s); });
-  if (C.anim.glow) C.anim.glow.intensity = 55 + Math.sin(t * 11) * 6 + Math.sin(t * 23) * 4;
+  if (C.anim.glow) C.anim.glow.intensity = 40 + Math.sin(t * 11) * 5 + Math.sin(t * 23) * 3;
   if (C.anim.sparkMesh) { C.anim.sparks.forEach((s, i) => { s.y += dt * s.s; if (s.y > 7) { s.y = .5; s.a = Math.random() * 6.28; } const r = s.r + s.y * .12; C.anim.sparkMesh.setMatrixAt(i, m4.compose(v3.set(Math.cos(s.a + s.y * .5) * r, s.y, Math.sin(s.a + s.y * .5) * r), q.identity(), sv.setScalar(1 - s.y / 8))); }); C.anim.sparkMesh.instanceMatrix.needsUpdate = true; }
   C.anim.flags.forEach(fm => { const pa = fm.geometry.attributes.position; for (let i = 0; i < pa.count; i++) pa.setZ(i, Math.sin(t * 3 + pa.getX(i) * 2) * .1 * pa.getX(i)); pa.needsUpdate = true; });
   applyCam(dt); R3.render(scene, cam); labels();
