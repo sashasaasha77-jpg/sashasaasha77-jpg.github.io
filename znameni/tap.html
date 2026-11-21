@@ -317,7 +317,7 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
       <div class="camp-energy">
         <div class="enp">
           <span class="eic" aria-hidden="true">⚡</span>
-          <div class="ew"><div class="l1"><b><span id="en">0</span> <small>/ <span id="enm">0</span> сил</small></b><em id="enr">+60 в минуту</em></div><div class="bar"><i id="enb"></i></div></div>
+          <div class="ew"><div class="l1"><b><span id="en">0</span> <small>/ <span id="enm">0</span> сил</small></b><em id="enr">+6 в минуту</em></div><div class="bar"><i id="enb"></i></div></div>
         </div>
         <button class="btn ad" id="adbtn" style="display:none">📺 Реклама · восстановить силы (<span id="adn">5</span>)</button>
       </div>
@@ -384,6 +384,7 @@ const INSTA = '4znameni'; // ник игры в Instagram (поменяем, к�
 const ADS_BLOCK = '60165'; // id блока AdsGram (после регистрации на adsgram.ai)
 const TG = window.Telegram && Telegram.WebApp, INIT = TG && TG.initData || '';
 const DEMO = !INIT;
+const regenFmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 });
 const $ = id => document.getElementById(id), fmt = n => Math.floor(n).toLocaleString('ru-RU');
 const F = { lions: ['Львы', '🦁', '#e8b33a', '#5a3c10'], wolves: ['Волки', '🐺', '#7f9fc4', '#26384f'], dragons: ['Драконы', '🐉', '#e0503a', '#4a1410'], ravens: ['Вороны', '🪶', '#9a6ad8', '#2a1648'] };
 const RL = { warrior: ['Воин', '⚔️'], guard: ['Страж', '🛡'], mage: ['Маг', '🔮'], archer: ['Лучник', '🏹'] };
@@ -486,7 +487,7 @@ async function demoApi(action, b) {
   let skinGot = '';
   if (action === 'skin_ad') { const r = PG.skinAd(s, b.skin, day); if (r.err) throw new Error(r.err); skinGot = r.unlocked || ''; }
   if (action === 'skin_set') { const r = PG.skinSet(s, b.skin); if (r.err) throw new Error(r.err); }
-  const st = () => ({ power: 1 + s.lv.power, maxE: 500 + 250 * s.lv.energy, regen: 1 + .5 * s.lv.regen }), eN = () => Math.min(st().maxE, s.e + st().regen * (now - s.eAt) / 1000);
+  const st = () => ({ power: 1 + s.lv.power, maxE: 500 + 250 * s.lv.energy, regen: .1 + .025 * s.lv.regen, regenStep: .025 }), eN = () => Math.min(st().maxE, s.e + st().regen * (now - s.eAt) / 1000);
   const C = { power: [100, 1.8], energy: [150, 1.9], regen: [200, 2] }, cost = (kk, l) => Math.round(C[kk][0] * Math.pow(C[kk][1], l));
   let extra = {};
   if (action === 'battle_start') { const e = eN(); if (e < PG.BATTLE_COST) throw new Error('Нужно 50 выносливости.'); const r = PG.battleStart(s, b.n, Math.floor(Math.sqrt(s.xp / 100)), now); if (r.err) throw new Error(r.err); s.e = e - PG.BATTLE_COST; s.eAt = now; extra.battle = r.battle; }
@@ -544,7 +545,7 @@ const mult = () => S.x2 > Date.now() ? 2 : 1;
 function draw() {
   if (!S) return 0; const e = Math.max(0, Math.min(S.maxE, eLocal + S.regen * (performance.now() - eT) / 1000) - pending);
   $('coins').textContent = fmt(S.coins + pending * S.power * mult()); $('en').textContent = Math.floor(e); $('enm').textContent = S.maxE;
-  $('enb').style.width = (100 * e / S.maxE) + '%'; $('enr').textContent = `+${fmt(S.regen * 60)} в минуту`;
+  $('enb').style.width = (100 * e / S.maxE) + '%'; $('enr').textContent = `+${regenFmt.format(S.regen * 60)} в минуту`;
   const now = Date.now(), pl = [`<span><em>+${S.power * mult()}</em> удар${mult() > 1 ? ' ×2' : ''}</span>`];
   pl.push(`<span>⏳ <em>+${fmt(S.perHour || 0)}</em> в час</span>`);
   if (S.auto > now) pl.push(`<span>🛡 <em>${Math.ceil((S.auto - now) / 36e5)} ч</em></span>`);
@@ -552,7 +553,7 @@ function draw() {
   return e;
 }
 setInterval(draw, 250);
-const UPC = { power: ['🗡', 'Сила удара', '#d8483a', (l, S) => [`+${S.power}`, `+${S.power + 1}`, 'за удар']], energy: ['💗', 'Выносливость', '#d84a9a', (l, S) => [fmt(S.maxE), fmt(S.maxE + 250), 'сил']], regen: ['🔥', 'Костёр', '#e08a2a', (l, S) => [`+${fmt(S.regen * 60)}`, `+${fmt((S.regen + .5) * 60)}`, 'в мин']] };
+const UPC = { power: ['🗡', 'Сила удара', '#d8483a', (l, S) => [`+${S.power}`, `+${S.power + 1}`, 'за удар']], energy: ['💗', 'Выносливость', '#d84a9a', (l, S) => [fmt(S.maxE), fmt(S.maxE + 250), 'сил']], regen: ['🔥', 'Костёр', '#e08a2a', (l, S) => [`+${regenFmt.format(S.regen * 60)}`, `+${regenFmt.format((S.regen + (S.regenStep ?? .025)) * 60)}`, 'в мин']] };
 const BC = { tavern: '#b8783a', forge: '#6a7a9a', stable: '#8a5a3a', range: '#3a8a5a', barracks: '#5a6ad8', tower: '#7a8aa8', temple: '#c8402a' };
 function renderUps() { renderBlds(); const have = S.coins + pending * S.power * mult(); let nAff = 0;
   $('ups').innerHTML = Object.entries(UPC).map(([k, [ic, nm, col, ds]]) => { const c = S.costs[k], l = S.lv[k], ok = c != null && c <= have; if (ok) nAff++; const [a, b2, u] = ds(l, S);
