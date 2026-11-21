@@ -281,6 +281,10 @@ h3{margin:0 0 6px;font-size:19px;color:var(--gold);text-shadow:0 2px 0 #0008}
 .nb.on{background:linear-gradient(150deg,#ffdea0,#bd8b52);border-color:#fff0ce;color:#342036;box-shadow:inset 0 1px #fff5,inset 0 -2px #80543472}
 .nb.on .camp-icon{background:currentColor}
 @media(max-height:640px){.lvbox,.lgbox{min-height:44px}.lvbox .ava{width:32px;height:32px}.nav{margin-top:5px}.nb,.nb.on{height:42px}.camp-dock{gap:3px}}
+.sk .sw{position:relative;isolation:isolate;width:58px;height:58px;border:1px solid #ead6ff60;background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--c) 70%,#d0deff),#202338 78%);box-shadow:inset 0 1px #fff4,0 3px 7px #080e2090}
+.skin-portrait{display:block;width:100%;height:100%;border-radius:inherit;background-image:url(bg/skin-portraits-v1.webp);background-repeat:no-repeat;background-size:500% 400%;background-position:var(--px) var(--py)}
+.skin-state{position:absolute;right:-5px;bottom:-3px;display:grid;place-items:center;width:19px;height:19px;border-radius:7px;background:#172237;border:1px solid #fff8;font:700 10px/1 system-ui;color:#fff}
+.skin-state.equipped{background:#345941;color:#eaffde}
 </style>
 </head>
 <body>
@@ -599,11 +603,18 @@ function renderLeagues() {
   $('lgl').innerHTML = `<div class="sub" style="text-align:center;margin-top:6px">${S.league.next ? `Ты — ${S.league.name}. До «${S.league.next.name}» ещё <b>${fmt(Math.max(0, S.league.next.need - S.total))}</b> золота.` : 'Ты в высшей лиге!'} «Ур.» — это уровень героя, он не связан с лигой.</div>` +
     S.league.list.map((L, i) => `<div class="lg ${i === S.league.i ? 'cur' : ''}"><span class="n">${i + 1}</span><div class="nm"><b>${L.name}</b><small>${i ? 'от ' + fmt(L.need) + ' золота' : 'Начало пути'}</small></div>${L.prize ? '<b>🪙 ' + fmt(L.prize) + '</b>' : ''}</div>`).join('');
 }
+const SKIN_PORTRAIT_ORDER = ["diamond","samurai","ninja","viking","cossack","tsar","vampire","robot","ogre","darklord","pharaoh","mummy","zombie","knight","pumpkin","highlander","legionary","plague","farmer","mageking"];
+function skinPortrait(skin) {
+  const i = SKIN_PORTRAIT_ORDER.indexOf(skin.k);
+  if (i < 0) return esc(skin.e || '');
+  return '<span class="skin-portrait" aria-hidden="true" style="--px:' + (i % 5) * 25 +
+    '%;--py:' + (Math.floor(i / 5) / 3 * 100) + '%"></span>';
+}
 function renderSkins() {
   if (!PGm || !S || !S.skins) return; const L = PGm.SKIN_LIST, need = PGm.SKIN_ADS;
   $('skins').innerHTML = `<div class="skh">🎨 Скины героев · Обычные<small>Посмотри ${need} реклам — образ твой навсегда, а над героем загорится его титул. Сегодня осталось: ${S.skinAdsLeft}</small></div><div class="skg">` + L.map(x => {
     const own = S.skins.includes(x.k), on = S.skin === x.k, n = Math.min(need, (S.skinAds || {})[x.k] || 0);
-    return `<div class="sk ${on ? 'on' : ''}"><div class="sw" style="--c:${x.c};${own ? '' : 'filter:grayscale(.6) brightness(.8)'}">${x.e || ''}${own ? (on ? '<i style="position:absolute;margin:30px 0 0 34px;font-size:13px;font-style:normal">✅</i>' : '') : '<i style="position:absolute;margin:30px 0 0 34px;font-size:13px;font-style:normal">🔒</i>'}</div><b>${x.n}</b>${own ? '<small>Открыт</small>' : `<div class="pb"><i style="width:${n / need * 100}%"></i></div><small>📺 ${n} / ${need}</small>`}
+    return `<div class="sk ${on ? 'on' : ''}"><div class="sw" style="--c:${x.c}">${skinPortrait(x)}${own ? (on ? '<span class="skin-state equipped" aria-label="Надет">✓</span>' : '') : '<span class="skin-state" aria-label="Закрыт">🔒</span>'}</div><b>${x.n}</b>${own ? '<small>Открыт</small>' : `<div class="pb"><i style="width:${n / need * 100}%"></i></div><small>📺 ${n} / ${need}</small>`}
       ${own ? `<button class="btn ${on ? '' : 'g'}" data-skinset="${on ? '' : x.k}">${on ? 'Снять' : 'Надеть'}</button>` : `<button class="btn" data-skinad="${x.k}" ${S.skinAdsLeft > 0 ? '' : 'disabled'}>📺 Смотреть</button>`}</div>`; }).join('') + '</div>';
 }
 function renderShop() {
